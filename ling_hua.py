@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, all_syw_exclude_s_b, find_swy
+from base_syw import ShengYiWu, all_syw_exclude_s_b, find_syw
 
 bing_tao = [
     ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_HUA, atk_per=0.105, elem_mastery=19, crit_rate=0.132, energe_recharge=0.11),
@@ -78,4 +78,4 @@ def calculate_score(combine):
 
 # Main body
 if __name__ == '__main__':
-    find_swy(syw_s_b, find_combins, calculate_score, "ling_hua_syw.txt")
+    find_syw(syw_s_b, find_combins, calculate_score, "ling_hua_syw.txt")

@@ -34,9 +34,10 @@ class ShengYiWu:
     ZONG_SHI = 'zong_shi'
     YUE_TUAN = 'yue_tuan'
     JUE_DOU_SHI = 'jue_dou_shi'
+    SHA_SHANG = 'sha_shang'
 
 
-    def __init__(self, name, part, crit_rate=0.0, crit_damage=0.0, hp_percent=0.0, hp=0, energe_recharge=0.0, atk_per=0.0, atk=0, def_per=0.0, def_v=0, elem_mastery=0):
+    def __init__(self, name, part, crit_rate=0.0, crit_damage=0.0, hp_percent=0.0, hp=0, energe_recharge=0.0, atk_per=0.0, atk=0, def_per=0.0, def_v=0, elem_mastery=0, elem_bonus=0.0):
         self.name = name
         self.part = part
         self.crit_rate = crit_rate
@@ -49,6 +50,7 @@ class ShengYiWu:
         self.def_per = def_per
         self.def_v = def_v
         self.elem_mastery = elem_mastery
+        self.elem_bonus = elem_bonus
 
     def __str__(self):
         s = '(' + self.name + ', ' + self.part
@@ -82,6 +84,9 @@ class ShengYiWu:
         if self.elem_mastery:
             s += ', elem:' + str(self.elem_mastery)
 
+        if self.elem_bonus:
+            s += ', bonus:' + str(self.elem_bonus)
+
         s += ')'
 
         return s
@@ -99,6 +104,7 @@ all_syw_exclude_s_b = {
         ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_HUA, energe_recharge=0.123, crit_rate=0.101, hp_percent=0.053, crit_damage=0.117),
         ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_HUA, def_per=0.066, crit_damage=0.148, crit_rate=0.105, energe_recharge=0.104),
         ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_HUA, crit_rate=0.066, crit_damage=0.287, elem_mastery=16, atk_per=0.099),
+        ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_HUA, hp_percent=0.181, atk=16, crit_damage=0.148, atk_per=0.058),
         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_HUA, elem_mastery=82, atk=19, hp_percent=0.122, def_v=19),
         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_HUA, crit_damage=0.218, crit_rate=0.035, hp_percent=0.157, atk=31),
         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_HUA, crit_rate=0.14, atk_per=0.117, crit_damage=0.07, energe_recharge=0.045),
@@ -234,10 +240,10 @@ all_syw_exclude_s_b = {
 
 
 
-def find_swy(swy_s_b, find_combins_callback, calculate_score_callbak, result_txt_file):
+def find_syw(syw_s_b, find_combins_callback, calculate_score_callbak, result_txt_file):
     all_syw = {}
     all_syw.update(all_syw_exclude_s_b)
-    all_syw.update(swy_s_b)
+    all_syw.update(syw_s_b)
 
     all_combins = find_combins_callback(all_syw)
 
@@ -253,8 +259,21 @@ def find_swy(swy_s_b, find_combins_callback, calculate_score_callbak, result_txt
 
         for s in all_syw[miss_part[0]]:
             combine = c + (s, )
+            sorted_combine = [None, None, None, None, None]
 
-            score_data = calculate_score_callbak(combine)
+            for p in combine:
+                if p.part == ShengYiWu.PART_HUA:
+                    sorted_combine[0] = p
+                elif p.part == ShengYiWu.PART_YU:
+                    sorted_combine[1] = p
+                elif p.part == ShengYiWu.PART_SHA:
+                    sorted_combine[2] = p
+                elif p.part == ShengYiWu.PART_BEI:
+                    sorted_combine[3] = p
+                else:
+                    sorted_combine[4] = p
+
+            score_data = calculate_score_callbak(sorted_combine)
             if not score_data:
                 continue
 
@@ -270,4 +289,4 @@ def find_swy(swy_s_b, find_combins_callback, calculate_score_callbak, result_txt
                 for c in all_scores[i]:
                     # print((i, c))
                     f.write(str((round(i, 4), c, )))
-                    f.write('\n')
+                    f.write('\n\n')
