@@ -114,6 +114,7 @@ shui_xian_name = "ShuiXian"
 shui_xian = [
     ShengYiWu(shui_xian_name, 'h', energe_recharge=0.123, atk=37, crit_rate=0.039, crit_damage=0.233),
     ShengYiWu(shui_xian_name, 'y', crit_damage=0.07, atk_per=0.058, energe_recharge=0.104, crit_rate=0.136),
+    ShengYiWu(shui_xian_name, 's', hp=837, elem_mastery=16, crit_damage=0.257, atk=19),
     ShengYiWu(shui_xian_name, 'b', crit_rate=0.109, def_v=32, hp=478, hp_percent=0.058),
 ]
 
@@ -325,8 +326,8 @@ def main():
             extra_water_plus = 0.0
             total_energe_recharge = (sum([p.energe_recharge for p in combine]) + 1) * 100
 
-            # if total_energe_recharge < 120:
-            #    continue
+            #if total_energe_recharge != 111:
+            #   continue
 
             syw_names = set([p.name for p in combine])
             for n in syw_names:
