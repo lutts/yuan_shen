@@ -56,7 +56,7 @@ def find_combins(all_syw):
 def calculate_score(combine):
     max_atk = 841
     base_elem_mastery = 380 + (100 # 四命
-                               + 243 # 固有天赋
+                               + 243 # 固有天赋，阿忍带圣显，四饰金加的150可以被纳西妲大招转化
                                + 187 # 精通沙
                                )
     base_atk = max_atk + 311
