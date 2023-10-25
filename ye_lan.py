@@ -82,21 +82,6 @@ syw_s_b = {
     ],
 }
 
-all_parts = {ShengYiWu.PART_HUA, ShengYiWu.PART_YU, ShengYiWu.PART_SHA, ShengYiWu.PART_BEI, ShengYiWu.PART_TOU}
-
-YeLan_Max_Hp = 14450.0
-base_hp = YeLan_Max_Hp * (1 
-                          + 0.466 # 生命沙
-                          + 0.3 #四色
-                          + 0.16 # 专武
-                          + 0.2 # 四命保底两个e
-                          ) + 4780
-base_crit_damage = 1 + 0.5 + 0.882
-wan_ye_bonus = 0 #0.4
-lei_shen_bonus = 0 #0.27
-base_water_plus = 1 + 0.466 + wan_ye_bonus + lei_shen_bonus # + 0.25 # 夜兰自身平均增伤
-
-
 def find_combine(all_swy):
     hua_hai_combins = list(itertools.combinations(hua_hai, 2))
     qian_yan_combins = list(itertools.combinations(qian_yan, 2))
@@ -110,8 +95,20 @@ def find_combine(all_swy):
 
 
 def calculate_score(combine):
+    YeLan_Max_Hp = 14450.0
+    base_hp = int(YeLan_Max_Hp * (1 
+                            + 0.466 # 生命沙
+                            + 0.3 #四色
+                            + 0.16 # 专武
+                            + 0.2 # 四命保底两个e
+                            )) + 4780
+    base_crit_damage = 1 + 0.5 + 0.882
+    wan_ye_bonus = 0.4
+    lei_shen_bonus = 0.27
+    base_water_plus = 1 + 0.466 + wan_ye_bonus + lei_shen_bonus + 0.25 # 夜兰自身平均增伤
+
     crit_rate = sum([p.crit_rate for p in combine]) + 0.242
-    if crit_rate < 0.70:
+    if crit_rate < 0.75:
         return None
 
     hp = sum([p.hp for p in combine])
@@ -151,14 +148,16 @@ def calculate_score(combine):
     # print('base_cd:' + str(base_crit_damage))
     # print('-----------------------------')
 
-    base_score = all_hp / base_hp * (base_water_plus + extra_water_plus) / base_water_plus
-    crit_score = base_score * (base_crit_damage + extra_crit_damage) / base_crit_damage
+    # non_crit_score: 不暴击的情况下，相对于base的增幅
+    non_crit_score= all_hp / base_hp * (base_water_plus + extra_water_plus) / base_water_plus
+    # crit_score: 暴击了的情况下，暴击伤害相对于base的增幅
+    crit_score = non_crit_score* (base_crit_damage + extra_crit_damage) / base_crit_damage
     expect_crit_damage_bonus = crit_rate * (extra_crit_damage + base_crit_damage - 1)
-    expect_score = base_score * (1 + expect_crit_damage_bonus)
+    # 当前圣遗物组合的伤害期望
+    expect_score = non_crit_score* (1 + expect_crit_damage_bonus)
 
-    data = [round(expect_score, 4), round(crit_score, 4), int(all_hp), round(crit_rate, 3), round(base_crit_damage +
+    return [expect_score, crit_score, int(all_hp), round(crit_rate, 3), round(base_crit_damage +
                                                                 extra_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
-    return (expect_score, data)
 
 # Main body
 if __name__ == '__main__':

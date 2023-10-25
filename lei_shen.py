@@ -66,13 +66,13 @@ def find_combins(all_syw):
 def calculate_score(combine):
     max_atk = 945
     ban_ni_te_atk = 755 * 1.19
-    shuang_huo_atk = 945 * 0.25
+    shuang_huo_atk = 0 #945 * 0.25
     jiu_tiao_atk = 0 #858 * 0.86
-    extra_atk = ban_ni_te_atk + shuang_huo_atk + jiu_tiao_atk
+    extra_atk = int(ban_ni_te_atk + shuang_huo_atk + jiu_tiao_atk)
     base_atk = max_atk + 311 + extra_atk
     base_crit_damage = 1.5
-    wan_ye_bonus = 0 #0.4
-    ye_lan_bonus = 0 #0.29
+    wan_ye_bonus = 0.4
+    ye_lan_bonus = 0.29
     base_elem_bonus = 1 + 0.27 + wan_ye_bonus + ye_lan_bonus
 
     crit_rate = 0
@@ -111,9 +111,8 @@ def calculate_score(combine):
     base_score = all_atk / base_atk * (elem_bonus + base_elem_bonus) / base_elem_bonus
     crit_score = base_score * (base_crit_damage + extra_crit_damage) / base_crit_damage
     expect_score = base_score * (1 + expect_crit_damage_bonus)
-    data = [round(expect_score, 4), round(crit_score, 4), int(all_atk - extra_atk), round(crit_rate, 3), round(base_crit_damage + extra_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
+    return [expect_score, crit_score, int(all_atk - extra_atk), round(crit_rate, 3), round(base_crit_damage + extra_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
 
-    return (expect_score + crit_score, data)
 
 # Main body
 if __name__ == '__main__':

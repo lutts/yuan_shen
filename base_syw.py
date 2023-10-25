@@ -247,7 +247,9 @@ def find_syw(syw_s_b, find_combins_callback, calculate_score_callbak, result_txt
 
     all_combins = find_combins_callback(all_syw)
 
-    all_scores = {}
+    all_score_data = []
+    max_crit_score = 0
+    max_expect_score = 0
 
     for c in all_combins:
         parts = [p.part for p in c]
@@ -277,16 +279,38 @@ def find_syw(syw_s_b, find_combins_callback, calculate_score_callbak, result_txt
             if not score_data:
                 continue
 
-            score, data = score_data
-            if score in all_scores:
-                all_scores[score].append(data)
-            else:
-                all_scores[score] = [data]
+            expect_score = score_data[0]
+            if expect_score > max_expect_score:
+                max_expect_score = expect_score
 
-    if all_scores:
+            crit_score = score_data[1]
+            if crit_score > max_crit_score:
+                max_crit_score = crit_score
+
+            all_score_data.append(score_data)
+
+    if all_score_data:
+        score_dict = {}
+        for score_data in all_score_data:
+            expect_score = score_data[0]
+            crit_score = score_data[1]
+            score_data[0] = str(expect_score) + '(' + str(round(expect_score / max_expect_score, 4)) + ')'
+            score_data[1] = str(crit_score) + '(' + str(round(crit_score / max_crit_score, 4)) + ')'
+
+            score = expect_score / max_expect_score + crit_score / max_crit_score
+            if score in score_dict:
+                score_dict[score].append(score_data)
+            else:
+                score_dict[score] = [score_data]
+
         with open(result_txt_file, 'w', encoding='utf-8') as f:
-            for i in sorted(all_scores):
-                for c in all_scores[i]:
+            for i in sorted(score_dict):
+                for c in score_dict[i]:
                     # print((i, c))
                     f.write(str((round(i, 4), c, )))
                     f.write('\n\n')
+
+            f.write(str(max_expect_score))
+            f.write('\n')
+            f.write(str(max_crit_score))
+            f.write('\n')
