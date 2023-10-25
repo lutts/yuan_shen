@@ -87,7 +87,7 @@ def calculate_score(combine):
     base_crit_damage = 1 + 0.5
     fixed_elem_bonus = 1 + (0.466  # 草伤杯
                             + 0.15  # 草套2件套效果
-                            + 0.298  # 1命
+                            + 0.316  # 1命
                             + 0.3 # 专武
                             )
     base_elem_bonus = fixed_elem_bonus + \
