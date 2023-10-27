@@ -50,6 +50,7 @@ chen_lun = [
 
 shui_xian = [
     ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_HUA, energe_recharge=0.123, atk=37, crit_rate=0.039, crit_damage=0.233),
+    ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_HUA, elem_mastery=42, crit_rate=0.105, atk=14, hp_percent=0.134),
     ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_YU, crit_damage=0.07, atk_per=0.058, energe_recharge=0.104, crit_rate=0.136),
     ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_YU, crit_damage=0.21, atk_per=0.169, hp=209, hp_percent=0.087),
     ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_SHA, hp=837, elem_mastery=16, crit_damage=0.257, atk=19),
