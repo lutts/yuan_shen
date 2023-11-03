@@ -116,7 +116,7 @@ def calculate_score(combine):
     wan_ye_bonus = 0.4
     lei_shen_bonus = 0.27
     shui_shen_bonus = 0 #1
-    base_water_plus = 1 + shui_shen_bonus + lei_shen_bonus + wan_ye_bonus + lei_shen_bonus + 0.25 # 夜兰自身平均增伤
+    base_water_plus = 1 + shui_shen_bonus + wan_ye_bonus + lei_shen_bonus + 0.25 # 夜兰自身平均增伤
 
     crit_rate = sum([p.crit_rate for p in combine]) + 0.242
     if crit_rate < 0.75:
