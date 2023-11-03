@@ -18,7 +18,7 @@ hua_hai = [
     ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_HUA, crit_damage=0.218, def_per=0.073, hp_percent=0.105, energe_recharge=0.104),
     ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_YU, def_v=23, crit_rate=0.027, crit_damage=0.028, energe_recharge=0.123),
     ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_SHA, energe_recharge=0.052, crit_damage=0.202, elem_mastery=44, crit_rate=0.062),
-    ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_BEI, hp_percent=0.163, crit_damage=0.14, energe_recharge=0.052, atk=27),
+    ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_BEI, hp_percent=0.163, crit_damage=0.14, energe_recharge=0.052, atk=27, elem_bonus=0.466),
     ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_TOU, crit_damage=0.622, atk=18, def_v=56, atk_per=0.105, crit_rate=0.093),
     ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_TOU, crit_damage=0.622, def_per=0.058, hp=687, hp_percent=0.111, crit_rate=0.07),
 ]
@@ -32,7 +32,7 @@ qian_yan = [
     ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_YU, def_v=23, crit_rate=0.031, hp=478, hp_percent=0.216),
     ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_SHA, crit_rate=0.066, atk=33, elem_mastery=40, crit_damage=0.21),
     ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_SHA, elem_mastery=44, atk=16, energe_recharge=0.058, crit_damage=0.272),
-    ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_BEI, hp=717, hp_percent=0.146, def_per=0.073, crit_damage=0.07),
+    ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_BEI, hp=717, hp_percent=0.146, def_per=0.073, crit_damage=0.07, elem_bonus=0.466),
     ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_TOU, hp_percent=0.466, hp=209, crit_rate=0.074, atk=18, crit_damage=0.241),
 ]
 
@@ -53,8 +53,10 @@ shui_xian = [
     ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_HUA, elem_mastery=42, crit_rate=0.105, atk=14, hp_percent=0.134),
     ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_YU, crit_damage=0.07, atk_per=0.058, energe_recharge=0.104, crit_rate=0.136),
     ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_YU, crit_damage=0.21, atk_per=0.169, hp=209, hp_percent=0.087),
+    ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_YU, def_v=23, crit_rate=0.117, crit_damage=0.194, elem_mastery=23),
     ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_SHA, hp=837, elem_mastery=16, crit_damage=0.257, atk=19),
-    ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_BEI, crit_rate=0.109, def_v=32, hp=478, hp_percent=0.058),
+    ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_SHA, atk=18, energe_recharge=0.091, crit_damage=0.218, crit_rate=0.074),
+    ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_BEI, crit_rate=0.109, def_v=32, hp=478, hp_percent=0.058, elem_bonus=0.466),
 ]
 
 syw_s_b = {
@@ -69,17 +71,22 @@ syw_s_b = {
         ShengYiWu(ShengYiWu.CHEN_LUN, ShengYiWu.PART_SHA, hp=448, crit_damage=0.311, def_per=0.073, elem_mastery=40),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_SHA, energe_recharge=0.091, crit_rate=0.163, crit_damage=0.078, hp=239),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_SHA, crit_rate=0.031, def_v=23, crit_damage=0.295, energe_recharge=0.104),
+
+        ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_SHA, hp=837, elem_mastery=16, crit_damage=0.257, atk=19),
+        ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_SHA, atk=18, energe_recharge=0.091, crit_damage=0.218, crit_rate=0.074),
     ],
     ShengYiWu.PART_BEI: [
-        ShengYiWu(ShengYiWu.JU_TUAN, ShengYiWu.PART_BEI, crit_damage=0.132, energe_recharge=0.11, def_v=62, def_per=0.73),
-        ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_BEI, hp_percent=0.163, crit_damage=0.14, energe_recharge=0.052, atk=27),
-        ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_BEI, crit_rate=0.109, def_v=32, hp=478, hp_percent=0.058),
-        ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_BEI, hp_percent=0.152, crit_damage=0.194, def_v=19, hp=239),
-        ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_BEI, hp=717, hp_percent=0.146, def_per=0.073, crit_damage=0.07),
-        ShengYiWu(ShengYiWu.YUE_TUAN, ShengYiWu.PART_BEI, atk=29, crit_damage=0.241, hp=239, hp_percent=0.099),
-        ShengYiWu(ShengYiWu.YUE_TUAN,   ShengYiWu.PART_BEI, hp=538, crit_damage=0.078, atk_per=0.152, crit_rate=0.074),
-        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, atk=14, hp_percent=0.14, crit_damage=0.202, hp=269),
-        ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_BEI, atk=16, hp_percent=0.152, energe_recharge=0.175, hp=299),
+        ShengYiWu(ShengYiWu.JU_TUAN, ShengYiWu.PART_BEI, crit_damage=0.132, energe_recharge=0.11, def_v=62, def_per=0.73, elem_bonus=0.466),
+        ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_BEI, hp_percent=0.163, crit_damage=0.14, energe_recharge=0.052, atk=27, elem_bonus=0.466),
+        ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_BEI, crit_rate=0.109, def_v=32, hp=478, hp_percent=0.058, elem_bonus=0.466),
+        ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_BEI, hp_percent=0.152, crit_damage=0.194, def_v=19, hp=239, elem_bonus=0.466),
+        ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_BEI, hp=717, hp_percent=0.146, def_per=0.073, crit_damage=0.07, elem_bonus=0.466),
+        ShengYiWu(ShengYiWu.YUE_TUAN, ShengYiWu.PART_BEI, atk=29, crit_damage=0.241, hp=239, hp_percent=0.099, elem_bonus=0.466),
+        ShengYiWu(ShengYiWu.YUE_TUAN,   ShengYiWu.PART_BEI, hp=538, crit_damage=0.078, atk_per=0.152, crit_rate=0.074, elem_bonus=0.466),
+        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, atk=14, hp_percent=0.14, crit_damage=0.202, hp=269, elem_bonus=0.466),
+
+        ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_BEI, crit_rate=0.031, crit_damage=0.218, elem_mastery=31, def_v=37, hp_percent=0.466),
+        ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_BEI, energe_recharge=0.045, crit_rate=0.101, atk=18, hp=657, hp_percent=0.466),
 
     ],
 }
@@ -101,13 +108,15 @@ def calculate_score(combine):
     base_hp = int(YeLan_Max_Hp * (1 
                             + 0.466 # 生命沙
                             + 0.3 #四色
+                            # + 0.18 + 0.25 # 双水
                             + 0.16 # 专武
                             + 0.2 # 四命保底两个e
                             )) + 4780
     base_crit_damage = 1 + 0.5 + 0.882
     wan_ye_bonus = 0.4
     lei_shen_bonus = 0.27
-    base_water_plus = 1 + 0.466 + wan_ye_bonus + lei_shen_bonus + 0.25 # 夜兰自身平均增伤
+    shui_shen_bonus = 0 #1
+    base_water_plus = 1 + shui_shen_bonus + lei_shen_bonus + wan_ye_bonus + lei_shen_bonus + 0.25 # 夜兰自身平均增伤
 
     crit_rate = sum([p.crit_rate for p in combine]) + 0.242
     if crit_rate < 0.75:
@@ -116,11 +125,11 @@ def calculate_score(combine):
     hp = sum([p.hp for p in combine])
     hp_per = sum([p.hp_percent for p in combine])
     extra_crit_damage = sum([p.crit_damage for p in combine])
-    extra_water_plus = 0.0
+    extra_water_plus = sum([p.elem_bonus for p in combine])
     total_energe_recharge = (sum([p.energe_recharge for p in combine]) + 1) * 100
 
-    #if total_energe_recharge != 111:
-    #   continue
+    #if total_energe_recharge < 140:
+    #    return None
 
     syw_names = [p.name for p in combine]
     #print(syw_names)
@@ -144,7 +153,8 @@ def calculate_score(combine):
 
     # print('all_hp:' + str(all_hp))
     # print('base_hp:' + str(base_hp))
-    # print("extra_plus:" + str(extra_water_plus))
+    #if extra_water_plus < 0.466:
+    #    print("extra_plus:" + str(extra_water_plus))
     # print('base_plus:' + str(base_water_plus))
     # print('extra_cd:' + str(extra_crit_damage))
     # print('base_cd:' + str(base_crit_damage))

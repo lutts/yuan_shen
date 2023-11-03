@@ -100,7 +100,7 @@ def calculate_score(combine):
     total_energe_recharge = (
         sum([p.energe_recharge for p in combine]) + 1) * 100
 
-    if total_energe_recharge < 116.4:
+    if total_energe_recharge < 116.5:
         return None
 
     # 出战时总攻击力
