@@ -41,6 +41,8 @@ bing_tao = [
               atk_per=0.152, elem_mastery=44, crit_damage=0.148),
     ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_TOU, crit_damage=0.622,
               hp=239, elem_mastery=16, crit_rate=0.086, def_v=60),
+    ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_TOU, atk_per=0.466, 
+              crit_rate=0.101, crit_damage=0.124, elem_mastery=40, hp_percent=0.047),
 ]
 
 syw_s_b = {

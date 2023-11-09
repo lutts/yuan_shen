@@ -13,6 +13,7 @@ from base_syw import ShengYiWu, all_syw_exclude_s_b, find_syw
 shen_lin = [
     ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_HUA, elem_mastery=40,
               def_v=21, crit_rate=0.027, crit_damage=0.241),
+    ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_HUA, crit_damage=0.288, crit_rate=0.062, def_v=21, hp_percent=0.047),
 
     ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_YU, crit_damage=0.078,
               atk_per=0.041, crit_rate=0.035, elem_mastery=96),
@@ -79,9 +80,10 @@ def find_combins(all_syw):
 
 def calculate_score(combine):
     max_atk = 841
-    base_elem_mastery = 380 + (100  # 四命
+    base_elem_mastery = 265 + 115 + (100  # 专武，突破精通提升，四命
                                + 243  # 固有天赋，阿忍带圣显，四饰金加的150可以被纳西妲大招转化
                                + 187  # 精通沙
+                               + 76 # 圣显
                                )
     base_atk = max_atk + 311
     base_crit_damage = 1 + 0.5

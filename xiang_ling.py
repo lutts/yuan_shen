@@ -53,7 +53,7 @@ syw_s_b = {
         ShengYiWu(ShengYiWu.YUE_TUAN, ShengYiWu.PART_BEI, hp_percent=0.041, crit_damage=0.14, crit_rate=0.105, hp=568),
         ShengYiWu(ShengYiWu.JUE_DOU_SHI, ShengYiWu.PART_BEI, atk_per=0.163, energe_recharge=0.065, atk=29, crit_damage=0.202),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, crit_rate=0.031, energe_recharge=0.097, elem_mastery=21, crit_damage=0.256),
-        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, def_v=21, energe_recharge=0.117, crit_damage=0.257, crit_rate=0.035),
+        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, crit_damage=0.256, def_per=0.139, energe_recharge=0.091, atk_per=0.058),
     ]
 }
 
