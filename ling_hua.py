@@ -23,6 +23,7 @@ bing_tao = [
               hp_percent=0.099, crit_damage=0.21, energe_recharge=0.058),
     ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_HUA, elem_mastery=16,
               crit_rate=0.039, crit_damage=0.264, def_v=46),
+
     ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_YU, crit_damage=0.194,
               energe_recharge=0.052, elem_mastery=19, hp_percent=0.233),
     ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_YU, crit_damage=0.14,
@@ -33,10 +34,13 @@ bing_tao = [
               energe_recharge=0.097, def_per=0.058, atk_per=0.041),
     ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_YU, crit_rate=0.066,
               crit_damage=0.21, hp=299, atk_per=0.099),
+
     ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_SHA,
               crit_rate=0.097, hp=209, crit_damage=0.202, def_v=42),
+
     ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI,
-              atk_per=0.192, hp=299, energe_recharge=0.11, atk=16),
+              atk_per=0.192, hp=299, energe_recharge=0.11, atk=16, elem_bonus=0.466),
+
     ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_TOU, crit_rate=0.311,
               atk_per=0.152, elem_mastery=44, crit_damage=0.148),
     ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_TOU, crit_damage=0.622,
@@ -62,13 +66,16 @@ syw_s_b = {
     ],
     "b": [
         ShengYiWu('shenlin', ShengYiWu.PART_BEI, hp=239,
-                  crit_rate=0.066, atk_per=0.21, atk=37),
+                  crit_rate=0.066, atk_per=0.21, atk=37, elem_bonus=0.466),
         ShengYiWu('chenlun', ShengYiWu.PART_BEI, def_per=0.058,
-                  crit_rate=0.07, crit_damage=0.218, atk=33),
+                  crit_rate=0.07, crit_damage=0.218, atk=33, elem_bonus=0.466),
         ShengYiWu('bingtao', ShengYiWu.PART_BEI, atk_per=0.192,
-                  hp=299, energe_recharge=0.11, atk=16),
+                  hp=299, energe_recharge=0.11, atk=16, elem_bonus=0.466),
         ShengYiWu('huahai', ShengYiWu.PART_BEI, atk=35,
-                  atk_per=0.111, elem_mastery=19, crit_rate=0.128),
+                  atk_per=0.111, elem_mastery=19, crit_rate=0.128, elem_bonus=0.466),
+
+        ShengYiWu(ShengYiWu.ZONG_SHI, ShengYiWu.PART_BEI, crit_damage=0.194,
+                  def_per=0.124, def_v=42, energe_recharge=0.117, atk_per=0.466),
     ],
 }
 
@@ -87,6 +94,9 @@ def calculate_score(combine):
     base_crit_damage = 1 + (0.441  # 雾切
                             + 0.884 # 突破加成
                             )
+    wan_ye_bonus = 0.4
+    shui_shen_bonus = 0#1.24
+    base_elem_bonus = 1 + wan_ye_bonus + shui_shen_bonus
 
     crit_rate = sum([p.crit_rate for p in combine]) + 0.05
     if crit_rate < 0.4:
@@ -99,6 +109,7 @@ def calculate_score(combine):
     atk = sum([p.atk for p in combine])
     atk_per = sum([p.atk_per for p in combine])
     extra_crit_damage = sum([p.crit_damage for p in combine])
+    extra_elem_bonus = sum([p.elem_bonus for p in combine])
     total_energe_recharge = (
         sum([p.energe_recharge for p in combine]) + 1) * 100
 
@@ -110,7 +121,7 @@ def calculate_score(combine):
     # 非出战时面板攻击力
     panel_atk = (1 + atk_per + 0.466) * ling_hua_max_atk + atk + 311
 
-    non_crit_score = all_atk / base_atk
+    non_crit_score = all_atk / base_atk * (base_elem_bonus + extra_elem_bonus) / base_elem_bonus
     crit_score = non_crit_score * (base_crit_damage + extra_crit_damage) / base_crit_damage
     expect_crit_damage_bonus = real_crit_rate * (extra_crit_damage + base_crit_damage - 1)
     expect_score = non_crit_score * (1 + expect_crit_damage_bonus)

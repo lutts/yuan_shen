@@ -37,7 +37,8 @@ class ShengYiWu:
     SHA_SHANG = 'sha_shang'
 
 
-    def __init__(self, name, part, crit_rate=0.0, crit_damage=0.0, hp_percent=0.0, hp=0, energe_recharge=0.0, atk_per=0.0, atk=0, def_per=0.0, def_v=0, elem_mastery=0, elem_bonus=0.0):
+    def __init__(self, name, part, crit_rate=0.0, crit_damage=0.0, hp_percent=0.0, hp=0, energe_recharge=0.0, 
+                 atk_per=0.0, atk=0, def_per=0.0, def_v=0, elem_mastery=0, elem_bonus=0.0):
         self.name = name
         self.part = part
         self.crit_rate = crit_rate
