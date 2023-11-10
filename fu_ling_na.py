@@ -9,6 +9,7 @@ import os
 import logging
 import itertools
 from base_syw import ShengYiWu, all_syw_exclude_s_b, find_syw
+from ye_lan_shui_shen_syw import hua_hai, qian_yan, chen_lun, shui_xian, syw_s_b
 
 ju_tuan = [
     ShengYiWu(ShengYiWu.JU_TUAN, ShengYiWu.PART_HUA, crit_rate=0.14, atk=14, crit_damage=0.078, energe_recharge=0.168),
@@ -34,40 +35,18 @@ ju_tuan = [
     ShengYiWu(ShengYiWu.JU_TUAN, ShengYiWu.PART_TOU, crit_damage=0.622, crit_rate=0.062, energe_recharge=0.097, def_v=32, def_per=0.131),
 ]
 
-syw_s_b = {
-    ShengYiWu.PART_SHA: [
-        ShengYiWu(ShengYiWu.JU_TUAN, ShengYiWu.PART_SHA, energe_recharge=0.045, crit_damage=0.078, crit_rate=0.113, def_v=60),
-        ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_SHA, crit_rate=0.027, def_v=23, crit_damage=0.264, hp=478),
-        ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_SHA, energe_recharge=0.052, crit_damage=0.202, elem_mastery=44, crit_rate=0.062),
-        ShengYiWu(ShengYiWu.SHI_JIN, ShengYiWu.PART_SHA, def_v=21, crit_damage=0.187, crit_rate=0.087, atk_per=0.041),
-        ShengYiWu(ShengYiWu.ZHUI_YI, ShengYiWu.PART_SHA, atk=19, crit_damage=0.14, elem_mastery=33, crit_rate=0.105),
-        ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_SHA, crit_rate=0.066, atk=33, elem_mastery=40, crit_damage=0.21),
-        ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_SHA, elem_mastery=44, atk=16, energe_recharge=0.058, crit_damage=0.272),
-        ShengYiWu(ShengYiWu.CHEN_LUN, ShengYiWu.PART_SHA, hp=448, crit_damage=0.311, def_per=0.073, elem_mastery=40),
-        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_SHA, energe_recharge=0.091, crit_rate=0.163, crit_damage=0.078, hp=239),
-        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_SHA, crit_rate=0.031, def_v=23, crit_damage=0.295, energe_recharge=0.104),
-
-        ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_SHA, hp=837, elem_mastery=16, crit_damage=0.257, atk=19),
-        ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_SHA, atk=18, energe_recharge=0.091, crit_damage=0.218, crit_rate=0.074),
-    ],
-    ShengYiWu.PART_BEI: [
-        ShengYiWu(ShengYiWu.JU_TUAN, ShengYiWu.PART_BEI, crit_damage=0.132, energe_recharge=0.11, def_v=62, def_per=0.73, elem_bonus=0.466),
-        ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_BEI, hp_percent=0.163, crit_damage=0.14, energe_recharge=0.052, atk=27, elem_bonus=0.466),
-        ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_BEI, crit_rate=0.109, def_v=32, hp=478, hp_percent=0.058, elem_bonus=0.466),
-        ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_BEI, hp_percent=0.152, crit_damage=0.194, def_v=19, hp=239, elem_bonus=0.466),
-        ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_BEI, hp=717, hp_percent=0.146, def_per=0.073, crit_damage=0.07, elem_bonus=0.466),
-        ShengYiWu(ShengYiWu.YUE_TUAN, ShengYiWu.PART_BEI, atk=29, crit_damage=0.241, hp=239, hp_percent=0.099, elem_bonus=0.466),
-        ShengYiWu(ShengYiWu.YUE_TUAN,   ShengYiWu.PART_BEI, hp=538, crit_damage=0.078, atk_per=0.152, crit_rate=0.074, elem_bonus=0.466),
-        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, atk=14, hp_percent=0.14, crit_damage=0.202, hp=269, elem_bonus=0.466),
-
-        ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_BEI, crit_rate=0.031, crit_damage=0.218, elem_mastery=31, def_v=37, hp_percent=0.466),
-        ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_BEI, energe_recharge=0.045, crit_rate=0.101, atk=18, hp=657, hp_percent=0.466),
-
-    ],
-}
-
 def find_combine(all_swy):
-    return list(itertools.combinations(ju_tuan, 4))
+    ju_tuan_combins = list(itertools.combinations(ju_tuan, 4))
+
+    hua_hai_combins = list(itertools.combinations(hua_hai, 2))
+    qian_yan_combins = list(itertools.combinations(qian_yan, 2))
+    chen_lun_combins = list(itertools.combinations(chen_lun, 2))
+    shui_xian_combins = list(itertools.combinations(shui_xian, 2))
+
+    all_combins_2p2 = hua_hai_combins + qian_yan_combins + \
+        chen_lun_combins + shui_xian_combins
+    return [(l[0] + l[1])
+                    for l in list(itertools.combinations(all_combins_2p2, 2))] + ju_tuan_combins
 
 def calculate_score(combine):
     YeLan_Max_Hp = 15307.0
