@@ -52,8 +52,10 @@ class ShengYiWu:
         self.def_v = def_v
         self.elem_mastery = elem_mastery
         self.elem_bonus = elem_bonus
+        
+        self.str_repr = self.to_str()
 
-    def __str__(self):
+    def to_str(self):
         s = '(' + self.name + ', ' + self.part
         if self.crit_rate:
             s += ', cc:' + str(self.crit_rate)
@@ -91,6 +93,9 @@ class ShengYiWu:
         s += ')'
 
         return s
+    
+    def __str__(self):
+        return self.str_repr
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -257,13 +262,16 @@ def find_syw(syw_s_b, find_combins_callback, calculate_score_callbak, result_txt
     all_syw.update(all_syw_exclude_s_b)
     all_syw.update(syw_s_b)
 
-    all_combins = find_combins_callback(all_syw)
+    all_combins_4 = find_combins_callback(all_syw)
 
     all_score_data = []
     max_crit_score = 0
     max_expect_score = 0
 
-    for c in all_combins:
+    #print(len(all_combins_4))
+
+    all_combins_5 = {}
+    for c in all_combins_4:
         parts = [p.part for p in c]
         parts_set = set(parts)
         if len(parts) != len(parts_set):
@@ -287,21 +295,31 @@ def find_syw(syw_s_b, find_combins_callback, calculate_score_callbak, result_txt
                 else:
                     sorted_combine[4] = p
 
-            score_data = calculate_score_callbak(sorted_combine)
-            if not score_data:
-                continue
+            scid = ""
+            for sc in sorted_combine:
+                scid += sc.str_repr
 
-            expect_score = score_data[0]
-            if expect_score > max_expect_score:
-                max_expect_score = expect_score
+            if scid not in all_combins_5:
+                all_combins_5[scid] = sorted_combine
 
-            crit_score = score_data[1]
-            if crit_score > max_crit_score:
-                max_crit_score = crit_score
+    #print(len(all_combins_5))
+    for c in all_combins_5.values():
+        score_data = calculate_score_callbak(c)
+        if not score_data:
+            continue
 
-            all_score_data.append(score_data)
+        expect_score = score_data[0]
+        if expect_score > max_expect_score:
+            max_expect_score = expect_score
+
+        crit_score = score_data[1]
+        if crit_score > max_crit_score:
+            max_crit_score = crit_score
+
+        all_score_data.append(score_data)
 
     if all_score_data:
+        #print(len(all_score_data))
         score_dict = {}
         for score_data in all_score_data:
             expect_score = score_data[0]
