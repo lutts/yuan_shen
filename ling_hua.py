@@ -23,6 +23,7 @@ bing_tao = [
               hp_percent=0.099, crit_damage=0.21, energe_recharge=0.058),
     ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_HUA, elem_mastery=16,
               crit_rate=0.039, crit_damage=0.264, def_v=46),
+    ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_HUA, atk_per=0.163, crit_rate=0.039, crit_damage=0.155, elem_mastery=40),
 
     ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_YU, crit_damage=0.194,
               energe_recharge=0.052, elem_mastery=19, hp_percent=0.233),
@@ -89,9 +90,9 @@ def find_combins(all_syw):
 def calculate_score(combine):
     ling_hua_max_atk = 1016
     base_atk = int(ling_hua_max_atk * (1
-                                   # + 0.2  # 宗室
+                                   #+ 0.2  # 宗室
                                    + 0.2  # 千岩
-                                   # + 0.48  # 讨龙
+                                   #+ 0.48  # 讨龙
                                    + 0.466  # 攻击沙
                                    )) + 311  # 羽毛
     base_crit_damage = 1 + (0.441  # 雾切

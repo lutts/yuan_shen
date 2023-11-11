@@ -154,6 +154,7 @@ all_syw_exclude_s_b = {
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_HUA, def_v=21, atk_per=0.134, atk=27, crit_damage=0.218),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_HUA, atk_per=0.099, hp_percent=0.099, crit_damage=0.21, energe_recharge=0.058),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_HUA, elem_mastery=16, crit_rate=0.039, crit_damage=0.264, def_v=46),
+        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_HUA, atk_per=0.163, crit_rate=0.039, crit_damage=0.155, elem_mastery=40),
     ],
     "y": [
         ShengYiWu(ShengYiWu.JU_TUAN, ShengYiWu.PART_YU, def_v=37, elem_mastery=40, crit_damage=0.256, crit_rate=0.027),

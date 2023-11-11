@@ -37,7 +37,7 @@ def calculate_score(combine):
     wan_ye_bonus = 0.4
     lei_shen_bonus = 0#0.27
     shui_shen_bonus = 1.24
-    base_water_plus = 1 + shui_shen_bonus + wan_ye_bonus + lei_shen_bonus + 0.25 # 夜兰自身平均增伤
+    base_water_bonus = 1 + shui_shen_bonus + wan_ye_bonus + lei_shen_bonus + 0.25 # 夜兰自身平均增伤
 
     crit_rate = sum([p.crit_rate for p in combine]) + 0.242
     if crit_rate < 0.75:
@@ -46,7 +46,7 @@ def calculate_score(combine):
     hp = sum([p.hp for p in combine])
     hp_per = sum([p.hp_percent for p in combine])
     extra_crit_damage = sum([p.crit_damage for p in combine])
-    extra_water_plus = sum([p.elem_bonus for p in combine])
+    extra_water_bonus = sum([p.elem_bonus for p in combine])
     total_energe_recharge = (sum([p.energe_recharge for p in combine]) + 1) * 100
 
     #if total_energe_recharge < 140:
@@ -64,25 +64,25 @@ def calculate_score(combine):
         if n == ShengYiWu.HUA_HAI:
             hp_per += 0.2
         elif n == ShengYiWu.SHUI_XIAN:
-            extra_water_plus += 0.15
+            extra_water_bonus += 0.15
         elif n == ShengYiWu.QIAN_YAN:
             hp_per += 0.2
         elif n == ShengYiWu.CHEN_LUN:
-            extra_water_plus += 0.15
+            extra_water_bonus += 0.15
 
     all_hp = hp_per * YeLan_Max_Hp + hp + base_hp
 
     # print('all_hp:' + str(all_hp))
     # print('base_hp:' + str(base_hp))
-    #if extra_water_plus < 0.466:
-    #    print("extra_plus:" + str(extra_water_plus))
-    # print('base_plus:' + str(base_water_plus))
+    #if extra_water_bonus < 0.466:
+    #    print("extra_bonus:" + str(extra_water_bonus))
+    # print('base_bonus:' + str(base_water_bonus))
     # print('extra_cd:' + str(extra_crit_damage))
     # print('base_cd:' + str(base_crit_damage))
     # print('-----------------------------')
 
     # non_crit_score: 不暴击的情况下，相对于base的增幅
-    non_crit_score= all_hp / base_hp * (base_water_plus + extra_water_plus) / base_water_plus
+    non_crit_score= all_hp / base_hp * (base_water_bonus + extra_water_bonus) / base_water_bonus
     # crit_score: 暴击了的情况下，暴击伤害相对于base的增幅
     crit_score = non_crit_score* (base_crit_damage + extra_crit_damage) / base_crit_damage
     expect_crit_damage_bonus = crit_rate * (extra_crit_damage + base_crit_damage - 1)
