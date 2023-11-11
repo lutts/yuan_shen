@@ -78,7 +78,7 @@ def calc_score(hp, e_bonus, q_bonus, crit_rate, crit_damage):
     pang_xie_damage_expect = pang_xie_damage_non_crit * (1 + crit_rate * (crit_damage - 1))
 
     # 以下按 芙芙qea 切万叶 切芙芙azaaa计算，前三个aaz为黑芙，后三个aaa为白芙
-    bai_fu_full_six_damage_non_crit = hp * 33 / 100 * q_bonus * 3
+    bai_fu_full_six_damage_non_crit = hp * (18 + 25) / 100 * q_bonus * 3
     hei_fu_full_six_damage_non_crit = hp * 18 / 100 * q_bonus * 3
     full_six_damage_non_crit = bai_fu_full_six_damage_non_crit + hei_fu_full_six_damage_non_crit
     full_six_damage_crit = full_six_damage_non_crit * crit_damage
@@ -95,14 +95,14 @@ def calculate_score(combine):
                             + 0.28 # 专武叠满两层
                             + 0.466 # 生命沙
                             + 1.0  # 二命
-                            #+ 0.25  # 双水
-                            #+ 0.2 # 夜兰四命保底两个e
+                            + 0.25  # 双水
+                            + 0.2 # 夜兰四命保底两个e
                             )) + 4780
     base_crit_damage = 1 + 0.5 + 0.882
     wan_ye_bonus = 0.4
     shui_shen_bonus = 1.24
     zhuan_wu_e_bonus = 0.08 * 3
-    ye_lan_bonus = 0 #0.25 # 夜兰平均增伤
+    ye_lan_bonus = 0.25 # 夜兰平均增伤
     base_e_bonus = 1 + wan_ye_bonus + shui_shen_bonus + zhuan_wu_e_bonus + ye_lan_bonus
     base_q_bonus = 1 + wan_ye_bonus + shui_shen_bonus + ye_lan_bonus
 
