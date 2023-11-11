@@ -77,7 +77,7 @@ def calc_score(hp, e_bonus, q_bonus, crit_rate, crit_damage):
     pang_xie_damage_crit = pang_xie_damage_non_crit * crit_damage
     pang_xie_damage_expect = pang_xie_damage_non_crit * (1 + crit_rate * (crit_damage - 1))
 
-    # 以下按 芙芙qea 切万叶 切芙芙azaaa计算，前三个aaz为黑芙，后三个aaa为白芙
+    # 以下按 芙芙qe 切万叶 切芙芙aazaaz计算，前三个aaz为黑芙，后三个aaz为白芙
     bai_fu_full_six_damage_non_crit = hp * (18 + 25) / 100 * q_bonus * 3
     hei_fu_full_six_damage_non_crit = hp * 18 / 100 * q_bonus * 3
     full_six_damage_non_crit = bai_fu_full_six_damage_non_crit + hei_fu_full_six_damage_non_crit
