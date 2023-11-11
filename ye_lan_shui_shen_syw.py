@@ -86,6 +86,7 @@ syw_s_b = {
 
         ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_BEI, crit_rate=0.031, crit_damage=0.218, elem_mastery=31, def_v=37, hp_percent=0.466),
         ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_BEI, energe_recharge=0.045, crit_rate=0.101, atk=18, hp=657, hp_percent=0.466),
+        ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_BEI, crit_rate=0.066, crit_damage=0.171, atk=27, energe_recharge=0.045, hp_percent=0.466),
 
     ],
 }

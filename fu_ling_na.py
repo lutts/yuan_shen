@@ -104,6 +104,12 @@ def calculate_score(combine):
     # print('base_cd:' + str(base_crit_damage))
     # print('-----------------------------')
 
+    # 计算分数时，按一轮循环中以下攻击次数计算
+    # 夫人：13次，倍率6.87， 13*6.87=89.31
+    # 勋爵：7次，倍率12.67，7*12.67=88.69
+    # 螃蟹：4.5次，倍率17.61, 4.5*17.61=79.245
+    # 满命6下，一半算黑芙，一半算白芙，3 * 18% + 3 * 33% = 153%
+
     # non_crit_score: 不暴击的情况下，相对于base的增幅
     non_crit_score= all_hp / base_hp * (base_water_plus + extra_water_plus) / base_water_plus
     # crit_score: 暴击了的情况下，暴击伤害相对于base的增幅

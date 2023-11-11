@@ -47,6 +47,8 @@ bing_tao = [
               hp=239, elem_mastery=16, crit_rate=0.086, def_v=60),
     ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_TOU, atk_per=0.466, 
               crit_rate=0.101, crit_damage=0.124, elem_mastery=40, hp_percent=0.047),
+    ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_TOU, crit_damage=0.622, crit_rate=0.078,
+              def_v=32, energe_recharge=0.104, atk_per=0.087),
 ]
 
 syw_s_b = {
@@ -87,15 +89,16 @@ def find_combins(all_syw):
 def calculate_score(combine):
     ling_hua_max_atk = 1016
     base_atk = int(ling_hua_max_atk * (1
-                                   + 0.2  # 宗室
-                                   + 0.48  # 讨龙
+                                   # + 0.2  # 宗室
+                                   + 0.2  # 千岩
+                                   # + 0.48  # 讨龙
                                    + 0.466  # 攻击沙
                                    )) + 311  # 羽毛
     base_crit_damage = 1 + (0.441  # 雾切
                             + 0.884 # 突破加成
                             )
     wan_ye_bonus = 0.4
-    shui_shen_bonus = 0#1.24
+    shui_shen_bonus = 1.24
     base_elem_bonus = 1 + wan_ye_bonus + shui_shen_bonus
 
     crit_rate = sum([p.crit_rate for p in combine]) + 0.05
