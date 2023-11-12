@@ -105,13 +105,52 @@ def calculate_score(combine):
         return None
    
     all_atk = atk_per * max_atk + atk + base_atk
+    all_bonus = extra_elem_bonus + base_elem_bonus
+    crit_damage = base_crit_damage + extra_crit_damage
 
-    expect_crit_damage_bonus = crit_rate * (extra_crit_damage + base_crit_damage - 1)
+    # 一轮伤害：两套普攻 + 4下
+    # 愿力层数：夜兰70 + 万叶60 + 班尼特60 = 190 * 0.2 = 38 * 1.2 = 45层，所有队友产球5颗就有60层
+    # 雷九万班：60层肯定没问题
+    # 梦想一刀：(721% + 420%=1141%)攻击力
+    # 一段：79.8% + 78.6% = 158.4%
+    # 二段：78.4% + 78.6% = 157%
+    # 三段：96.0% + 78.6% = 174.6%
+    # 四段：(55.1% + 78.6% = 133.7%) + (55.3% + 78.6% = 133.9%)
+    # 五段：131.9% + 78.6% = 210.5%
 
-    base_score = all_atk / base_atk * (extra_elem_bonus + base_elem_bonus) / base_elem_bonus
-    crit_score = base_score * (base_crit_damage + extra_crit_damage) / base_crit_damage
-    expect_score = base_score * (1 + expect_crit_damage_bonus)
-    return [expect_score, crit_score, int(all_atk - extra_atk), round(crit_rate, 3), round(base_crit_damage + extra_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
+    q_damage = all_atk * 1141 / 100 * all_bonus
+    q_damage_crit = q_damage * crit_damage
+    q_damage_expect = q_damage * (1 + crit_rate * (crit_damage - 1))
+
+    qa1_damage = all_atk * 158.4 / 100 * all_bonus * 3
+    qa1_damage_crit = qa1_damage * crit_damage
+    qa1_damage_expect = qa1_damage * (1 + crit_rate * (crit_damage - 1))
+
+    qa2_damage = all_atk * 157 / 100 * all_bonus * 3
+    qa2_damage_crit = qa2_damage * crit_damage
+    qa2_damage_expect = qa2_damage * (1 + crit_rate * (crit_damage - 1))
+
+    qa3_damage = all_atk * 174.6 / 100 * all_bonus * 3
+    qa3_damage_crit = qa3_damage * crit_damage
+    qa3_damage_expect = qa3_damage * (1 + crit_rate * (crit_damage - 1))
+
+    qa4_damage = all_atk * 133.7 / 100 * all_bonus * 3 + all_atk * 133.9 / 100 * all_bonus * 3
+    qa4_damage_crit = qa4_damage * crit_damage
+    qa4_damage_expect = qa4_damage * (1 + crit_rate * (crit_damage - 1))
+
+    qa5_damage = all_atk * 210.5 / 100 * all_bonus * 2
+    qa5_damage_crit = qa5_damage * crit_damage
+    qa5_damage_expect = qa5_damage * (1 + crit_rate * (crit_damage - 1))
+
+    crit_score = q_damage_crit + qa1_damage_crit + qa2_damage_crit + qa3_damage_crit + qa4_damage_crit + qa5_damage_crit
+    expect_score = q_damage_expect + qa1_damage_expect + qa2_damage_expect + qa3_damage_expect + qa4_damage_expect + qa5_damage_expect
+
+    # expect_crit_damage_bonus = crit_rate * (extra_crit_damage + base_crit_damage - 1)
+
+    # base_score = all_atk / base_atk * (extra_elem_bonus + base_elem_bonus) / base_elem_bonus
+    # crit_score = base_score * (base_crit_damage + extra_crit_damage) / base_crit_damage
+    # expect_score = base_score * (1 + expect_crit_damage_bonus)
+    return [expect_score, crit_score, int(all_atk - extra_atk), round(crit_rate, 3), round(crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
 
 
 # Main body

@@ -120,8 +120,7 @@ def calculate_score(combine):
     # # 当前圣遗物组合的伤害期望
     # expect_score = non_crit_score* (1 + expect_crit_damage_bonus)
 
-    return [expect_score, crit_score, int(all_hp), round(crit_rate, 3), round(base_crit_damage +
-                                                                extra_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
+    return [expect_score, crit_score, int(all_hp), round(crit_rate, 3), round(crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
 
 # Main body
 if __name__ == '__main__':
