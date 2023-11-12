@@ -28,16 +28,17 @@ def calculate_score(combine):
     YeLan_Max_Hp = 14450.0
     base_hp = int(YeLan_Max_Hp * (1 
                             + 0.466 # 生命沙
-                            + 0.3 #四色
-                            #+ 0.18 + 0.25 # 双水
+                            #+ 0.3 #四色
+                            + 0.18 + 0.25 # 双水
                             + 0.16 # 专武
                             + 0.2 # 四命保底两个e
                             )) + 4780
     base_crit_damage = 1 + 0.5 + 0.882
+    zhuan_wu_bonus = 0.2
     wan_ye_bonus = 0.4
-    lei_shen_bonus = 0.27
-    shui_shen_bonus = 0#1.24
-    base_water_bonus = 1 + shui_shen_bonus + wan_ye_bonus + lei_shen_bonus + 0.25 # 夜兰自身平均增伤
+    lei_shen_bonus = 0#0.27
+    shui_shen_bonus = 1.24
+    base_water_bonus = 1 + zhuan_wu_bonus + shui_shen_bonus + wan_ye_bonus + lei_shen_bonus + 0.25 # 夜兰自身平均增伤
 
     crit_rate = sum([p.crit_rate for p in combine]) + 0.242
     if crit_rate < 0.75:
