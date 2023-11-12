@@ -8,61 +8,34 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, all_syw_exclude_s_b, find_syw
-
-jue_yuan = [
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_HUA, hp_percent=0.181, energe_recharge=0.123, def_v=23, crit_rate=0.07),
-    #ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_HUA, atk_per=0.041, crit_rate=0.062, elem_mastery=54, crit_damage=0.21),
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_HUA, crit_rate=0.144, crit_damage=0.078, hp_percent=0.105, elem_mastery=40),
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_HUA, elem_mastery=44, crit_damage=0.21, def_per=0.066, energe_recharge=0.194),
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_HUA, elem_mastery=21, crit_rate=0.066, energe_recharge=0.181, crit_damage=0.124),
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_HUA, atk=33, crit_rate=0.066, atk_per=0.111, crit_damage=0.117),
-
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_YU, def_per=0.073, atk_per=0.087, crit_rate=0.027, energe_recharge=0.285),
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_YU, crit_damage=0.148, def_per=0.117, def_v=19, crit_rate=0.148),
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_YU, crit_rate=0.039, crit_damage=0.35, hp_percent=0.041, def_v=39),
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_YU, hp=448, crit_damage=0.078, energe_recharge=0.311, hp_percent=0.053),
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_YU, hp=807, atk_per=0.047, energe_recharge=0.11, crit_damage=0.171),
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_YU, elem_mastery=16, atk_per=0.058, crit_damage=0.148, crit_rate=0.132),
-
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_TOU, crit_rate=0.311, atk_per=0.047, crit_damage=0.256, energe_recharge=0.104, hp=209),
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_TOU, crit_rate=0.311, atk=31, crit_damage=0.179, def_per=0.058, energe_recharge=0.104),
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_TOU, crit_rate=0.311, crit_damage=0.218, hp_percent=0.087, elem_mastery=16, atk_per=0.099),
-
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_SHA, hp_percent=0.093, crit_damage=0.14, crit_rate=0.07, atk=35, energe_recharge=0.518),
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_SHA, hp=448, crit_rate=0.07, atk_per=0.082, def_v=44, energe_recharge=0.518),
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_SHA, crit_damage=0.194, elem_mastery=19, hp=508, def_v=0.117, energe_recharge=0.518),
-    ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_SHA, hp=0.117, crit_rate=0.027, def_per=0.19, crit_damage=0.14, energe_recharge=0.518),
-]
-
-syw_s_b = {
-    ShengYiWu.PART_SHA : [
-        ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_SHA, atk=14, crit_rate=0.14, def_v=37,  crit_damage=0.148, energe_recharge=0.518),
-        ShengYiWu(ShengYiWu.SHI_JIN, ShengYiWu.PART_SHA, elem_mastery=23, crit_damage=0.218, def_v=44, crit_rate=0.07, energe_recharge=0.518),
-
-        ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_SHA, hp_percent=0.093, crit_damage=0.14, crit_rate=0.07, atk=35, energe_recharge=0.518),
-        ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_SHA, hp=448, crit_rate=0.07, atk_per=0.082, def_v=44, energe_recharge=0.518),
-        ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_SHA, crit_damage=0.194, elem_mastery=19, hp=508, def_v=0.117, energe_recharge=0.518),
-        ShengYiWu(ShengYiWu.JUE_YUAN, ShengYiWu.PART_SHA, hp=0.117, crit_rate=0.027, def_per=0.19, crit_damage=0.14, energe_recharge=0.518),
-
-        ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_SHA, crit_rate=0.101, hp=508, atk_per=0.099, def_v=23, energe_recharge=0.518),
-    ],
-    ShengYiWu.PART_BEI : [
-        ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_BEI, crit_rate=0.035, def_v=44, atk_per=0.053, crit_damage=0.28),
-        ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_BEI, crit_rate=0.062, crit_damage=0.28, atk=14, def_v=16),
-        ShengYiWu(ShengYiWu.YUE_TUAN, ShengYiWu.PART_BEI, hp_percent=0.041, crit_damage=0.14, crit_rate=0.105, hp=568),
-        ShengYiWu(ShengYiWu.JUE_DOU_SHI, ShengYiWu.PART_BEI, atk_per=0.163, energe_recharge=0.065, atk=29, crit_damage=0.202),
-        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, crit_rate=0.031, energe_recharge=0.097, elem_mastery=21, crit_damage=0.256),
-        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, crit_damage=0.256, def_per=0.139, energe_recharge=0.091, atk_per=0.058),
-    ]
-}
+from base_syw import ShengYiWu, calculate_score, find_syw
 
 
-def find_combins(all_syw):
+def match_sha_callback(syw: ShengYiWu):
+    return syw.energe_recharge == ShengYiWu.ENERGE_RECHARGE_MAX
+
+
+def match_bei_callback(syw: ShengYiWu):
+    return syw.elem_type == ShengYiWu.ELEM_TYPE_HUO # or syw.atk_per == ShengYiWu.BONUS_MAX
+
+
+def match_syw(s: ShengYiWu, expect_name):
+    if s.name != expect_name:
+        return False
+
+    if s.part == ShengYiWu.PART_SHA:
+        return match_sha_callback(s)
+    elif s.part == ShengYiWu.PART_BEI:
+        return match_bei_callback(s)
+    else:
+        return True
+
+def find_combins_callback():
+    jue_yuan = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.JUE_YUAN))
     return list(itertools.combinations(jue_yuan, 4))
 
 
-def calculate_score(combine):
+def calculate_score_callback(combine):
     max_atk = 735
     ban_ni_te_atk = int(755 * 1.19)
     shuang_huo_atk = int(max_atk * 0.25)
@@ -110,4 +83,8 @@ def calculate_score(combine):
 
 # Main body
 if __name__ == '__main__':
-    find_syw(syw_s_b, find_combins, calculate_score, "xiang_ling_syw.txt")
+    calculate_score(find_combine_callback=find_combins_callback,
+                    match_sha_callback=match_sha_callback,
+                    match_bei_callback=match_bei_callback,
+                    calculate_score_callbak=calculate_score_callback,
+                    result_txt_file="xiang_ling_syw.txt")
