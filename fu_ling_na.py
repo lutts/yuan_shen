@@ -109,14 +109,14 @@ def calculate_score_callback(combine):
     base_hp = int(YeLan_Max_Hp * (1
                                   + 0.28  # 专武叠满两层
                                   + 1.0  # 二命
-                                  + 0.25  # 双水
-                                  + 0.2  # 夜兰四命保底两个e
+                                  #+ 0.25  # 双水
+                                  #+ 0.2  # 夜兰四命保底两个e
                                   )) + 4780
     base_crit_damage = 1 + 0.5 + 0.882
     wan_ye_bonus = 0.4
     shui_shen_bonus = 1.24
     zhuan_wu_e_bonus = 0.08 * 3
-    ye_lan_bonus = 0.25  # 夜兰平均增伤
+    ye_lan_bonus = 0#0.25  # 夜兰平均增伤
     base_e_bonus = 1 + wan_ye_bonus + shui_shen_bonus + zhuan_wu_e_bonus + ye_lan_bonus
     base_q_bonus = 1 + wan_ye_bonus + shui_shen_bonus + ye_lan_bonus
 
@@ -177,7 +177,7 @@ def calculate_score_callback(combine):
     # print("expect_score:" + str(expect_score))
     # print('-----------------------------')
 
-    return [expect_score, crit_score, int(all_hp), int(panel_hp), int(e_bonus), int(q_bonus), round(crit_rate, 3), round(all_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
+    return [expect_score, crit_score, int(all_hp), int(panel_hp), round(e_bonus, 3), round(q_bonus, 3), round(crit_rate, 3), round(all_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
 
 
 # Main body
