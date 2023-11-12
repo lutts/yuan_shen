@@ -28,15 +28,15 @@ def calculate_score(combine):
     YeLan_Max_Hp = 14450.0
     base_hp = int(YeLan_Max_Hp * (1 
                             + 0.466 # 生命沙
-                            #+ 0.3 #四色
-                             + 0.18 + 0.25 # 双水
+                            + 0.3 #四色
+                            #+ 0.18 + 0.25 # 双水
                             + 0.16 # 专武
                             + 0.2 # 四命保底两个e
                             )) + 4780
     base_crit_damage = 1 + 0.5 + 0.882
     wan_ye_bonus = 0.4
-    lei_shen_bonus = 0#0.27
-    shui_shen_bonus = 1.24
+    lei_shen_bonus = 0.27
+    shui_shen_bonus = 0#1.24
     base_water_bonus = 1 + shui_shen_bonus + wan_ye_bonus + lei_shen_bonus + 0.25 # 夜兰自身平均增伤
 
     crit_rate = sum([p.crit_rate for p in combine]) + 0.242
@@ -71,6 +71,8 @@ def calculate_score(combine):
             extra_water_bonus += 0.15
 
     all_hp = hp_per * YeLan_Max_Hp + hp + base_hp
+    elem_bonus = base_water_bonus + extra_water_bonus
+    crit_damage = base_crit_damage + extra_crit_damage
 
     # print('all_hp:' + str(all_hp))
     # print('base_hp:' + str(base_hp))
@@ -81,13 +83,42 @@ def calculate_score(combine):
     # print('base_cd:' + str(base_crit_damage))
     # print('-----------------------------')
 
-    # non_crit_score: 不暴击的情况下，相对于base的增幅
-    non_crit_score= all_hp / base_hp * (base_water_bonus + extra_water_bonus) / base_water_bonus
-    # crit_score: 暴击了的情况下，暴击伤害相对于base的增幅
-    crit_score = non_crit_score* (base_crit_damage + extra_crit_damage) / base_crit_damage
-    expect_crit_damage_bonus = crit_rate * (extra_crit_damage + base_crit_damage - 1)
-    # 当前圣遗物组合的伤害期望
-    expect_score = non_crit_score* (1 + expect_crit_damage_bonus)
+    # 扣除切人时间，按一轮循环中11次协同攻击算
+    # 技能伤害：15.53%生命值上限
+    # 协同伤害：10.35%生命值上限 * 3 * 11
+    # 三命额外协同伤害：一般能打出6次，14%生命值上限 * 6
+    # 强化破局矢伤害：20.84%生命上限 * 1.56 * 5
+    # 两个e: 45.2生命值上限 * 2
+    q_damage = all_hp * 15.53 / 100 * elem_bonus
+    q_damage_crit = q_damage * crit_damage
+    q_damage_expect = q_damage * (1 + crit_rate * (crit_damage - 1))
+
+    qx_damage = all_hp * 10.35 / 100 * elem_bonus * 3 * 11
+    qx_damage_crit = qx_damage * crit_damage
+    qx_damage_expect = qx_damage * (1 + crit_rate * (crit_damage - 1))
+
+    extra_qx_damage = all_hp * 14 / 100 * elem_bonus * 6
+    extra_qx_damage_crit = extra_qx_damage * crit_damage
+    extra_qx_damage_expect = extra_qx_damage * (1 + crit_rate * (crit_damage - 1))
+
+    po_ju_shi_damage = all_hp * 20.84 / 100 * elem_bonus * 1.56 * 5
+    po_ju_shi_damage_crit = po_ju_shi_damage * crit_damage
+    po_ju_shi_damage_expect = po_ju_shi_damage * (1 + crit_rate * (crit_damage - 1))
+
+    e_damage = all_hp * 45.2 / 100 * elem_bonus * 2
+    e_damage_crit = e_damage * crit_damage
+    e_damage_expect = e_damage * (1 + crit_rate * (crit_damage - 1))
+
+    crit_score = q_damage_crit + qx_damage_crit + extra_qx_damage_crit + po_ju_shi_damage_crit + e_damage_crit
+    expect_score = q_damage_expect + qx_damage_expect + extra_qx_damage_expect + po_ju_shi_damage_expect + e_damage_expect
+
+    # # non_crit_score: 不暴击的情况下，相对于base的增幅
+    # non_crit_score= all_hp / base_hp * (base_water_bonus + extra_water_bonus) / base_water_bonus
+    # # crit_score: 暴击了的情况下，暴击伤害相对于base的增幅
+    # crit_score = non_crit_score* (base_crit_damage + extra_crit_damage) / base_crit_damage
+    # expect_crit_damage_bonus = crit_rate * (extra_crit_damage + base_crit_damage - 1)
+    # # 当前圣遗物组合的伤害期望
+    # expect_score = non_crit_score* (1 + expect_crit_damage_bonus)
 
     return [expect_score, crit_score, int(all_hp), round(crit_rate, 3), round(base_crit_damage +
                                                                 extra_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
