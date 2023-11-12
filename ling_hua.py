@@ -98,9 +98,10 @@ def calculate_score(combine):
     base_crit_damage = 1 + (0.441  # 雾切
                             + 0.884 # 突破加成
                             )
+    wu_qie_bonus = 0.12 + 0.28
     wan_ye_bonus = 0.4
     shui_shen_bonus = 1.24
-    base_elem_bonus = 1 + wan_ye_bonus + shui_shen_bonus
+    base_elem_bonus = 1 + wu_qie_bonus + wan_ye_bonus + shui_shen_bonus
 
     crit_rate = sum([p.crit_rate for p in combine]) + 0.05
     if crit_rate < 0.4:
