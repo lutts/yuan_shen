@@ -117,15 +117,15 @@ def calculate_score_callback(combine):
     base_hp = int(YeLan_Max_Hp * (1
                                   + 0.28  # 专武叠满两层
                                   + 1.2  # 二命，按平均1.2算，有可能更高
-                                  + 0.25  # 双水
-                                  + 0.2  # 夜兰四命保底两个e
+                                  #+ 0.25  # 双水
+                                  #+ 0.2  # 夜兰四命保底两个e
                                   )) + 4780
     base_crit_damage = 1 + 0.5 + 0.882
     gu_you_tian_fu_2_bonus = 0.28 # 基本是能吃满的
     wan_ye_bonus = 0.4
     shui_shen_bonus = 1.24
     zhuan_wu_e_bonus = 0.08 * 3
-    ye_lan_bonus = 0.25  # 夜兰平均增伤
+    ye_lan_bonus = 0 #0.25  # 夜兰平均增伤
     base_e_bonus = 1 + wan_ye_bonus + shui_shen_bonus + zhuan_wu_e_bonus + ye_lan_bonus + gu_you_tian_fu_2_bonus
     base_full_bonus = 1 + wan_ye_bonus + shui_shen_bonus + ye_lan_bonus
 
