@@ -8,6 +8,7 @@ import sys
 import os
 import logging
 import itertools
+import uuid
 
 
 class ShengYiWu:
@@ -55,6 +56,7 @@ class ShengYiWu:
 
     def __init__(self, name, part, crit_rate=0.0, crit_damage=0.0, hp_percent=0.0, hp=0, energe_recharge=0.0,
                  atk_per=0.0, atk=0, def_per=0.0, def_v=0, elem_mastery=0, elem_bonus=0.0, elem_type=None):
+        self.id = str(uuid.uuid4())
         self.name = name
         self.part = part
         self.crit_rate = crit_rate
@@ -69,8 +71,6 @@ class ShengYiWu:
         self.elem_mastery = elem_mastery
         self.elem_bonus = elem_bonus
         self.elem_type = elem_type
-
-        self.str_repr = self.to_str()
 
     def to_str(self):
         s = '(' + self.name + ', ' + self.part
@@ -112,7 +112,7 @@ class ShengYiWu:
         return s
 
     def __str__(self):
-        return self.str_repr
+        return self.to_str()
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -753,7 +753,7 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
 
             scid = ""
             for sc in sorted_combine:
-                scid += sc.str_repr
+                scid += sc.id
 
             if scid not in all_combins_5:
                 all_combins_5[scid] = sorted_combine
