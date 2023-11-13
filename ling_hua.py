@@ -39,7 +39,7 @@ def calculate_score_callback(combine):
     ling_hua_max_atk = 1016
     base_atk = int(ling_hua_max_atk * (1
                                    + 0.2  # 宗室
-                                   + 0.2  # 千岩
+                                   #+ 0.2  # 千岩
                                    + 0.48  # 讨龙
                                    )) + 311  # 羽毛
     base_crit_damage = 1 + (0.441  # 雾切
@@ -47,7 +47,7 @@ def calculate_score_callback(combine):
                             )
     wu_qie_bonus = 0.12 + 0.28
     wan_ye_bonus = 0.4
-    shui_shen_bonus = 0 #1.24
+    shui_shen_bonus = 1.24
     base_elem_bonus = 1 + wu_qie_bonus + wan_ye_bonus + shui_shen_bonus
 
     crit_rate = sum([p.crit_rate for p in combine]) + 0.05

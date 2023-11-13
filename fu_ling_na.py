@@ -64,25 +64,29 @@ def find_combine_callback():
 def calc_score(hp, e_bonus, q_bonus, crit_rate, crit_damage):
     """
     计算分数时，按一轮循环中以下攻击次数计算
-    夫人：13次，倍率6.87， 13*6.87=89.31
-    勋爵：7次，倍率12.67，7*12.67=88.69
-    螃蟹：4.5次，倍率17.61, 4.5*17.61=79.245
+    夫人：17次，倍率6.87
+    勋爵：8次，倍率12.67
+    螃蟹：5次，倍率17.61
     满命6下，一半算黑芙，一半算白芙，3 * 18% + 3 * 33% = 153%，这6下时增伤很可能还没满
     """
 
+    FU_REN_NUM = 17
+    XUN_JUE_NUM = 8
+    PANG_XIE_NUM = 5
+
     e_extra_damage = 1.4  # 队友大于50%血量，e技能伤害为原来的1.4倍 （注：实测为1.542倍)
 
-    fu_ren_damage_non_crit = hp * 6.87 / 100 * e_bonus * 13 * e_extra_damage
+    fu_ren_damage_non_crit = hp * 6.87 / 100 * e_bonus * FU_REN_NUM * e_extra_damage
     fu_ren_damage_crit = fu_ren_damage_non_crit * crit_damage
     fu_ren_damage_expect = fu_ren_damage_non_crit * \
         (1 + crit_rate * (crit_damage - 1))
 
-    xun_jue_damage_non_crit = hp * 12.67 / 100 * e_bonus * 7 * e_extra_damage
+    xun_jue_damage_non_crit = hp * 12.67 / 100 * e_bonus * XUN_JUE_NUM * e_extra_damage
     xun_jue_damage_crit = xun_jue_damage_non_crit * crit_damage
     xun_jue_damage_expect = xun_jue_damage_non_crit * \
         (1 + crit_rate * (crit_damage - 1))
 
-    pang_xie_damage_non_crit = hp * 17.61 / 100 * e_bonus * 4.5 * e_extra_damage
+    pang_xie_damage_non_crit = hp * 17.61 / 100 * e_bonus * PANG_XIE_NUM * e_extra_damage
     pang_xie_damage_crit = pang_xie_damage_non_crit * crit_damage
     pang_xie_damage_expect = pang_xie_damage_non_crit * \
         (1 + crit_rate * (crit_damage - 1))
@@ -109,14 +113,14 @@ def calculate_score_callback(combine):
     base_hp = int(YeLan_Max_Hp * (1
                                   + 0.28  # 专武叠满两层
                                   + 1.0  # 二命
-                                  #+ 0.25  # 双水
-                                  #+ 0.2  # 夜兰四命保底两个e
+                                  + 0.25  # 双水
+                                  + 0.2  # 夜兰四命保底两个e
                                   )) + 4780
     base_crit_damage = 1 + 0.5 + 0.882
     wan_ye_bonus = 0.4
     shui_shen_bonus = 1.24
     zhuan_wu_e_bonus = 0.08 * 3
-    ye_lan_bonus = 0#0.25  # 夜兰平均增伤
+    ye_lan_bonus = 0.25  # 夜兰平均增伤
     base_e_bonus = 1 + wan_ye_bonus + shui_shen_bonus + zhuan_wu_e_bonus + ye_lan_bonus
     base_q_bonus = 1 + wan_ye_bonus + shui_shen_bonus + ye_lan_bonus
 
