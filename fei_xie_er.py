@@ -90,7 +90,7 @@ def calculate_score_callback(combine):
         elif n == ShengYiWu.JU_TUAN:
             if name_count[n] == 2:
                 extra_elem_bonus += 0.2
-            else:
+            elif name_count[n] >= 4:
                 extra_elem_bonus += 0.2 + 0.25 + 0.25
         elif n == ShengYiWu.SHI_JIN:
             elem_mastery += 80 + 100
