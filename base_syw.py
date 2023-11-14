@@ -400,7 +400,7 @@ all_syw = {
         ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_SHA, elem_mastery=ShengYiWu.ELEM_MASTERY_MAIN,
                   def_per=0.073, crit_rate=0.128, crit_damage=0.148, hp_percent=0.041),
 
-        ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_SHA,
+        ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_SHA, atk_per=ShengYiWu.BONUS_MAX,
                   crit_damage=0.21, hp=568, crit_rate=0.078, hp_percent=0.093),
         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_SHA, hp_percent=ShengYiWu.BONUS_MAX,
                   energe_recharge=0.052, crit_damage=0.202, elem_mastery=44, crit_rate=0.062),
