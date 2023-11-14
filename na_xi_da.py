@@ -60,7 +60,7 @@ def calculate_score_callback(combine):
     atk_per = sum([p.atk_per for p in combine])
     extra_crit_damage = sum([p.crit_damage for p in combine])
 
-    elem_bonus = fixed_elem_bonus + min((base_elem_mastery - 200) * 0.001, 0.8)
+    elem_bonus = fixed_elem_bonus + min((elem_mastery - 200) * 0.001, 0.8)
 
     all_atk = atk_per * max_atk + atk + base_atk
     crit_damage = base_crit_damage + extra_crit_damage
