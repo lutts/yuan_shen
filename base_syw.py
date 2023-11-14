@@ -152,11 +152,13 @@ all_syw = {
                   def_per=0.073, hp_percent=0.105, energe_recharge=0.104),
 
         ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_HUA,
-                  energe_recharge=0.123, atk=37, crit_rate=0.039, crit_damage=0.233),
+                  elem_mastery=42, crit_rate=0.105, atk=14, hp_percent=0.134),
+         ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_HUA, 
+                   def_per=0.073, hp_percent=0.152, crit_rate=0.027, crit_damage=0.202),
         ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_HUA, 
                   def_per=0.139, crit_rate=0.101, energe_recharge=0.058, crit_damage=0.124),
         ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_HUA,
-                  elem_mastery=42, crit_rate=0.105, atk=14, hp_percent=0.134),
+                  energe_recharge=0.123, atk=37, crit_rate=0.039, crit_damage=0.233),
 
         ShengYiWu(ShengYiWu.SHI_JIN, ShengYiWu.PART_HUA,
                   crit_damage=0.124, hp_percent=0.099, atk=14, crit_rate=0.124),
@@ -782,7 +784,7 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
                 crit_score) + '(' + str(round(crit_score / max_crit_score, 4)) + ')'
 
             score = expect_score / max_expect_score + crit_score / max_crit_score
-            if score < 0.85 * 2:
+            if score < 1.75: #0.85 * 2:
                 continue
 
             if score in score_dict:
@@ -801,3 +803,5 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
             f.write('\n')
             f.write(str(max_crit_score))
             f.write('\n')
+
+    return score_dict

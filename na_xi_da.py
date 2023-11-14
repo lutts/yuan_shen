@@ -73,11 +73,14 @@ def calculate_score_callback(combine):
     expect_score = non_crit_score * (1 + crit_rate * (crit_damage - 1))
     return [expect_score, crit_score, elem_mastery, int(all_atk), round(panel_crit_rate, 3), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
 
-
-# Main body
-if __name__ == '__main__':
-    calculate_score(find_combine_callback=find_combins_callback,
+def find_syw_for_na_xi_da():
+    return calculate_score(find_combine_callback=find_combins_callback,
                     match_sha_callback=match_sha_callback,
                     match_bei_callback=match_bei_callback,
                     calculate_score_callbak=calculate_score_callback,
                     result_txt_file="na_xi_da_syw.txt")
+
+
+# Main body
+if __name__ == '__main__':
+    find_syw_for_na_xi_da()

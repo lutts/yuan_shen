@@ -80,10 +80,13 @@ def calculate_score_callback(combine):
     return [expect_score, crit_score, int(panel_atk), round(crit_rate, 3), round(base_crit_damage + extra_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
 
 
-# Main body
-if __name__ == '__main__':
-    calculate_score(find_combine_callback=find_combins_callback,
+def find_syw_for_ling_hua():
+    return calculate_score(find_combine_callback=find_combins_callback,
                     match_sha_callback=match_sha_callback,
                     match_bei_callback=match_bei_callback,
                     calculate_score_callbak=calculate_score_callback,
                     result_txt_file="ling_hua_syw.txt")
+
+# Main body
+if __name__ == '__main__':
+    find_syw_for_ling_hua()
