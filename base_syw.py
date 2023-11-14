@@ -784,7 +784,7 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
                 crit_score) + '(' + str(round(crit_score / max_crit_score, 4)) + ')'
 
             score = expect_score / max_expect_score + crit_score / max_crit_score
-            if score < 1.75: #0.85 * 2:
+            if score < 1.8: #0.85 * 2:
                 continue
 
             if score in score_dict:
@@ -799,9 +799,9 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
                     f.write(str((round(i, 4), c, )))
                     f.write('\n\n')
 
-            f.write(str(max_expect_score))
+            f.write("expect_max: " + str(max_expect_score))
             f.write('\n')
-            f.write(str(max_crit_score))
+            f.write("crit_max: " + str(max_crit_score))
             f.write('\n')
 
     return score_dict
