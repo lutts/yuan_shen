@@ -69,7 +69,7 @@ def calculate_score_callback(combine):
         return None
 
     # 出战时总攻击力
-    all_atk = atk_per * ling_hua_max_atk + atk + base_atk
+    all_atk = int(atk_per * ling_hua_max_atk) + atk + base_atk
     # 非出战时面板攻击力
     panel_atk = (1 + atk_per) * ling_hua_max_atk + atk + 311
 

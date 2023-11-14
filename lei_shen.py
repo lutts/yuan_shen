@@ -76,7 +76,7 @@ def calculate_score_callback(combine):
     if total_energe_recharge < 260 or total_energe_recharge > 280:
         return None
    
-    all_atk = atk_per * max_atk + atk + base_atk
+    all_atk = int(atk_per * max_atk) + atk + base_atk
     all_bonus = extra_elem_bonus + base_elem_bonus
     crit_damage = base_crit_damage + extra_crit_damage
 

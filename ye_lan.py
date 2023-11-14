@@ -94,7 +94,7 @@ def calculate_score_callback(combine):
         elif n == ShengYiWu.CHEN_LUN:
             extra_water_bonus += 0.15
 
-    all_hp = hp_per * YeLan_Max_Hp + hp + base_hp
+    all_hp = int(hp_per * YeLan_Max_Hp) + hp + base_hp
     elem_bonus = base_water_bonus + extra_water_bonus
     crit_damage = base_crit_damage + extra_crit_damage
 

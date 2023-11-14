@@ -168,7 +168,7 @@ def calculate_score_callback(combine):
             else:
                 extra_e_bonus += 0.2 + 0.25 + 0.25
 
-    all_hp = hp_per * YeLan_Max_Hp + hp + base_hp
+    all_hp = int(hp_per * YeLan_Max_Hp) + hp + base_hp
     all_crit_damage = base_crit_damage + extra_crit_damage
     e_bonus = base_e_bonus + extra_e_bonus + extra_water_bonus
     full_bonus = base_full_bonus + extra_water_bonus

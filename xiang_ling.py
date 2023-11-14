@@ -72,7 +72,7 @@ def calculate_score_callback(combine):
     
     extra_elem_bonus = min(total_energe_recharge / 4 / 100, 0.75)
 
-    all_atk = atk_per * max_atk + atk + base_atk
+    all_atk = int(atk_per * max_atk) + atk + base_atk
 
     non_crit_score = all_atk / base_atk * (extra_elem_bonus + base_elem_bonus) / base_elem_bonus
     crit_score = non_crit_score * (base_crit_damage + extra_crit_damage) / base_crit_damage
