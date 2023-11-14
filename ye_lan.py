@@ -50,7 +50,7 @@ def calculate_score_callback(combine):
     YeLan_Max_Hp = 14450.0
     base_hp = int(YeLan_Max_Hp * (1
                                   + 0.3  # 四色
-                                  # + 0.18 + 0.25 # 双水
+                                  #+ 0.18 + 0.25 # 双水
                                   + 0.16  # 专武
                                   + 0.2  # 四命保底两个e
                                   )) + 4780

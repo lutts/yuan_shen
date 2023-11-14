@@ -60,14 +60,20 @@ def find_combine_callback():
     # print(len(set(all_combins)))
     return all_combins
 
+shui_shen_q_bonus = 1.24
+fu_ning_na_Max_Hp = 15307.0
+ming_2_average_bonus = 1.2  # 二命，按平均1.2算，有可能更高
 
-def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage, extra_bonus):
+def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage, shui_shen_q_bonus):
     """
     计算分数时，按17秒内攻击次数计算
     夫人：10次，倍率6.87，另外计算7次不吃芙芙大招增伤的伤害
     勋爵：5次，倍率12.67，另外计算3次不吃芙芙大招增伤的伤害
     螃蟹：4次，倍率17.61，另外计算1次不吃芙芙大招增伤的伤害
     满命6下，一半算黑芙，一半算白芙，3 * 18% + 3 * 33% = 153%，这6下时增伤很可能还没满
+
+    第一轮前6秒吃不满增伤
+    第二轮及以后，有全队奶的时候，能瞬间叠满
     """
 
     FU_REN_NUM = 17
@@ -78,31 +84,47 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage, extra_bonus):
     XUN_JUE_NUM_Q = 5
     PANG_XIE_NUM_Q = 4
 
+    seamless_q = True
+    only_e = False
+
+    if seamless_q:
+        FU_REN_NUM = FU_REN_NUM_Q
+        XUN_JUE_NUM = XUN_JUE_NUM_Q
+        PANG_XIE_NUM = PANG_XIE_NUM_Q
+
     e_extra_damage = 1.4  # 队友大于50%血量，e技能伤害为原来的1.4倍 （注：实测为1.542倍)
 
-    fu_ren_damage_non_crit = hp * 6.87 / 100  * e_extra_damage * (e_bonus * FU_REN_NUM_Q + (e_bonus - extra_bonus) * (FU_REN_NUM - FU_REN_NUM_Q))
+    fu_ren_damage_non_crit = hp * 6.87 / 100  * e_extra_damage * (e_bonus * FU_REN_NUM_Q + (e_bonus - shui_shen_q_bonus) * (FU_REN_NUM - FU_REN_NUM_Q))
     fu_ren_damage_crit = fu_ren_damage_non_crit * crit_damage
     fu_ren_damage_expect = fu_ren_damage_non_crit * \
         (1 + crit_rate * (crit_damage - 1))
 
-    xun_jue_damage_non_crit = hp * 12.67 / 100 * e_extra_damage * (e_bonus * XUN_JUE_NUM_Q + (e_bonus - extra_bonus) * (XUN_JUE_NUM - XUN_JUE_NUM_Q))
+    xun_jue_damage_non_crit = hp * 12.67 / 100 * e_extra_damage * (e_bonus * XUN_JUE_NUM_Q + (e_bonus - shui_shen_q_bonus) * (XUN_JUE_NUM - XUN_JUE_NUM_Q))
     xun_jue_damage_crit = xun_jue_damage_non_crit * crit_damage
     xun_jue_damage_expect = xun_jue_damage_non_crit * \
         (1 + crit_rate * (crit_damage - 1))
 
-    pang_xie_damage_non_crit = hp * 17.61 / 100 * e_extra_damage * (e_bonus * PANG_XIE_NUM_Q + (e_bonus - extra_bonus) * (PANG_XIE_NUM - PANG_XIE_NUM_Q))
+    pang_xie_damage_non_crit = hp * 17.61 / 100 * e_extra_damage * (e_bonus * PANG_XIE_NUM_Q + (e_bonus - shui_shen_q_bonus) * (PANG_XIE_NUM - PANG_XIE_NUM_Q))
     pang_xie_damage_crit = pang_xie_damage_non_crit * crit_damage
     pang_xie_damage_expect = pang_xie_damage_non_crit * \
         (1 + crit_rate * (crit_damage - 1))
 
-    # 以下按 芙芙qe 切万叶 切芙芙aazaaz计算，前三个aaz为黑芙，后三个aaz为白芙
-    bai_fu_full_six_damage_non_crit = hp * (18 + 25) / 100 * full_bonus * 3
-    hei_fu_full_six_damage_non_crit = hp * 18 / 100 * full_bonus * 3
-    full_six_damage_non_crit = bai_fu_full_six_damage_non_crit + \
-        hei_fu_full_six_damage_non_crit
-    full_six_damage_crit = full_six_damage_non_crit * crit_damage
-    full_six_damage_expect = full_six_damage_non_crit * \
-        (1 + crit_rate * (crit_damage - 1))
+    if not only_e:
+        # 以下按 芙芙qe 切万叶 切芙芙aazaaz计算，前三个aaz为黑芙，第一轮这三下吃不满q增伤，第二轮要看什么时候切奶妈
+        # 后三个aaz为白芙，此时增伤已满，hp是变动的，第一轮平均为0.251，第二轮有全队奶时，能很快吃满
+        actual_hei_fu_bonus = full_bonus  # - shui_shen_q_bonus + shui_shen_q_bonus * 0.85
+        actual_hei_fu_hp = hp #- int(fu_ning_na_Max_Hp * ming_2_average_bonus)
+        actual_bai_fu_hp = hp #- actual_hei_fu_hp + int(fu_ning_na_Max_Hp * 0.251)
+        bai_fu_full_six_damage_non_crit = actual_bai_fu_hp * (18 + 25) / 100 * full_bonus * 3
+        hei_fu_full_six_damage_non_crit = actual_hei_fu_hp * 18 / 100 * actual_hei_fu_bonus * 3
+        full_six_damage_non_crit = bai_fu_full_six_damage_non_crit + \
+            hei_fu_full_six_damage_non_crit
+        full_six_damage_crit = full_six_damage_non_crit * crit_damage
+        full_six_damage_expect = full_six_damage_non_crit * \
+            (1 + crit_rate * (crit_damage - 1))
+    else:
+        full_six_damage_crit = 0
+        full_six_damage_expect = 0
 
     all_crit = fu_ren_damage_crit + xun_jue_damage_crit + \
         pang_xie_damage_crit + full_six_damage_crit
@@ -113,21 +135,20 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage, extra_bonus):
 
 
 def calculate_score_callback(combine):
-    YeLan_Max_Hp = 15307.0
-    base_hp = int(YeLan_Max_Hp * (1
+    fu_ning_na_Max_Hp = 15307.0
+    base_hp = int(fu_ning_na_Max_Hp * (1
                                   + 0.28  # 专武叠满两层
-                                  + 1.2  # 二命，按平均1.2算，有可能更高
+                                  + ming_2_average_bonus
                                   + 0.25  # 双水
                                   + 0.2  # 夜兰四命保底两个e
                                   )) + 4780
     base_crit_damage = 1 + 0.5 + 0.882
     gu_you_tian_fu_2_bonus = 0.28 # 基本是能吃满的
     wan_ye_bonus = 0.4
-    shui_shen_bonus = 1.24
     zhuan_wu_e_bonus = 0.08 * 3
-    ye_lan_bonus = 0.25  # 夜兰平均增伤
-    base_e_bonus = 1 + wan_ye_bonus + shui_shen_bonus + zhuan_wu_e_bonus + ye_lan_bonus + gu_you_tian_fu_2_bonus
-    base_full_bonus = 1 + wan_ye_bonus + shui_shen_bonus + ye_lan_bonus
+    fu_ning_na_bonus = 0.25  # 夜兰平均增伤
+    base_e_bonus = 1 + wan_ye_bonus + shui_shen_q_bonus + zhuan_wu_e_bonus + fu_ning_na_bonus + gu_you_tian_fu_2_bonus
+    base_full_bonus = 1 + wan_ye_bonus + shui_shen_q_bonus + fu_ning_na_bonus
 
     crit_rate = sum([p.crit_rate for p in combine]) + 0.242
     if crit_rate < 0.70:
@@ -140,7 +161,7 @@ def calculate_score_callback(combine):
     total_energe_recharge = (
         sum([p.energe_recharge for p in combine]) + 1) * 100
 
-    if total_energe_recharge < 107:
+    if total_energe_recharge < 110:
         return None
 
     extra_e_bonus = 0
@@ -168,14 +189,14 @@ def calculate_score_callback(combine):
             elif name_count[n] >= 4:
                 extra_e_bonus += 0.2 + 0.25 + 0.25
 
-    all_hp = int(hp_per * YeLan_Max_Hp) + hp + base_hp
+    all_hp = int(hp_per * fu_ning_na_Max_Hp) + hp + base_hp
     all_crit_damage = base_crit_damage + extra_crit_damage
     e_bonus = base_e_bonus + extra_e_bonus + extra_water_bonus
     full_bonus = base_full_bonus + extra_water_bonus
 
     crit_score, expect_score = calc_score(
-        all_hp, e_bonus, full_bonus, crit_rate, all_crit_damage, shui_shen_bonus)
-    panel_hp = YeLan_Max_Hp * (1 + hp_per) + 4780 + hp
+        all_hp, e_bonus, full_bonus, crit_rate, all_crit_damage, shui_shen_q_bonus)
+    panel_hp = fu_ning_na_Max_Hp * (1 + hp_per) + 4780 + hp
 
     # print('all_hp:' + str(all_hp))
     # print("e_bonus:" + str(e_bonus))
