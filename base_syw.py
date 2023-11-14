@@ -493,6 +493,8 @@ all_syw = {
                   crit_rate=0.031, def_v=23, crit_damage=0.295, energe_recharge=0.104),
     ],
     ShengYiWu.PART_BEI: [
+        ShengYiWu(ShengYiWu.JU_TUAN, ShengYiWu.PART_BEI, hp_percent=ShengYiWu.BONUS_MAX,
+                  atk=35, def_v=23, elem_mastery=70, crit_rate=0.109),
         ShengYiWu(ShengYiWu.JU_TUAN, ShengYiWu.PART_BEI, elem_bonus=ShengYiWu.BONUS_MAX, elem_type=ShengYiWu.ELEM_TYPE_SHUI,
                   crit_damage=0.132, energe_recharge=0.11, def_v=62, def_per=0.073),
 
