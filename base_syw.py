@@ -483,6 +483,8 @@ all_syw = {
                   def_per=0.124, crit_rate=0.101, crit_damage=0.132, atk=19),
 
         ShengYiWu(ShengYiWu.FENG_TAO, ShengYiWu.PART_SHA, elem_mastery=ShengYiWu.ELEM_MASTERY_MAIN,
+                  atk=33, crit_rate=0.093, crit_damage=0.14, energe_recharge=0.13),
+        ShengYiWu(ShengYiWu.FENG_TAO, ShengYiWu.PART_SHA, elem_mastery=ShengYiWu.ELEM_MASTERY_MAIN,
                   crit_rate=0.062, def_v=44, atk_per=0.047, energe_recharge=0.168),
         ShengYiWu(ShengYiWu.FENG_TAO, ShengYiWu.PART_SHA, elem_mastery=ShengYiWu.ELEM_MASTERY_MAIN,
                   atk_per=0.047, energe_recharge=0.168, def_v=323, atk=37),
