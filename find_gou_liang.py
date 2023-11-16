@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 
-from base_syw import find_syw
+from base_syw import find_syw, set_score_threshold
 from ye_lan import find_syw_for_ye_lan
 from fu_ling_na import find_syw_for_fu_ling_na
 from lei_shen import find_syw_for_lei_shen
@@ -43,6 +43,7 @@ if __name__ == '__main__':
 
     used_syw_id_list = []
 
+    set_score_threshold(1.85)
     for func in used_syw_funcs:
         used_syw_id_list += syw_dict_to_id_list(func())
 

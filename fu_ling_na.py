@@ -84,8 +84,8 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage, shui_shen_q_bonu
     XUN_JUE_NUM_Q = 5
     PANG_XIE_NUM_Q = 4
 
-    seamless_q = True
-    only_e = False
+    seamless_q = False
+    only_e = True
 
     if seamless_q:
         FU_REN_NUM = FU_REN_NUM_Q

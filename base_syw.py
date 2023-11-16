@@ -707,6 +707,11 @@ def find_syw(match_syw_callback):
     return matched_syw
 
 
+score_threshold = 1.8
+
+def set_score_threshold(new_threashold):
+    score_threshold = new_threashold
+
 def calculate_score(find_combine_callback, match_sha_callback, match_bei_callback, calculate_score_callbak, result_txt_file):
     # all_syw = {}
     # all_syw.update(all_syw_exclude_s_b)
@@ -786,7 +791,7 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
                 crit_score) + '(' + str(round(crit_score / max_crit_score, 4)) + ')'
 
             score = expect_score / max_expect_score + crit_score / max_crit_score
-            if score < 1.8: #0.85 * 2:
+            if score < score_threshold: #0.85 * 2:
                 continue
 
             if score in score_dict:
