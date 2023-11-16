@@ -710,6 +710,7 @@ def find_syw(match_syw_callback):
 score_threshold = 1.8
 
 def set_score_threshold(new_threashold):
+    global score_threshold
     score_threshold = new_threashold
 
 def calculate_score(find_combine_callback, match_sha_callback, match_bei_callback, calculate_score_callbak, result_txt_file):
