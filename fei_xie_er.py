@@ -52,10 +52,11 @@ def find_combins_callback():
 
 
 def calculate_score_callback(combine):
-    max_atk = 754
-    base_atk = int(max_atk * (1 + 0.24)) + 311
-    base_crit_damage = 1 + 0.5
-    base_elem_mastery = 165 # 绝弦
+    max_atk = 852 #绝弦754， 最初的大魔术852
+    base_atk = int(max_atk * (1 + 0.24)) + 311      # 突破加成0.24
+    mo_shu_crit_damage = 0.662
+    base_crit_damage = 1 + 0.5 + mo_shu_crit_damage
+    base_elem_mastery = 0 #165 # 绝弦
     wan_ye_bonus = 0.4
     base_elem_bonus = 1 + wan_ye_bonus
 
@@ -69,7 +70,7 @@ def calculate_score_callback(combine):
     extra_elem_bonus = sum([p.elem_bonus for p in combine])
     elem_mastery = sum([p.elem_mastery for p in combine]) + base_elem_mastery
 
-    if elem_mastery < 350:
+    if elem_mastery < 100:
         return None
     
     syw_names = [p.name for p in combine]
