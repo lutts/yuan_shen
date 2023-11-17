@@ -40,9 +40,10 @@ def calculate_score_callback(combine):
     ban_ni_te_atk = int(755 * 1.19)
     shuang_huo_atk = 0 # int(945 * 0.25)
     jiu_tiao_atk = 0 # int(858 * 0.86)
+    jiu_tiao_crit_damage = 0 #0.6
     extra_atk = ban_ni_te_atk + shuang_huo_atk + jiu_tiao_atk
     base_atk = max_atk + 311 + extra_atk
-    base_crit_damage = 1.5
+    base_crit_damage = 1.5 + jiu_tiao_crit_damage
     wan_ye_bonus = 0.4
     ye_lan_bonus = 0.29
     base_elem_bonus = 1 + 0.27 + wan_ye_bonus + ye_lan_bonus
