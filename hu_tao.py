@@ -28,6 +28,26 @@ def match_syw(s: ShengYiWu, expect_name):
         return match_bei_callback(s)
     else:
         return True
+    
+def find_combins_callback_lie_ren():
+    zhui_yi = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.ZHUI_YI))
+    lie_ren = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.LIE_REN))
+    jue_dou_shi = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.JUE_DOU_SHI))
+
+    zhui_yi_2_combins = list(itertools.combinations(zhui_yi, 2))
+    zhui_yi_4_combins = list(itertools.combinations(zhui_yi, 4))
+
+    lie_ren_2_combins = list(itertools.combinations(lie_ren, 2))
+    lie_ren_4_combins = list(itertools.combinations(lie_ren, 4))
+
+    jue_dou_shi_2_combins = list(itertools.combinations(jue_dou_shi, 2))
+
+    all_2_combins = zhui_yi_2_combins + jue_dou_shi_2_combins + lie_ren_2_combins
+
+    all_combins = [(l[0] + l[1])
+                   for l in list(itertools.combinations(all_2_combins, 2))] + zhui_yi_4_combins + lie_ren_4_combins
+
+    return all_combins
 
 def find_combins_callback():
     zhui_yi = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.ZHUI_YI))
@@ -115,6 +135,13 @@ def calculate_score_callback(combine):
 
 def find_syw_for_hu_tao():
     return calculate_score(find_combine_callback=find_combins_callback,
+                    match_sha_callback=match_sha_callback,
+                    match_bei_callback=match_bei_callback,
+                    calculate_score_callbak=calculate_score_callback,
+                    result_txt_file="hu_tao_syw.txt")
+
+def find_syw_for_hu_tao_lie_ren():
+    return calculate_score(find_combine_callback=find_combins_callback_lie_ren,
                     match_sha_callback=match_sha_callback,
                     match_bei_callback=match_bei_callback,
                     calculate_score_callbak=calculate_score_callback,
