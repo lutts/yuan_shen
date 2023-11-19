@@ -46,7 +46,8 @@ def calculate_score_callback(combine):
     base_crit_damage = 1.5 + jiu_tiao_crit_damage
     wan_ye_bonus = 0.4
     ye_lan_bonus = 0.29
-    base_elem_bonus = 1 + 0.27 + wan_ye_bonus + ye_lan_bonus
+    shui_shen_bonus = 0 #1.24
+    base_elem_bonus = 1 + 0.27 + wan_ye_bonus + ye_lan_bonus + shui_shen_bonus
 
     crit_rate = 0
     atk = 0
