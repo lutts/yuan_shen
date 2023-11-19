@@ -73,7 +73,7 @@ def calculate_score_callback(combine):
     total_energe_recharge = (
         sum([p.energe_recharge for p in combine]) + 1) * 100
 
-    # if total_energe_recharge < 140:
+    #if total_energe_recharge < 120:
     #    return None
 
     syw_names = [p.name for p in combine]
