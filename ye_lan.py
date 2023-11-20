@@ -57,7 +57,7 @@ def calculate_score_callback(combine):
     base_crit_damage = 1 + 0.5 + 0.882
     zhuan_wu_bonus = 0.2
     wan_ye_bonus = 0.4
-    lei_shen_bonus = 0.27
+    lei_shen_bonus = 0 #0.27
     shui_shen_bonus = 1.24
     base_water_bonus = 1 + zhuan_wu_bonus + shui_shen_bonus + \
         wan_ye_bonus + lei_shen_bonus + 0.25  # 夜兰自身平均增伤
@@ -73,8 +73,8 @@ def calculate_score_callback(combine):
     total_energe_recharge = (
         sum([p.energe_recharge for p in combine]) + 1) * 100
 
-    #if total_energe_recharge < 120:
-    #    return None
+    if total_energe_recharge < 120:
+        return None
 
     syw_names = [p.name for p in combine]
     # print(syw_names)

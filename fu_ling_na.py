@@ -206,8 +206,8 @@ def calculate_score_callback(combine):
     total_energe_recharge = (
         sum([p.energe_recharge for p in combine]) + 1) * 100
 
-    #if total_energe_recharge < 110:
-    #    return None
+    if total_energe_recharge < 110:
+        return None
 
     extra_e_bonus = 0
 
