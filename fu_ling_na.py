@@ -65,46 +65,86 @@ fu_ning_na_Max_Hp = 15307.0
 ming_2_average_bonus = 1.2  # 二命，按平均1.2算，有可能更高
 
 def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage, shui_shen_q_bonus):
-    """
-    计算分数时，按17秒内攻击次数计算
-    夫人：10次，倍率6.87，另外计算7次不吃芙芙大招增伤的伤害
-    勋爵：5次，倍率12.67，另外计算3次不吃芙芙大招增伤的伤害
-    螃蟹：4次，倍率17.61，另外计算1次不吃芙芙大招增伤的伤害
-    满命6下，一半算黑芙，一半算白芙，3 * 18% + 3 * 33% = 153%，这6下时增伤很可能还没满
+    # e技能持续时间内总次数
+    FU_REN_NUM = 18
+    XUN_JUE_NUM = 9
+    PANG_XIE_NUM = 6
 
-    第一轮前6秒吃不满增伤
-    第二轮及以后，有全队奶的时候，能瞬间叠满
-    """
+    # 夜兰+芙芙+钟离+万叶或琴，加上切人时间，按21.5秒一轮循环计算
+    # 这一轮循环里，分为三个阶段：1)叠层阶段，大约6秒多，此时血量需要扣除2命增加的，2)满叠层状态，大约9.5秒，3)大招结束，无增伤阶段：6秒
+    # 其中二命时，第二阶段又分两个小阶段：需要4秒左右血量才会提升140%
+    # 从第二轮开始，分两种情况：
+    #   1） 如果第一轮芙芙用的是黑芙，因为会持续加血很长时间，血量掉不下去，第二轮叠满层的时间即便有全队奶妈也快不到哪去，因为几乎都是满血的
+    #   2） 如果第一轮芙芙用的是白芙，第二轮开始全队掉血较多，第二轮开始奶妈开大全队奶能加快叠层，但如果带的是万叶，则没有全队奶，叠层不会加快太多
+    FU_REN_NUM_PHASE_1 = 4
+    XUN_JUE_NUM_PHASE_1 = 2
+    PANG_XIE_NUM_PHASE_1 = 1
 
-    FU_REN_NUM = 17
-    XUN_JUE_NUM = 8
-    PANG_XIE_NUM = 5
+    FU_REN_NUM_PHASE_2_1 = 3
+    XUN_JUE_NUM_PHASE_2_1 = 1
+    PANG_XIE_NUM_PHASE_2_1 = 1
 
-    FU_REN_NUM_Q = 10
-    XUN_JUE_NUM_Q = 5
-    PANG_XIE_NUM_Q = 4
+    FU_REN_NUM_PHASE_2_2 = 3
+    XUN_JUE_NUM_PHASE_2_2 = 2
+    PANG_XIE_NUM_PHASE_2_2 = 1
 
-    seamless_q = False
-    only_e = True
+    FU_REN_NUM_PHASE_3 = 3
+    XUN_JUE_NUM_PHASE_3 = 2
+    PANG_XIE_NUM_PHASE_3 = 1
 
-    if seamless_q:
-        FU_REN_NUM = FU_REN_NUM_Q
-        XUN_JUE_NUM = XUN_JUE_NUM_Q
-        PANG_XIE_NUM = PANG_XIE_NUM_Q
+    FU_REN_NUM_OTHER = FU_REN_NUM - FU_REN_NUM_PHASE_1 - FU_REN_NUM_PHASE_2_1 + FU_REN_NUM_PHASE_2_2 - FU_REN_NUM_PHASE_3
+    XUN_JUE_NUM_OTHER = XUN_JUE_NUM - XUN_JUE_NUM_PHASE_1 - XUN_JUE_NUM_PHASE_2_1 + XUN_JUE_NUM_PHASE_2_2 - XUN_JUE_NUM_PHASE_3
+    PANG_XIE_NUM_OTHER = PANG_XIE_NUM - PANG_XIE_NUM_PHASE_1 - PANG_XIE_NUM_PHASE_2_1 + PANG_XIE_NUM_PHASE_2_2 - PANG_XIE_NUM_PHASE_3
+
+    include_other = False    # 带雷夜芙的时候，e技能持续时间能吃满
+    only_e = False   # 芙芙没时间砍满命6刀时置为true
 
     e_extra_damage = 1.4  # 队友大于50%血量，e技能伤害为原来的1.4倍 （注：实测为1.542倍)
 
-    fu_ren_damage_non_crit = hp * 6.87 / 100  * e_extra_damage * (e_bonus * FU_REN_NUM_Q + (e_bonus - shui_shen_q_bonus) * (FU_REN_NUM - FU_REN_NUM_Q))
+    phase_1_hp = hp - int(fu_ning_na_Max_Hp * ming_2_average_bonus)
+    phase_2_1_hp = phase_1_hp + fu_ning_na_Max_Hp
+    phase_2_2_hp = hp
+    phase_3_hp = phase_1_hp
+    phase_other_hp = phase_1_hp
+
+    e_bonus_phase_1 = e_bonus - shui_shen_q_bonus / 2
+    e_bonus_phase_2_1 = e_bonus
+    e_bonus_phase_2_2 = e_bonus
+    e_bonus_phase_3 = e_bonus - shui_shen_q_bonus
+    e_bonus_phase_other = e_bonus - shui_shen_q_bonus
+
+    fu_ren_damage_non_crit = phase_1_hp * 6.87 / 100 * e_extra_damage * e_bonus_phase_1 * FU_REN_NUM_PHASE_1
+    fu_ren_damage_non_crit += phase_2_1_hp * 6.87 / 100 * e_extra_damage * e_bonus_phase_2_1 * FU_REN_NUM_PHASE_2_1
+    fu_ren_damage_non_crit += phase_2_2_hp * 6.87 / 100 * e_extra_damage * e_bonus_phase_2_2 * FU_REN_NUM_PHASE_2_2
+    fu_ren_damage_non_crit += phase_3_hp * 6.87 / 100 * e_extra_damage * e_bonus_phase_3 * FU_REN_NUM_PHASE_3
+
+    if include_other:
+        fu_ren_damage_non_crit += phase_other_hp * 6.87 / 100 * e_extra_damage * e_bonus_phase_other * FU_REN_NUM_OTHER
+
     fu_ren_damage_crit = fu_ren_damage_non_crit * crit_damage
     fu_ren_damage_expect = fu_ren_damage_non_crit * \
         (1 + crit_rate * (crit_damage - 1))
+    
+    xun_jue_damage_non_crit = phase_1_hp * 12.67 / 100 * e_extra_damage * e_bonus_phase_1 * XUN_JUE_NUM_PHASE_1
+    xun_jue_damage_non_crit += phase_2_1_hp * 12.67 / 100 * e_extra_damage * e_bonus_phase_2_1 * XUN_JUE_NUM_PHASE_2_1
+    xun_jue_damage_non_crit += phase_2_2_hp * 12.67 / 100 * e_extra_damage * e_bonus_phase_2_2 * XUN_JUE_NUM_PHASE_2_2
+    xun_jue_damage_non_crit += phase_3_hp * 12.67 / 100 * e_extra_damage * e_bonus_phase_3 * XUN_JUE_NUM_PHASE_3
 
-    xun_jue_damage_non_crit = hp * 12.67 / 100 * e_extra_damage * (e_bonus * XUN_JUE_NUM_Q + (e_bonus - shui_shen_q_bonus) * (XUN_JUE_NUM - XUN_JUE_NUM_Q))
+    if include_other:
+        xun_jue_damage_non_crit += phase_other_hp * 12.67 / 100 * e_extra_damage * e_bonus_phase_other * XUN_JUE_NUM_OTHER
+
     xun_jue_damage_crit = xun_jue_damage_non_crit * crit_damage
     xun_jue_damage_expect = xun_jue_damage_non_crit * \
         (1 + crit_rate * (crit_damage - 1))
+    
+    pang_xie_damage_non_crit = phase_1_hp * 17.61 / 100 * e_extra_damage * e_bonus_phase_1 * PANG_XIE_NUM_PHASE_1
+    pang_xie_damage_non_crit += phase_2_1_hp * 17.61 / 100 * e_extra_damage * e_bonus_phase_2_1 * PANG_XIE_NUM_PHASE_2_1
+    pang_xie_damage_non_crit += phase_2_2_hp * 17.61 / 100 * e_extra_damage * e_bonus_phase_2_2 * PANG_XIE_NUM_PHASE_2_2
+    pang_xie_damage_non_crit += phase_3_hp * 17.61 / 100 * e_extra_damage * e_bonus_phase_3 * PANG_XIE_NUM_PHASE_3
 
-    pang_xie_damage_non_crit = hp * 17.61 / 100 * e_extra_damage * (e_bonus * PANG_XIE_NUM_Q + (e_bonus - shui_shen_q_bonus) * (PANG_XIE_NUM - PANG_XIE_NUM_Q))
+    if include_other:
+        pang_xie_damage_non_crit += phase_other_hp * 17.61 / 100 * e_extra_damage * e_bonus_phase_other * PANG_XIE_NUM_OTHER
+
     pang_xie_damage_crit = pang_xie_damage_non_crit * crit_damage
     pang_xie_damage_expect = pang_xie_damage_non_crit * \
         (1 + crit_rate * (crit_damage - 1))
@@ -112,11 +152,16 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage, shui_shen_q_bonu
     if not only_e:
         # 以下按 芙芙qe 切万叶 切芙芙aazaaz计算，前三个aaz为黑芙，第一轮这三下吃不满q增伤，第二轮要看什么时候切奶妈
         # 后三个aaz为白芙，此时增伤已满，hp是变动的，第一轮平均为0.251，第二轮有全队奶时，能很快吃满
-        actual_hei_fu_bonus = full_bonus  # - shui_shen_q_bonus + shui_shen_q_bonus * 0.85
-        actual_hei_fu_hp = hp #- int(fu_ning_na_Max_Hp * ming_2_average_bonus)
-        actual_bai_fu_hp = hp #- actual_hei_fu_hp + int(fu_ning_na_Max_Hp * 0.251)
-        bai_fu_full_six_damage_non_crit = actual_bai_fu_hp * (18 + 25) / 100 * full_bonus * 3
-        hei_fu_full_six_damage_non_crit = actual_hei_fu_hp * 18 / 100 * actual_hei_fu_bonus * 3
+
+        hei_fu_hp = phase_1_hp
+        hei_fu_bonus = full_bonus - shui_shen_q_bonus + 0.875 * e_bonus - shui_shen_q_bonus
+
+        bai_fu_hp = phase_1_hp + int(0.85 * fu_ning_na_Max_Hp)
+        bai_fu_bonus = full_bonus
+
+        hei_fu_full_six_damage_non_crit = hei_fu_hp * 18 / 100 * hei_fu_bonus * 3
+        bai_fu_full_six_damage_non_crit = bai_fu_hp * (18 + 25) / 100 * bai_fu_bonus * 3
+        
         full_six_damage_non_crit = bai_fu_full_six_damage_non_crit + \
             hei_fu_full_six_damage_non_crit
         full_six_damage_crit = full_six_damage_non_crit * crit_damage
