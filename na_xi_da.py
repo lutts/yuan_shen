@@ -51,6 +51,7 @@ def calculate_score_callback(combine):
         min((base_elem_mastery - 200) * 0.001, 0.8)
 
     elem_mastery = sum([p.elem_mastery for p in combine]) + base_elem_mastery
+    panel_elem_mastery = sum([p.elem_mastery for p in combine]) + 265 + 115
     panel_crit_rate = sum([p.crit_rate for p in combine]) + 0.05
     crit_rate = panel_crit_rate + min((elem_mastery - 200) * 0.0003, 0.24)
     if crit_rate < 0.64:
@@ -71,7 +72,7 @@ def calculate_score_callback(combine):
     non_crit_score = atk_bei_lv * all_atk + elem_bei_lv * elem_mastery * elem_bonus
     crit_score = non_crit_score * crit_damage
     expect_score = non_crit_score * (1 + crit_rate * (crit_damage - 1))
-    return [expect_score, crit_score, elem_mastery, int(all_atk), round(panel_crit_rate, 3), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
+    return [expect_score, crit_score, elem_mastery, panel_elem_mastery, int(all_atk), round(panel_crit_rate, 3), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
 
 def find_syw_for_na_xi_da():
     return calculate_score(find_combine_callback=find_combins_callback,
