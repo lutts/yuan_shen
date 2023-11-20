@@ -185,12 +185,12 @@ def calculate_score_callback(combine):
                                   + 0.2  # 夜兰四命保底两个e
                                   )) + 4780
     base_crit_damage = 1 + 0.5 + 0.882
-    gu_you_tian_fu_2_bonus = 0.28 # 基本是能吃满的
+    gu_you_tian_fu_2_e_bonus = 0.28 # 基本是能吃满的
     wan_ye_bonus = 0.4
     zhuan_wu_e_bonus = 0.08 * 3
-    fu_ning_na_bonus = 0.25  # 夜兰平均增伤
-    base_e_bonus = 1 + wan_ye_bonus + shui_shen_q_bonus + zhuan_wu_e_bonus + fu_ning_na_bonus + gu_you_tian_fu_2_bonus
-    base_full_bonus = 1 + wan_ye_bonus + shui_shen_q_bonus + fu_ning_na_bonus
+    ye_lan_bonus = 0.25  # 夜兰平均增伤
+    base_e_bonus = 1 + wan_ye_bonus + shui_shen_q_bonus + zhuan_wu_e_bonus + ye_lan_bonus + gu_you_tian_fu_2_e_bonus
+    base_full_bonus = 1 + wan_ye_bonus + shui_shen_q_bonus + ye_lan_bonus
 
     crit_rate = sum([p.crit_rate for p in combine]) + 0.242
     if crit_rate < 0.70:
