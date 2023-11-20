@@ -150,13 +150,10 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage, shui_shen_q_bonu
         (1 + crit_rate * (crit_damage - 1))
 
     if not only_e:
-        # 以下按 芙芙qe 切万叶 切芙芙aazaaz计算，前三个aaz为黑芙，第一轮这三下吃不满q增伤，第二轮要看什么时候切奶妈
-        # 后三个aaz为白芙，此时增伤已满，hp是变动的，第一轮平均为0.251，第二轮有全队奶时，能很快吃满
-
-        hei_fu_hp = phase_1_hp
+        hei_fu_hp = hp - int(fu_ning_na_Max_Hp * ming_2_average_bonus)
         hei_fu_bonus = full_bonus - shui_shen_q_bonus + 0.875 * e_bonus - shui_shen_q_bonus
 
-        bai_fu_hp = phase_1_hp + int(0.85 * fu_ning_na_Max_Hp)
+        bai_fu_hp = hei_fu_hp + int(0.85 * fu_ning_na_Max_Hp)
         bai_fu_bonus = full_bonus
 
         hei_fu_full_six_damage_non_crit = hei_fu_hp * 18 / 100 * hei_fu_bonus * 3
