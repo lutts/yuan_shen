@@ -96,8 +96,8 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage, shui_shen_q_bonu
     XUN_JUE_NUM_OTHER = XUN_JUE_NUM - XUN_JUE_NUM_PHASE_1 - XUN_JUE_NUM_PHASE_2_1 + XUN_JUE_NUM_PHASE_2_2 - XUN_JUE_NUM_PHASE_3
     PANG_XIE_NUM_OTHER = PANG_XIE_NUM - PANG_XIE_NUM_PHASE_1 - PANG_XIE_NUM_PHASE_2_1 + PANG_XIE_NUM_PHASE_2_2 - PANG_XIE_NUM_PHASE_3
 
-    include_other = True    # 带雷夜芙的时候，e技能持续时间能吃满
-    only_e = True   # 芙芙没时间砍满命6刀时置为true
+    include_other = False    # 带雷夜芙的时候，e技能持续时间能吃满
+    only_e = False   # 芙芙没时间砍满命6刀时置为true
 
     e_extra_damage = 1.4  # 队友大于50%血量，e技能伤害为原来的1.4倍 （注：实测为1.542倍)
 
