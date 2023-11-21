@@ -60,107 +60,197 @@ def find_combine_callback():
     # print(len(set(all_combins)))
     return all_combins
 
-shui_shen_q_bonus = 1.24
+
+shui_shen_q_bonus_bei_lv = 0.0031
+shui_shen_q_bonus = 400 * shui_shen_q_bonus_bei_lv
 fu_ning_na_Max_Hp = 15307.0
-ming_2_average_bonus = 1.2  # 二命，按平均1.2算，有可能更高
+ming_2_hp_bonus_max = 1.4  # 140%
 
-def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage, shui_shen_q_bonus):
-    # e技能持续时间内总次数
-    FU_REN_NUM = 18
-    XUN_JUE_NUM = 9
-    PANG_XIE_NUM = 6
 
-    # 夜兰+芙芙+钟离+万叶或琴，加上切人时间，按21.5秒一轮循环计算
-    # 这一轮循环里，分为三个阶段：1)叠层阶段，大约6秒多，此时血量需要扣除2命增加的，2)满叠层状态，大约9.5秒，3)大招结束，无增伤阶段：6秒
-    # 其中二命时，第二阶段又分两个小阶段：需要4秒左右血量才会提升140%
-    # 从第二轮开始，分两种情况：
-    #   1） 如果第一轮芙芙用的是黑芙，因为会持续加血很长时间，血量掉不下去，第二轮叠满层的时间即便有全队奶妈也快不到哪去，因为几乎都是满血的
-    #   2） 如果第一轮芙芙用的是白芙，第二轮开始全队掉血较多，第二轮开始奶妈开大全队奶能加快叠层，但如果带的是万叶，则没有全队奶，叠层不会加快太多
-    FU_REN_NUM_PHASE_1 = 4
-    XUN_JUE_NUM_PHASE_1 = 2
-    PANG_XIE_NUM_PHASE_1 = 1
-
-    FU_REN_NUM_PHASE_2_1 = 3
-    XUN_JUE_NUM_PHASE_2_1 = 1
-    PANG_XIE_NUM_PHASE_2_1 = 1
-
-    FU_REN_NUM_PHASE_2_2 = 3
-    XUN_JUE_NUM_PHASE_2_2 = 2
-    PANG_XIE_NUM_PHASE_2_2 = 1
-
-    FU_REN_NUM_PHASE_3 = 3
-    XUN_JUE_NUM_PHASE_3 = 2
-    PANG_XIE_NUM_PHASE_3 = 1
-
-    FU_REN_NUM_OTHER = FU_REN_NUM - FU_REN_NUM_PHASE_1 - FU_REN_NUM_PHASE_2_1 + FU_REN_NUM_PHASE_2_2 - FU_REN_NUM_PHASE_3
-    XUN_JUE_NUM_OTHER = XUN_JUE_NUM - XUN_JUE_NUM_PHASE_1 - XUN_JUE_NUM_PHASE_2_1 + XUN_JUE_NUM_PHASE_2_2 - XUN_JUE_NUM_PHASE_3
-    PANG_XIE_NUM_OTHER = PANG_XIE_NUM - PANG_XIE_NUM_PHASE_1 - PANG_XIE_NUM_PHASE_2_1 + PANG_XIE_NUM_PHASE_2_2 - PANG_XIE_NUM_PHASE_3
-
-    include_other = False    # 带雷夜芙的时候，e技能持续时间能吃满
+def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
+    include_extra = False    # 带雷夜芙的时候，e技能持续时间能吃满
     only_e = False   # 芙芙没时间砍满命6刀时置为true
-
     e_extra_damage = 1.4  # 队友大于50%血量，e技能伤害为原来的1.4倍 （注：实测为1.542倍)
 
-    phase_1_hp = hp - int(fu_ning_na_Max_Hp * ming_2_average_bonus)
-    phase_2_1_hp = phase_1_hp + fu_ning_na_Max_Hp
-    phase_2_2_hp = hp
-    phase_3_hp = phase_1_hp
-    phase_other_hp = phase_1_hp
+    class e_damage_component:
+        def __init__(self, bei_lv, hp, bonus, is_extra=False):
+            self.bei_lv = bei_lv
+            self.hp = hp
+            self.bonus = bonus
+            self.is_extra = is_extra
 
-    e_bonus_phase_1 = e_bonus - shui_shen_q_bonus / 2
-    e_bonus_phase_2_1 = e_bonus
-    e_bonus_phase_2_2 = e_bonus
-    e_bonus_phase_3 = e_bonus - shui_shen_q_bonus
-    e_bonus_phase_other = e_bonus - shui_shen_q_bonus
+        def score(self):
+            return self.hp * self.bei_lv / 100 * e_extra_damage * self.bonus
 
-    fu_ren_damage_non_crit = phase_1_hp * 6.87 / 100 * e_extra_damage * e_bonus_phase_1 * FU_REN_NUM_PHASE_1
-    fu_ren_damage_non_crit += phase_2_1_hp * 6.87 / 100 * e_extra_damage * e_bonus_phase_2_1 * FU_REN_NUM_PHASE_2_1
-    fu_ren_damage_non_crit += phase_2_2_hp * 6.87 / 100 * e_extra_damage * e_bonus_phase_2_2 * FU_REN_NUM_PHASE_2_2
-    fu_ren_damage_non_crit += phase_3_hp * 6.87 / 100 * e_extra_damage * e_bonus_phase_3 * FU_REN_NUM_PHASE_3
+    FU_REN_BEI_LV = 6.87
+    XUN_JUE_BEI_LV = 12.67
+    PANG_XIE_BEI_LV = 17.61
 
-    if include_other:
-        fu_ren_damage_non_crit += phase_other_hp * 6.87 / 100 * e_extra_damage * e_bonus_phase_other * FU_REN_NUM_OTHER
+    full_hp = hp + int(fu_ning_na_Max_Hp * ming_2_hp_bonus_max)
+    e_bonus_withoud_q = e_bonus - shui_shen_q_bonus
+
+    e_damage_list = [
+        # e结束：00:00:07.159
+        # 前三次攻击的时候，就有6个头，表示叠了200层了
+        # 夫人：00:00:08.559		（1.4）
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q + 200 * shui_shen_q_bonus_bei_lv),
+        # 螃蟹：00:00:08.959			(1.8)
+        e_damage_component(PANG_XIE_BEI_LV, hp,
+                           e_bonus_withoud_q + 200 * shui_shen_q_bonus_bei_lv),
+        # 勋爵：00:00:09.158			(1.999)
+        e_damage_component(XUN_JUE_BEI_LV, hp,
+                           e_bonus_withoud_q + 200 * shui_shen_q_bonus_bei_lv),
+
+        # 夫人：00:00:10.198			(3.039)
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q + 300 * shui_shen_q_bonus_bei_lv),
+        # 夫人：00:00:11.919			(4.76)
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q + 400 * shui_shen_q_bonus_bei_lv),
+
+        # 满层
+
+        # 勋爵：00:00:12.518			(5.359)
+        e_damage_component(XUN_JUE_BEI_LV, hp + \
+                           int(0.184 * fu_ning_na_Max_Hp), e_bonus),
+        # 夫人：00:00:13.479			(6.32)
+        e_damage_component(FU_REN_BEI_LV, hp + \
+                           int(0.438 * fu_ning_na_Max_Hp), e_bonus),
+        # 螃蟹：00:00:14.360			(7.201)
+        e_damage_component(PANG_XIE_BEI_LV, hp + \
+                           int(0.438 * fu_ning_na_Max_Hp), e_bonus),
+        # 夫人：00:00:15.161			(8.002)
+        e_damage_component(FU_REN_BEI_LV, hp + \
+                           int(0.517 * fu_ning_na_Max_Hp), e_bonus),
+        # 勋爵：00:00:15.839			(8.68）
+        e_damage_component(XUN_JUE_BEI_LV, hp + \
+                           int(0.983 * fu_ning_na_Max_Hp), e_bonus),
+        # 夫人：00:00:16.758			(9.599)
+        e_damage_component(FU_REN_BEI_LV, hp + \
+                           int(1.029 * fu_ning_na_Max_Hp), e_bonus),
+
+        # 二命叠满生命
+        # 夫人：00:00:18.359			(11.2)
+        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus),
+        # 勋爵：00:00:19.160			(12.001)
+        e_damage_component(XUN_JUE_BEI_LV, full_hp, e_bonus),
+        # 螃蟹：00:00:19.478			(12.319)
+        e_damage_component(PANG_XIE_BEI_LV, full_hp, e_bonus),
+        # 夫人：00:00:20.119			(12.96)
+        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus),
+        # 夫人：00:00:21.800			(14.641)
+        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus),
+        # 勋爵：00:00:22.639			(15.48)
+        e_damage_component(XUN_JUE_BEI_LV, full_hp, e_bonus),
+        # 夫人：00:00:23.439			(16.28)
+        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus),
+        # 螃蟹：00:00:24.639			(17.48)
+        e_damage_component(PANG_XIE_BEI_LV, full_hp, e_bonus),
+        # 夫人：00:00:25.080			(17.921)
+        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus),
+
+        # 大招结束
+        # 勋爵：00:00:25.919			(18.76)
+        e_damage_component(XUN_JUE_BEI_LV, hp, e_bonus_withoud_q),
+        # 夫人：00:00:26.678			(19.519)
+        e_damage_component(FU_REN_BEI_LV, hp, e_bonus_withoud_q),
+        # 夫人：00:00:28.198			(21.039)
+        e_damage_component(FU_REN_BEI_LV, hp, e_bonus_withoud_q),
+        # 勋爵：00:00:29.398			(22.239)
+        e_damage_component(XUN_JUE_BEI_LV, hp, e_bonus_withoud_q),
+        # 夫人：00:00:29.718			(22.559)
+        e_damage_component(FU_REN_BEI_LV, hp, e_bonus_withoud_q),
+        # 螃蟹：00:00:29.759			(22.6)
+        e_damage_component(PANG_XIE_BEI_LV, hp, e_bonus_withoud_q),
+        # 夫人：00:00:31.199			(24.04)
+        e_damage_component(FU_REN_BEI_LV, hp, e_bonus_withoud_q),
+
+        # 一轮循环之外，某些配队才有这些
+        # 勋爵：00:00:32.560			(25.401)
+        e_damage_component(XUN_JUE_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 夫人：00:00:32.718			(25.559)
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 夫人：00:00:34.359			(27.2)
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 螃蟹：00:00:35.079			(27.92)
+        e_damage_component(PANG_XIE_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 勋爵：00:00:35.799			(28.64)
+        e_damage_component(XUN_JUE_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 夫人：00:00:35.878			(28.719)
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+    ]
+
+    fu_ren_damage_non_crit = 0
+    xun_jue_damage_non_crit = 0
+    pang_xie_damage_non_crit = 0
+
+    for d in e_damage_list:
+        if d.is_extra and not include_extra:
+            break
+
+        if d.bei_lv == FU_REN_BEI_LV:
+            fu_ren_damage_non_crit += d.score()
+        elif d.bei_lv == XUN_JUE_BEI_LV:
+            xun_jue_damage_non_crit += d.score()
+        elif d.bei_lv == PANG_XIE_BEI_LV:
+            pang_xie_damage_non_crit += d.score()
 
     fu_ren_damage_crit = fu_ren_damage_non_crit * crit_damage
     fu_ren_damage_expect = fu_ren_damage_non_crit * \
         (1 + crit_rate * (crit_damage - 1))
-    
-    xun_jue_damage_non_crit = phase_1_hp * 12.67 / 100 * e_extra_damage * e_bonus_phase_1 * XUN_JUE_NUM_PHASE_1
-    xun_jue_damage_non_crit += phase_2_1_hp * 12.67 / 100 * e_extra_damage * e_bonus_phase_2_1 * XUN_JUE_NUM_PHASE_2_1
-    xun_jue_damage_non_crit += phase_2_2_hp * 12.67 / 100 * e_extra_damage * e_bonus_phase_2_2 * XUN_JUE_NUM_PHASE_2_2
-    xun_jue_damage_non_crit += phase_3_hp * 12.67 / 100 * e_extra_damage * e_bonus_phase_3 * XUN_JUE_NUM_PHASE_3
-
-    if include_other:
-        xun_jue_damage_non_crit += phase_other_hp * 12.67 / 100 * e_extra_damage * e_bonus_phase_other * XUN_JUE_NUM_OTHER
 
     xun_jue_damage_crit = xun_jue_damage_non_crit * crit_damage
     xun_jue_damage_expect = xun_jue_damage_non_crit * \
         (1 + crit_rate * (crit_damage - 1))
-    
-    pang_xie_damage_non_crit = phase_1_hp * 17.61 / 100 * e_extra_damage * e_bonus_phase_1 * PANG_XIE_NUM_PHASE_1
-    pang_xie_damage_non_crit += phase_2_1_hp * 17.61 / 100 * e_extra_damage * e_bonus_phase_2_1 * PANG_XIE_NUM_PHASE_2_1
-    pang_xie_damage_non_crit += phase_2_2_hp * 17.61 / 100 * e_extra_damage * e_bonus_phase_2_2 * PANG_XIE_NUM_PHASE_2_2
-    pang_xie_damage_non_crit += phase_3_hp * 17.61 / 100 * e_extra_damage * e_bonus_phase_3 * PANG_XIE_NUM_PHASE_3
-
-    if include_other:
-        pang_xie_damage_non_crit += phase_other_hp * 17.61 / 100 * e_extra_damage * e_bonus_phase_other * PANG_XIE_NUM_OTHER
 
     pang_xie_damage_crit = pang_xie_damage_non_crit * crit_damage
     pang_xie_damage_expect = pang_xie_damage_non_crit * \
         (1 + crit_rate * (crit_damage - 1))
 
     if not only_e:
-        hei_fu_hp = hp - int(fu_ning_na_Max_Hp * ming_2_average_bonus)
-        hei_fu_bonus = full_bonus - shui_shen_q_bonus + 0.875 * e_bonus - shui_shen_q_bonus
+        # 采用qea 万叶e, 夜兰qee，这种手法能更快速叠层
+        # e技能结束：00:00:04.870
+        # 满层：00:00:09.247                            0%						4.377
+        # 芙芙出场：
+        # 00:00:10.446			45433                   18.4%				5.576
+        # 00:00:10.497			45628                   19.6%				5.627
+        # 00:00:10.697			46628                   26.2%				5.827
+        # 00:00:11.186			49328	第二刀           43.8%				6.316
+        # 00:00:11.677			49328	第三刀           43.8%				6.807
+        # 00:00:12.427			50528	第四刀（重击）    51.7%				7.557
+        # 00:00:13.087			57673	第五刀           98.3%				8.217
+        # 00:00:13.746			58378	第六刀          102.9%			8.876
+        class full_damage_component:
+            def __init__(self, hp_bonus, bei_lv):
+                self.hp_bonus = hp_bonus
+                self.bei_lv = bei_lv
 
-        bai_fu_hp = hei_fu_hp + int(0.85 * fu_ning_na_Max_Hp)
-        bai_fu_bonus = full_bonus
+            def score(self):
+                return (hp + int(self.hp_bonus * fu_ning_na_Max_Hp)) * self.bei_lv / 100 * full_bonus
 
-        hei_fu_full_six_damage_non_crit = hei_fu_hp * 18 / 100 * hei_fu_bonus * 3
-        bai_fu_full_six_damage_non_crit = bai_fu_hp * (18 + 25) / 100 * bai_fu_bonus * 3
-        
-        full_six_damage_non_crit = bai_fu_full_six_damage_non_crit + \
-            hei_fu_full_six_damage_non_crit
+        HEI_FU_BEI_LV = 18
+        BAI_FU_BEI_LV = 18 + 25
+
+        hp_bonus_list = [
+            full_damage_component(0, HEI_FU_BEI_LV),
+            full_damage_component(0.438, HEI_FU_BEI_LV),
+            full_damage_component(0.438, HEI_FU_BEI_LV),
+            full_damage_component(0.517, BAI_FU_BEI_LV),
+            full_damage_component(0.983, BAI_FU_BEI_LV),
+            full_damage_component(1.029, BAI_FU_BEI_LV)
+        ]
+
+        full_six_damage_non_crit = 0
+        for d in hp_bonus_list:
+            full_six_damage_non_crit += d.score()
+
         full_six_damage_crit = full_six_damage_non_crit * crit_damage
         full_six_damage_expect = full_six_damage_non_crit * \
             (1 + crit_rate * (crit_damage - 1))
@@ -177,19 +267,13 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage, shui_shen_q_bonu
 
 
 def calculate_score_callback(combine):
-    fu_ning_na_Max_Hp = 15307.0
-    base_hp = int(fu_ning_na_Max_Hp * (1
-                                  + 0.28  # 专武叠满两层
-                                  + ming_2_average_bonus
-                                  + 0.25  # 双水
-                                  + 0.2  # 夜兰四命保底两个e
-                                  )) + 4780
     base_crit_damage = 1 + 0.5 + 0.882
-    gu_you_tian_fu_2_e_bonus = 0.28 # 基本是能吃满的
+    gu_you_tian_fu_2_e_bonus = 0.28  # 基本是能吃满的
     wan_ye_bonus = 0.4
     zhuan_wu_e_bonus = 0.08 * 3
     ye_lan_bonus = 0.25  # 夜兰平均增伤
-    base_e_bonus = 1 + wan_ye_bonus + shui_shen_q_bonus + zhuan_wu_e_bonus + ye_lan_bonus + gu_you_tian_fu_2_e_bonus
+    base_e_bonus = 1 + wan_ye_bonus + shui_shen_q_bonus + \
+        zhuan_wu_e_bonus + ye_lan_bonus + gu_you_tian_fu_2_e_bonus
     base_full_bonus = 1 + wan_ye_bonus + shui_shen_q_bonus + ye_lan_bonus
 
     crit_rate = sum([p.crit_rate for p in combine]) + 0.242
@@ -231,14 +315,18 @@ def calculate_score_callback(combine):
             elif name_count[n] >= 4:
                 extra_e_bonus += 0.2 + 0.25 + 0.25
 
-    all_hp = int(hp_per * fu_ning_na_Max_Hp) + hp + base_hp
+    all_hp = int(fu_ning_na_Max_Hp * (1
+                                      + hp_per
+                                      + 0.28  # 专武叠满两层
+                                      + 0.25  # 双水
+                                      + 0.2  # 夜兰四命保底两个e
+                                      )) + hp + 4780
     all_crit_damage = base_crit_damage + extra_crit_damage
     e_bonus = base_e_bonus + extra_e_bonus + extra_water_bonus
     full_bonus = base_full_bonus + extra_water_bonus
 
     crit_score, expect_score = calc_score(
-        all_hp, e_bonus, full_bonus, crit_rate, all_crit_damage, shui_shen_q_bonus)
-    panel_hp = fu_ning_na_Max_Hp * (1 + hp_per) + 4780 + hp
+        all_hp, e_bonus, full_bonus, crit_rate, all_crit_damage)
 
     # print('all_hp:' + str(all_hp))
     # print("e_bonus:" + str(e_bonus))
@@ -249,15 +337,19 @@ def calculate_score_callback(combine):
     # print("expect_score:" + str(expect_score))
     # print('-----------------------------')
 
-    return [expect_score, crit_score, int(all_hp), int(panel_hp), round(e_bonus, 3), round(full_bonus, 3), round(crit_rate, 3), round(all_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
+    max_hp = all_hp + int(fu_ning_na_Max_Hp * ming_2_hp_bonus_max)
+    panel_hp = fu_ning_na_Max_Hp * (1 + hp_per) + 4780 + hp
+
+    return [expect_score, crit_score, int(max_hp), int(panel_hp), round(e_bonus, 3), round(full_bonus, 3), round(crit_rate, 3), round(all_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
+
 
 def find_syw_for_fu_ling_na():
     return calculate_score(find_combine_callback=find_combine_callback,
-                    match_sha_callback=match_sha_callback,
-                    match_bei_callback=match_bei_callback,
-                    calculate_score_callbak=calculate_score_callback,
-                    result_txt_file="fu_ling_na_syw.txt")
-    
+                           match_sha_callback=match_sha_callback,
+                           match_bei_callback=match_bei_callback,
+                           calculate_score_callbak=calculate_score_callback,
+                           result_txt_file="fu_ling_na_syw.txt")
+
 
 # Main body
 if __name__ == '__main__':
