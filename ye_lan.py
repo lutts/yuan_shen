@@ -110,7 +110,7 @@ def calculate_score_callback(combine):
     # 扣除切人时间，按一轮循环中11次协同攻击算
     # 技能伤害：15.53%生命值上限
     # 协同伤害：10.35%生命值上限 * 3 * 11
-    # 三命额外协同伤害：一般能打出6次，14%生命值上限 * 6
+    # 二命额外协同伤害：一般能打出5次，14%生命值上限 * 5
     # 强化破局矢伤害：20.84%生命上限 * 1.56 * 5
     # 两个e: 45.2生命值上限 * 2
     q_damage = all_hp * 15.53 / 100 * elem_bonus
@@ -121,7 +121,7 @@ def calculate_score_callback(combine):
     qx_damage_crit = qx_damage * crit_damage
     qx_damage_expect = qx_damage * (1 + crit_rate * (crit_damage - 1))
 
-    extra_qx_damage = all_hp * 14 / 100 * elem_bonus * 6
+    extra_qx_damage = all_hp * 14 / 100 * elem_bonus * 5
     extra_qx_damage_crit = extra_qx_damage * crit_damage
     extra_qx_damage_expect = extra_qx_damage * \
         (1 + crit_rate * (crit_damage - 1))

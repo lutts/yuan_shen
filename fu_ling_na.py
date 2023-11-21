@@ -89,7 +89,7 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
     full_hp = hp + int(fu_ning_na_Max_Hp * ming_2_hp_bonus_max)
     e_bonus_withoud_q = e_bonus - shui_shen_q_bonus
 
-    e_damage_list = [
+    e_damage_list_hei_fu = [
         # e结束：00:00:07.159
         # 前三次攻击的时候，就有6个头，表示叠了200层了
         # 夫人：00:00:08.559		（1.4）
@@ -110,7 +110,6 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
                            e_bonus_withoud_q + 400 * shui_shen_q_bonus_bei_lv),
 
         # 增伤满层，但二命的生命还会继续叠层
-
         # 勋爵：00:00:12.518			(5.359)
         e_damage_component(XUN_JUE_BEI_LV, hp + \
                            int(0.184 * fu_ning_na_Max_Hp), e_bonus),
@@ -189,9 +188,116 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
                            e_bonus_withoud_q, is_extra=True),
     ]
 
+    e_damage_list_bai_fu = [
+        # e结束：00:00:07.159
+        # 前三次攻击的时候，就有6个头，表示叠了200层了
+        # 夫人：00:00:08.559		（1.4）
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q + 200 * shui_shen_q_bonus_bei_lv),
+        # 螃蟹：00:00:08.959			(1.8)
+        e_damage_component(PANG_XIE_BEI_LV, hp,
+                           e_bonus_withoud_q + 200 * shui_shen_q_bonus_bei_lv),
+        # 勋爵：00:00:09.158			(1.999)
+        e_damage_component(XUN_JUE_BEI_LV, hp,
+                           e_bonus_withoud_q + 200 * shui_shen_q_bonus_bei_lv),
+
+        # 夫人：00:00:10.198			(3.039)
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q + 300 * shui_shen_q_bonus_bei_lv),
+        # 夫人：00:00:11.919			(4.76)
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q + 400 * shui_shen_q_bonus_bei_lv),
+
+        # 增伤满层，但二命的生命还会继续叠层
+
+        # 勋爵：00:00:12.518			(5.359)
+        e_damage_component(XUN_JUE_BEI_LV, hp + \
+                           int(0.184 * fu_ning_na_Max_Hp), e_bonus),
+        # 夫人：00:00:13.479			(6.32)
+        e_damage_component(FU_REN_BEI_LV, hp + \
+                           int(0.438 * fu_ning_na_Max_Hp), e_bonus),
+        # 螃蟹：00:00:14.360			(7.201)
+        e_damage_component(PANG_XIE_BEI_LV, hp + \
+                           int(0.438 * fu_ning_na_Max_Hp), e_bonus),
+
+        # 接下来的五次因为切换白芙导致三小只消失
+        # 夫人：00:00:15.161			(8.002)
+        e_damage_component(FU_REN_BEI_LV, hp + \
+                           int(0.517 * fu_ning_na_Max_Hp), e_bonus * 0),
+        # 勋爵：00:00:15.839			(8.68）
+        e_damage_component(XUN_JUE_BEI_LV, hp + \
+                           int(0.983 * fu_ning_na_Max_Hp), e_bonus * 0),
+        # 夫人：00:00:16.758			(9.599)
+        e_damage_component(FU_REN_BEI_LV, hp + \
+                           int(1.029 * fu_ning_na_Max_Hp), e_bonus * 0),
+
+        # 二命叠满生命
+        # 夫人：00:00:18.359			(11.2)
+        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus * 0),
+        # 勋爵：00:00:19.160			(12.001)
+        e_damage_component(XUN_JUE_BEI_LV, full_hp, e_bonus * 0),
+
+
+        # 再次切为黑芙后，三小只回来，行为模式回到一开始时
+        # 夫人：00:00:08.559		（1.4 --- 12.001）
+        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus),
+        # 螃蟹：00:00:08.959			(1.8 --- 12.401)
+        e_damage_component(PANG_XIE_BEI_LV, full_hp, e_bonus),
+        # 勋爵：00:00:09.158			(1.999)
+        e_damage_component(XUN_JUE_BEI_LV, full_hp, e_bonus),
+
+        # 夫人：00:00:10.198			(3.039)
+        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus),
+        # 夫人：00:00:11.919			(4.76)
+        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus),
+        # 勋爵：00:00:12.518			(5.359 --- 15.96)
+        e_damage_component(XUN_JUE_BEI_LV, full_hp, e_bonus),
+        # 夫人：00:00:13.479			(6.32 --- 16.921)
+        e_damage_component(FU_REN_BEI_LV, hp, e_bonus),
+        # 螃蟹：00:00:14.360			(7.201 --- 17.802)
+        e_damage_component(PANG_XIE_BEI_LV, hp, e_bonus),
+        
+        # 大招结束
+        # 夫人：00:00:15.161			(8.002)
+        e_damage_component(FU_REN_BEI_LV, hp, e_bonus_withoud_q),
+        # 勋爵：00:00:15.839			(8.68）
+        e_damage_component(XUN_JUE_BEI_LV, hp, e_bonus_withoud_q),
+        # 夫人：00:00:16.758			(9.599 --- 20.2)
+        e_damage_component(FU_REN_BEI_LV, hp, e_bonus_withoud_q),
+        # 夫人：00:00:18.359			(11.2 --- 21.801)
+        e_damage_component(FU_REN_BEI_LV, hp, e_bonus_withoud_q),
+        # 勋爵：00:00:19.160			(12.001 --- 22.602)
+        e_damage_component(XUN_JUE_BEI_LV, hp, e_bonus_withoud_q),
+        # 螃蟹：00:00:19.478			(12.319 --- 22.92)
+        e_damage_component(PANG_XIE_BEI_LV, hp, e_bonus_withoud_q),
+        # 夫人：00:00:20.119			(12.96  --- 23.561)
+        e_damage_component(FU_REN_BEI_LV, hp, e_bonus_withoud_q),
+
+        # 一轮循环(大约24秒)之外，某些配队才有这些
+        # 夫人：00:00:21.800			(14.641 --- 25.242)
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 勋爵：00:00:22.639			(15.48)
+        e_damage_component(XUN_JUE_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 夫人：00:00:23.439			(16.28)
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 螃蟹：00:00:24.639			(17.48 --- 28.081)
+        e_damage_component(PANG_XIE_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 夫人：00:00:25.080			(17.921 --- 28.522)
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+    ]
+
     fu_ren_damage_non_crit = 0
     xun_jue_damage_non_crit = 0
     pang_xie_damage_non_crit = 0
+
+    e_damage_list = e_damage_list_bai_fu
+    if only_e:
+        e_damage_list = e_damage_list_hei_fu
 
     for d in e_damage_list:
         if d.is_extra and not include_extra:
@@ -265,7 +371,7 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
     all_expect = fu_ren_damage_expect + xun_jue_damage_expect + \
         pang_xie_damage_expect + full_six_damage_expect
 
-    return (all_crit, all_expect)
+    return (all_crit, all_expect, round(full_six_damage_crit / all_crit, 3), round(full_six_damage_expect / all_expect, 3))
 
 
 def calculate_score_callback(combine):
@@ -327,7 +433,7 @@ def calculate_score_callback(combine):
     e_bonus = base_e_bonus + extra_e_bonus + extra_water_bonus
     full_bonus = base_full_bonus + extra_water_bonus
 
-    crit_score, expect_score = calc_score(
+    crit_score, expect_score, full_six_crit_zhan_bi, full_six_expect_zhan_bi = calc_score(
         all_hp, e_bonus, full_bonus, crit_rate, all_crit_damage)
 
     # print('all_hp:' + str(all_hp))
@@ -342,7 +448,7 @@ def calculate_score_callback(combine):
     max_hp = all_hp + int(fu_ning_na_Max_Hp * ming_2_hp_bonus_max)
     panel_hp = fu_ning_na_Max_Hp * (1 + hp_per) + 4780 + hp
 
-    return [expect_score, crit_score, int(max_hp), int(panel_hp), round(e_bonus, 3), round(full_bonus, 3), round(crit_rate, 3), round(all_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
+    return [expect_score, crit_score, full_six_expect_zhan_bi, full_six_crit_zhan_bi, int(max_hp), int(panel_hp), round(e_bonus, 3), round(full_bonus, 3), round(crit_rate, 3), round(all_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
 
 
 def find_syw_for_fu_ling_na():
