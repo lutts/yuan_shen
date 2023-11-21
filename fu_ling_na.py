@@ -163,10 +163,12 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
         e_damage_component(FU_REN_BEI_LV, hp, e_bonus_withoud_q),
         # 螃蟹：00:00:29.759			(22.6)
         e_damage_component(PANG_XIE_BEI_LV, hp, e_bonus_withoud_q),
-        # 夫人：00:00:31.199			(24.04)
-        e_damage_component(FU_REN_BEI_LV, hp, e_bonus_withoud_q),
+        
 
-        # 一轮循环之外，某些配队才有这些
+        # 一轮循环(大约24秒)之外，某些配队才有这些
+        # 夫人：00:00:31.199			(24.04)
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
         # 勋爵：00:00:32.560			(25.401)
         e_damage_component(XUN_JUE_BEI_LV, hp,
                            e_bonus_withoud_q, is_extra=True),
