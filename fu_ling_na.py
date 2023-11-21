@@ -109,7 +109,7 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
         e_damage_component(FU_REN_BEI_LV, hp,
                            e_bonus_withoud_q + 400 * shui_shen_q_bonus_bei_lv),
 
-        # 满层
+        # 增伤满层，但二命的生命还会继续叠层
 
         # 勋爵：00:00:12.518			(5.359)
         e_damage_component(XUN_JUE_BEI_LV, hp + \
