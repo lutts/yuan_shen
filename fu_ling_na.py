@@ -90,6 +90,7 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
     e_bonus_withoud_q = e_bonus - shui_shen_q_bonus
 
     e_damage_list_hei_fu = [
+        # 一直不切换成白芙时，三小只的行动模式
         # e结束：00:00:07.159
         # 前三次攻击的时候，就有6个头，表示叠了200层了
         # 夫人：00:00:08.559		（1.4）
@@ -189,105 +190,73 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
     ]
 
     e_damage_list_bai_fu = [
-        # e结束：00:00:07.159
-        # 前三次攻击的时候，就有6个头，表示叠了200层了
-        # 夫人：00:00:08.559		（1.4）
+        # 切白芙砍三刀，再切回黑芙时，三小只的行动模式
+        # 测试方法：钟离长e, 芙芙qea，琴e，夜兰eqe，芙芙zaaaz然后站场观察三小只的行动模式
         e_damage_component(FU_REN_BEI_LV, hp,
                            e_bonus_withoud_q + 200 * shui_shen_q_bonus_bei_lv),
-        # 螃蟹：00:00:08.959			(1.8)
         e_damage_component(PANG_XIE_BEI_LV, hp,
                            e_bonus_withoud_q + 200 * shui_shen_q_bonus_bei_lv),
-        # 勋爵：00:00:09.158			(1.999)
         e_damage_component(XUN_JUE_BEI_LV, hp,
                            e_bonus_withoud_q + 200 * shui_shen_q_bonus_bei_lv),
 
-        # 夫人：00:00:10.198			(3.039)
         e_damage_component(FU_REN_BEI_LV, hp,
                            e_bonus_withoud_q + 300 * shui_shen_q_bonus_bei_lv),
-        # 夫人：00:00:11.919			(4.76)
+        # 第五次夫人的攻击无限接近满层
         e_damage_component(FU_REN_BEI_LV, hp,
                            e_bonus_withoud_q + 400 * shui_shen_q_bonus_bei_lv),
 
         # 增伤满层，但二命的生命还会继续叠层
+        e_damage_component(XUN_JUE_BEI_LV, hp + int(0.3 * fu_ning_na_Max_Hp), e_bonus),
+        e_damage_component(FU_REN_BEI_LV, hp + int(0.399 * fu_ning_na_Max_Hp), e_bonus),
 
-        # 勋爵：00:00:12.518			(5.359)
-        e_damage_component(XUN_JUE_BEI_LV, hp + \
-                           int(0.184 * fu_ning_na_Max_Hp), e_bonus),
-        # 夫人：00:00:13.479			(6.32)
-        e_damage_component(FU_REN_BEI_LV, hp + \
-                           int(0.438 * fu_ning_na_Max_Hp), e_bonus),
-        # 螃蟹：00:00:14.360			(7.201)
-        e_damage_component(PANG_XIE_BEI_LV, hp + \
-                           int(0.438 * fu_ning_na_Max_Hp), e_bonus),
-
-        # 接下来的五次因为切换白芙导致三小只消失
-        # 夫人：00:00:15.161			(8.002)
-        e_damage_component(FU_REN_BEI_LV, hp + \
-                           int(0.517 * fu_ning_na_Max_Hp), e_bonus * 0),
-        # 勋爵：00:00:15.839			(8.68）
-        e_damage_component(XUN_JUE_BEI_LV, hp + \
-                           int(0.983 * fu_ning_na_Max_Hp), e_bonus * 0),
-        # 夫人：00:00:16.758			(9.599)
-        e_damage_component(FU_REN_BEI_LV, hp + \
-                           int(1.029 * fu_ning_na_Max_Hp), e_bonus * 0),
-
-        # 二命叠满生命
-        # 夫人：00:00:18.359			(11.2)
-        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus * 0),
-        # 勋爵：00:00:19.160			(12.001)
-        e_damage_component(XUN_JUE_BEI_LV, full_hp, e_bonus * 0),
-
-
-        # 再次切为黑芙后，三小只回来，行为模式回到一开始时
-        # 夫人：00:00:08.559		（1.4 --- 12.001）
-        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus),
-        # 螃蟹：00:00:08.959			(1.8 --- 12.401)
+        # 切白芙，三小只消失
+        # 再切黑芙，三小只出来，行动模式重置
+        e_damage_component(FU_REN_BEI_LV, hp + int(1.3 * fu_ning_na_Max_Hp), e_bonus),
         e_damage_component(PANG_XIE_BEI_LV, full_hp, e_bonus),
-        # 勋爵：00:00:09.158			(1.999)
         e_damage_component(XUN_JUE_BEI_LV, full_hp, e_bonus),
+        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus),
+        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus),
+        e_damage_component(XUN_JUE_BEI_LV, full_hp, e_bonus),
+        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus),
 
-        # 夫人：00:00:10.198			(3.039)
-        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus),
-        # 夫人：00:00:11.919			(4.76)
-        e_damage_component(FU_REN_BEI_LV, full_hp, e_bonus),
-        # 勋爵：00:00:12.518			(5.359 --- 15.96)
-        e_damage_component(XUN_JUE_BEI_LV, full_hp, e_bonus),
-        # 夫人：00:00:13.479			(6.32 --- 16.921)
-        e_damage_component(FU_REN_BEI_LV, hp, e_bonus),
-        # 螃蟹：00:00:14.360			(7.201 --- 17.802)
-        e_damage_component(PANG_XIE_BEI_LV, hp, e_bonus),
-        
+        # 大招消失了，但芙芙的血量没变化，气氛值还在
+        e_damage_component(PANG_XIE_BEI_LV, full_hp, e_bonus),
+
         # 大招结束
-        # 夫人：00:00:15.161			(8.002)
         e_damage_component(FU_REN_BEI_LV, hp, e_bonus_withoud_q),
-        # 勋爵：00:00:15.839			(8.68）
         e_damage_component(XUN_JUE_BEI_LV, hp, e_bonus_withoud_q),
-        # 夫人：00:00:16.758			(9.599 --- 20.2)
         e_damage_component(FU_REN_BEI_LV, hp, e_bonus_withoud_q),
-        # 夫人：00:00:18.359			(11.2 --- 21.801)
         e_damage_component(FU_REN_BEI_LV, hp, e_bonus_withoud_q),
-        # 勋爵：00:00:19.160			(12.001 --- 22.602)
         e_damage_component(XUN_JUE_BEI_LV, hp, e_bonus_withoud_q),
-        # 螃蟹：00:00:19.478			(12.319 --- 22.92)
-        e_damage_component(PANG_XIE_BEI_LV, hp, e_bonus_withoud_q),
-        # 夫人：00:00:20.119			(12.96  --- 23.561)
-        e_damage_component(FU_REN_BEI_LV, hp, e_bonus_withoud_q),
 
         # 一轮循环(大约24秒)之外，某些配队才有这些
-        # 夫人：00:00:21.800			(14.641 --- 25.242)
-        e_damage_component(FU_REN_BEI_LV, hp,
-                           e_bonus_withoud_q, is_extra=True),
-        # 勋爵：00:00:22.639			(15.48)
-        e_damage_component(XUN_JUE_BEI_LV, hp,
-                           e_bonus_withoud_q, is_extra=True),
-        # 夫人：00:00:23.439			(16.28)
-        e_damage_component(FU_REN_BEI_LV, hp,
-                           e_bonus_withoud_q, is_extra=True),
-        # 螃蟹：00:00:24.639			(17.48 --- 28.081)
+        # --------
+        # 00:00:36.050				螃蟹
         e_damage_component(PANG_XIE_BEI_LV, hp,
                            e_bonus_withoud_q, is_extra=True),
-        # 夫人：00:00:25.080			(17.921 --- 28.522)
+        # 00:00:36.703				夫人
         e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 00:00:38.752				夫人
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 00:00:39.651				勋爵
+        e_damage_component(XUN_JUE_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 00:00:40.711				夫人
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 00:00:42.791				螃蟹
+        e_damage_component(PANG_XIE_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 00:00:42.916				夫人
+        e_damage_component(FU_REN_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 00:00:44.175				勋爵
+        e_damage_component(XUN_JUE_BEI_LV, hp,
+                           e_bonus_withoud_q, is_extra=True),
+        # 00:00:44.973				夫人，然后三小只消失
+        e_damage_component(XUN_JUE_BEI_LV, hp,
                            e_bonus_withoud_q, is_extra=True),
     ]
 
@@ -324,17 +293,6 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
 
     if not only_e:
         # 采用qea 万叶e, 夜兰qee，这种手法能更快速叠层
-        # e技能结束：00:00:04.870
-        # 满层：00:00:09.247                            0%						4.377
-        # 芙芙出场：
-        # 00:00:10.446			45433                   18.4%				5.576
-        # 00:00:10.497			45628                   19.6%				5.627
-        # 00:00:10.697			46628                   26.2%				5.827
-        # 00:00:11.186			49328	第二刀           43.8%				6.316
-        # 00:00:11.677			49328	第三刀           43.8%				6.807
-        # 00:00:12.427			50528	第四刀（重击）    51.7%				7.557
-        # 00:00:13.087			57673	第五刀           98.3%				8.217
-        # 00:00:13.746			58378	第六刀          102.9%			8.876
         class full_damage_component:
             def __init__(self, hp_bonus, bei_lv):
                 self.hp_bonus = hp_bonus
@@ -348,11 +306,11 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
 
         hp_bonus_list = [
             full_damage_component(0, HEI_FU_BEI_LV),
-            full_damage_component(0.438, HEI_FU_BEI_LV),
-            full_damage_component(0.438, HEI_FU_BEI_LV),
-            full_damage_component(0.517, BAI_FU_BEI_LV),
-            full_damage_component(0.983, BAI_FU_BEI_LV),
-            full_damage_component(1.029, BAI_FU_BEI_LV)
+            full_damage_component(0.4, HEI_FU_BEI_LV),
+            full_damage_component(0.48, HEI_FU_BEI_LV),
+            full_damage_component(0.6, BAI_FU_BEI_LV),
+            full_damage_component(0.9, BAI_FU_BEI_LV),
+            full_damage_component(1.0, BAI_FU_BEI_LV)
         ]
 
         full_six_damage_non_crit = 0
