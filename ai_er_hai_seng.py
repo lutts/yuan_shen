@@ -67,7 +67,7 @@ def calculate_score_callback(combine : list[ShengYiWu]):
     crit_damage = 1 + 0.5
     elem_mastery = na_xi_da_zhuan_wu_elem_mastery + shuang_cao_elem_mastery + sheng_xian_mastery
     panel_elem_mastery = 0
-    atk = bai_zhi_atk + 311
+    atk = 311
     atk_per = 0
     elem_bonus = base_elem_bonus + bo_bo_dao_bonus
 
@@ -82,6 +82,8 @@ def calculate_score_callback(combine : list[ShengYiWu]):
 
     if crit_rate < 0.65:
         return None
+    
+    panel_atk_per = atk_per
     
     syw_names = [p.name for p in combine]
     # print(syw_names)
@@ -109,6 +111,7 @@ def calculate_score_callback(combine : list[ShengYiWu]):
     
     a_elem_bonus = elem_bonus + bo_bo_dao_a_bonus
     all_atk = int(bai_zhi_atk * (1 + atk_per)) + atk
+    panel_atk = int(bai_zhi_atk * (1 + panel_atk_per)) + atk
 
     # 以下计算基于以下手法
     # Q 切久岐忍e 再切回海哥 aaa闪 aaa e aaa闪 aaa z aaa aaa，共计六发满层光幕攻击
@@ -125,7 +128,7 @@ def calculate_score_callback(combine : list[ShengYiWu]):
     crit_score = non_crit_score * crit_damage
     expect_score = non_crit_score * (1 + crit_rate * (crit_damage - 1))
 
-    return [expect_score, crit_score, elem_mastery, panel_elem_mastery, int(all_atk), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
+    return [expect_score, crit_score, elem_mastery, panel_elem_mastery, int(panel_atk), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
 
 
 def find_syw_for_ai_er_hai_seng():
