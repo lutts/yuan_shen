@@ -331,32 +331,52 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
 
     return (all_crit, all_expect, round(full_six_damage_crit / all_crit, 3), round(full_six_damage_expect / all_expect, 3))
 
+def calculate_score_callback(combine : list[ShengYiWu]):
+    extra_crit_damage = {
+        "专武": 0.882
+    }
 
-def calculate_score_callback(combine):
-    base_crit_damage = 1 + 0.5 + 0.882
-    gu_you_tian_fu_2_e_bonus = 0.28  # 基本是能吃满的
-    wan_ye_bonus = 0.4
-    zhuan_wu_e_bonus = 0.08 * 3
-    ye_lan_bonus = 0.25  # 夜兰平均增伤
-    base_e_bonus = 1 + wan_ye_bonus + shui_shen_q_bonus + \
-        zhuan_wu_e_bonus + ye_lan_bonus + gu_you_tian_fu_2_e_bonus
-    base_full_bonus = 1 + wan_ye_bonus + shui_shen_q_bonus + ye_lan_bonus
+    common_elem_bonus = {
+        "万叶": 0.4,
+        "夜兰平均增伤": 0.25,
+        "芙芙Q增伤": shui_shen_q_bonus,
+    }
 
-    crit_rate = sum([p.crit_rate for p in combine]) + 0.242
+    extra_e_bonus = {
+        "固有天赋2": 0.28,# 基本是能吃满的，操作得当，生命基本能保持在50%以上
+        "专武": 0.08 * 3,
+
+    }
+
+    extra_hp_bonus = {
+        "专武叠满两层": 0.28,
+        "双水": 0.25,
+        "夜兰四命保底两个e": 0.2,
+    }
+
+    crit_rate = 0.242 # 突破加成
+    crit_damage = 1 + 0.5 + sum(extra_crit_damage.values())
+    hp = 0
+    hp_per = 0
+    elem_bonus = 1 + sum(common_elem_bonus.values())
+    energe_recharge = 1
+
+    for p in combine:
+        crit_rate += p.crit_rate
+        crit_damage += p.crit_damage
+        hp += p.hp
+        hp_per += p.hp_percent
+        elem_bonus += p.elem_bonus
+        energe_recharge += p.energe_recharge
+
     if crit_rate < 0.70:
         return None
-
-    hp = sum([p.hp for p in combine])
-    hp_per = sum([p.hp_percent for p in combine])
-    extra_crit_damage = sum([p.crit_damage for p in combine])
-    extra_water_bonus = sum([p.elem_bonus for p in combine])
-    total_energe_recharge = (
-        sum([p.energe_recharge for p in combine]) + 1) * 100
-
-    if total_energe_recharge < 110:
+    
+    energe_recharge *= 100
+    if energe_recharge < 110:
         return None
 
-    extra_e_bonus = 0
+    syw_e_bonus = 0
 
     syw_names = [p.name for p in combine]
     # print(syw_names)
@@ -370,43 +390,29 @@ def calculate_score_callback(combine):
         if n == ShengYiWu.HUA_HAI:
             hp_per += 0.2
         elif n == ShengYiWu.SHUI_XIAN:
-            extra_water_bonus += 0.15
+            elem_bonus += 0.15
         elif n == ShengYiWu.QIAN_YAN:
             hp_per += 0.2
         elif n == ShengYiWu.CHEN_LUN:
-            extra_water_bonus += 0.15
+            elem_bonus += 0.15
         elif n == ShengYiWu.JU_TUAN:
-            if name_count[n] == 2:
-                extra_e_bonus += 0.2
-            elif name_count[n] >= 4:
-                extra_e_bonus += 0.2 + 0.25 + 0.25
+            syw_e_bonus += 0.2
+            if name_count[n] >= 4:
+                syw_e_bonus += 0.25 + 0.25
 
     all_hp = int(fu_ning_na_Max_Hp * (1
                                       + hp_per
-                                      + 0.28  # 专武叠满两层
-                                      + 0.25  # 双水
-                                      + 0.2  # 夜兰四命保底两个e
+                                      + sum(extra_hp_bonus.values())
                                       )) + hp + 4780
-    all_crit_damage = base_crit_damage + extra_crit_damage
-    e_bonus = base_e_bonus + extra_e_bonus + extra_water_bonus
-    full_bonus = base_full_bonus + extra_water_bonus
+    e_bonus = elem_bonus + sum(extra_e_bonus.values()) + syw_e_bonus
 
     crit_score, expect_score, full_six_crit_zhan_bi, full_six_expect_zhan_bi = calc_score(
-        all_hp, e_bonus, full_bonus, crit_rate, all_crit_damage)
-
-    # print('all_hp:' + str(all_hp))
-    # print("e_bonus:" + str(e_bonus))
-    # print("full_bonus:" + str(full_bonus))
-    # print('crit_rate:' + str(crit_rate))
-    # print('crit_damage:' + str(all_crit_damage))
-    # print("crit_score:" + str(crit_score))
-    # print("expect_score:" + str(expect_score))
-    # print('-----------------------------')
+        all_hp, e_bonus, elem_bonus, crit_rate, crit_damage)
 
     max_hp = all_hp + int(fu_ning_na_Max_Hp * ming_2_hp_bonus_max)
     panel_hp = fu_ning_na_Max_Hp * (1 + hp_per) + 4780 + hp
 
-    return [expect_score, crit_score, full_six_expect_zhan_bi, full_six_crit_zhan_bi, int(max_hp), int(panel_hp), round(e_bonus, 3), round(full_bonus, 3), round(crit_rate, 3), round(all_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
+    return [expect_score, crit_score, full_six_expect_zhan_bi, full_six_crit_zhan_bi, int(max_hp), int(panel_hp), round(e_bonus, 3), round(elem_bonus, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]
 
 
 def find_syw_for_fu_ling_na():
