@@ -17,6 +17,7 @@ from xiang_ling import find_syw_for_xiang_ling
 from na_xi_da import find_syw_for_na_xi_da
 from fei_xie_er import find_syw_for_fei_xie_er
 from hu_tao import find_syw_for_hu_tao, find_syw_for_hu_tao_lie_ren
+from ai_er_hai_seng import find_syw_for_ai_er_hai_seng
 
 def syw_dict_to_id_list(syw_dict):
     id_list = []
@@ -44,6 +45,7 @@ if __name__ == '__main__':
         find_syw_for_fei_xie_er,
         find_syw_for_hu_tao,
         find_syw_for_hu_tao_lie_ren,
+        find_syw_for_ai_er_hai_seng
     ]
 
     used_syw_id_list = []

@@ -51,20 +51,34 @@ def find_combins_callback():
             for l in list(itertools.combinations(all_combines_2, 2))] + shi_jin_4
 
 
-def calculate_score_callback(combine):
-    max_atk = 841
+def calculate_score_callback(combine : list[ShengYiWu]):
+    base_atk = 314
+    wu_qi_atk = 608 # 波波刀
+    bai_zhi_atk = base_atk + wu_qi_atk
     na_xi_da_zhuan_wu_elem_mastery = 40
-    base_elem_mastery = na_xi_da_zhuan_wu_elem_mastery + (50 + 50  # 双草共鸣
-                                                          + 76  # 圣显
-                                                          )
-    base_atk = max_atk + 311
-    base_crit_damage = 1 + 0.5
-    base_elem_bonus = 1 + (0.288  # 等级突破
-                           + 0.12  # 波波刀
-                           )
+    shuang_cao_elem_mastery = 50 + 50   # 双草共鸣
+    sheng_xian_mastery = 76 # 久岐忍圣显
+    base_elem_bonus = 1 + 0.288  # 等级突破
+    bo_bo_dao_bonus = 0.12
+    bo_bo_dao_a_bonus = 2 * 0.2     # 波波刀2层
+    bo_bo_dao_crit_rate = 0.331
 
-    elem_mastery = sum([p.elem_mastery for p in combine]) + base_elem_mastery
-    crit_rate = sum([p.crit_rate for p in combine]) + 0.05 + 0.331  # 波波刀
+    crit_rate = 0.05 + bo_bo_dao_crit_rate
+    crit_damage = 1 + 0.5
+    elem_mastery = na_xi_da_zhuan_wu_elem_mastery + shuang_cao_elem_mastery + sheng_xian_mastery
+    panel_elem_mastery = 0
+    atk = bai_zhi_atk + 311
+    atk_per = 0
+    elem_bonus = base_elem_bonus + bo_bo_dao_bonus
+
+    for p in combine:
+        crit_rate += p.crit_rate
+        crit_damage += p.crit_damage
+        elem_mastery += p.elem_mastery
+        panel_elem_mastery += p.elem_mastery
+        atk += p.atk
+        atk_per += p.atk_per
+        elem_bonus += p.elem_bonus
 
     if crit_rate < 0.65:
         return None
@@ -79,34 +93,39 @@ def calculate_score_callback(combine):
 
         # print(n)
         if n == ShengYiWu.SHI_JIN:
-            if name_count[n] == 2:
-                elem_mastery += 80
-            else:
-                
-            hp_per += 0.2
-        elif n == ShengYiWu.SHUI_XIAN:
-            extra_water_bonus += 0.15
-        elif n == ShengYiWu.QIAN_YAN:
-            hp_per += 0.2
-        elif n == ShengYiWu.CHEN_LUN:
-            extra_water_bonus += 0.15
+            elem_mastery += 80
+            panel_elem_mastery += 80
+            if name_count[n] >= 4:
+                atk_per += 0.14
+                elem_mastery += 50 + 50
+        elif n == ShengYiWu.YUE_TUAN:
+            elem_mastery += 80
+            panel_elem_mastery += 80
+        elif n == ShengYiWu.SHEN_LIN:
+            elem_bonus += 0.15
+    
+    # 固有天赋2
+    elem_bonus += min(elem_mastery * 0.001, 1)
+    
+    a_elem_bonus = elem_bonus + bo_bo_dao_a_bonus
+    all_atk = int(bai_zhi_atk * (1 + atk_per)) + atk
 
-    atk = sum([p.atk for p in combine])
-    atk_per = sum([p.atk_per for p in combine])
-    extra_crit_damage = sum([p.crit_damage for p in combine])
+    # 以下计算基于以下手法
+    # Q 切久岐忍e 再切回海哥 aaa闪 aaa e aaa闪 aaa z aaa aaa，共计六发满层光幕攻击
+    # 波波刀的普攻增伤需要海哥e之后才有，能覆盖开e后续所有的平A
+    q_damage = (all_atk * 218.9 / 100 + elem_mastery * 175.1 / 100) * elem_bonus
 
-    elem_bonus = base_elem_bonus + min((elem_mastery - 200) * 0.001, 0.8)
+    aaa_damage = all_atk * (91 + 93.2 + 62.8 + 62.8) / 100
+    z_damage = all_atk * (101.5 + 101.5) / 100
 
-    all_atk = atk_per * max_atk + atk + base_atk
-    crit_damage = base_crit_damage + extra_crit_damage
+    e_damage = (all_atk * 3.485 / 100 + elem_mastery * 2.788 / 100) * elem_bonus
+    guang_mu_damage = (all_atk * 121 / 100 + elem_mastery * 241.9 / 100) * 3 * elem_bonus * 6  # 六剑雨
 
-    atk_bei_lv = 2.193
-    elem_bei_lv = 4.386
-
-    non_crit_score = atk_bei_lv * all_atk + elem_bei_lv * elem_mastery * elem_bonus
+    non_crit_score = q_damage + 2 * aaa_damage * elem_bonus + e_damage + z_damage + 4 * aaa_damage * a_elem_bonus + guang_mu_damage
     crit_score = non_crit_score * crit_damage
     expect_score = non_crit_score * (1 + crit_rate * (crit_damage - 1))
-    return [expect_score, crit_score, elem_mastery, int(all_atk), round(panel_crit_rate, 3), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
+
+    return [expect_score, crit_score, elem_mastery, panel_elem_mastery, int(all_atk), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
 
 
 def find_syw_for_ai_er_hai_seng():
