@@ -46,34 +46,55 @@ def find_combine_callback():
                     for l in list(itertools.combinations(all_combins, 2))]
 
 
-def calculate_score_callback(combine):
-    YeLan_Max_Hp = 14450.0
-    base_hp = int(YeLan_Max_Hp * (1
-                                  #+ 0.3  # 四色
-                                  + 0.18 + 0.25 # 双水
-                                  + 0.16  # 专武
-                                  + 0.2  # 四命保底两个e
-                                  )) + 4780
-    base_crit_damage = 1 + 0.5 + 0.882
-    zhuan_wu_bonus = 0.2
-    wan_ye_bonus = 0.4
-    lei_shen_bonus = 0 #0.27
-    shui_shen_bonus = 1.24
-    base_water_bonus = 1 + zhuan_wu_bonus + shui_shen_bonus + \
-        wan_ye_bonus + lei_shen_bonus + 0.25  # 夜兰自身平均增伤
+def calculate_score_callback(combine : list[ShengYiWu]):
+    base_hp = 14450.0
 
-    crit_rate = sum([p.crit_rate for p in combine]) + 0.242
+    extra_hp_bonus = {
+        # "四色": 0.3,
+        "双水": 0.18 + 0.25,
+        "专武": 0.16,
+        "四命保底两个e": 0.2,
+    }
+
+    common_elem_bonus = {
+        "专武": 0.2,
+        "万叶": 0.4,
+        "芙芙q": 1.24,
+        "夜兰大招平均增伤": 0.27,
+    }
+
+    extra_q_bonus = {
+        #"雷神e": 70 * 0.003,
+    }
+
+    extra_crit_damage = {
+        "专武": 0.882,
+    }
+
+    po_ju_shi_avg_bonus = 0.36  # 大招开启后第10秒左右切出来放打满命5下
+    
+    crit_rate = 0.242
+    crit_damage = 1 + 0.5 + sum(extra_crit_damage.values())
+    hp = 0
+    hp_per = 0
+    elem_bonus = 1 + sum(common_elem_bonus.values()) + sum(extra_q_bonus.values())
+    energe_recharge = 1
+
+    for p in combine:
+        crit_rate += p.crit_rate
+        crit_damage += p.crit_damage
+        hp += p.hp
+        hp_per += p.hp_percent
+        elem_bonus += p.elem_bonus
+        energe_recharge += p.energe_recharge
+
     if crit_rate < 0.75:
         return None
 
-    hp = sum([p.hp for p in combine])
-    hp_per = sum([p.hp_percent for p in combine])
-    extra_crit_damage = sum([p.crit_damage for p in combine])
-    extra_water_bonus = sum([p.elem_bonus for p in combine])
-    total_energe_recharge = (
-        sum([p.energe_recharge for p in combine]) + 1) * 100
 
-    if total_energe_recharge < 120:
+    energe_recharge *= 100
+
+    if energe_recharge < 120:
         return None
 
     syw_names = [p.name for p in combine]
@@ -88,24 +109,13 @@ def calculate_score_callback(combine):
         if n == ShengYiWu.HUA_HAI:
             hp_per += 0.2
         elif n == ShengYiWu.SHUI_XIAN:
-            extra_water_bonus += 0.15
+            elem_bonus += 0.15
         elif n == ShengYiWu.QIAN_YAN:
             hp_per += 0.2
         elif n == ShengYiWu.CHEN_LUN:
-            extra_water_bonus += 0.15
+            elem_bonus += 0.15
 
-    all_hp = int(hp_per * YeLan_Max_Hp) + hp + base_hp
-    elem_bonus = base_water_bonus + extra_water_bonus
-    crit_damage = base_crit_damage + extra_crit_damage
-
-    # print('all_hp:' + str(all_hp))
-    # print('base_hp:' + str(base_hp))
-    # if extra_water_bonus < 0.466:
-    #    print("extra_bonus:" + str(extra_water_bonus))
-    # print('base_bonus:' + str(base_water_bonus))
-    # print('extra_cd:' + str(extra_crit_damage))
-    # print('base_cd:' + str(base_crit_damage))
-    # print('-----------------------------')
+    all_hp = int(base_hp * (1 + hp_per + sum(extra_hp_bonus.values()))) + hp + 4780
 
     # 扣除切人时间，按一轮循环中11次协同攻击算
     # 技能伤害：15.53%生命值上限
@@ -113,7 +123,7 @@ def calculate_score_callback(combine):
     # 二命额外协同伤害：一般能打出5次，14%生命值上限 * 5
     # 强化破局矢伤害：20.84%生命上限 * 1.56 * 5
     # 两个e: 45.2生命值上限 * 2
-    q_damage = all_hp * 15.53 / 100 * elem_bonus
+    q_damage = all_hp * 15.53 / 100 * (elem_bonus - common_elem_bonus["夜兰大招平均增伤"])
     q_damage_crit = q_damage * crit_damage
     q_damage_expect = q_damage * (1 + crit_rate * (crit_damage - 1))
 
@@ -126,12 +136,16 @@ def calculate_score_callback(combine):
     extra_qx_damage_expect = extra_qx_damage * \
         (1 + crit_rate * (crit_damage - 1))
 
-    po_ju_shi_damage = all_hp * 20.84 / 100 * elem_bonus * 1.56 * 5
+    po_ju_shi_elem_bonus = (elem_bonus - common_elem_bonus["夜兰大招平均增伤"] + po_ju_shi_avg_bonus)
+    po_ju_shi_damage = all_hp * 20.84 / 100 * po_ju_shi_elem_bonus * 1.56 * 5
     po_ju_shi_damage_crit = po_ju_shi_damage * crit_damage
     po_ju_shi_damage_expect = po_ju_shi_damage * \
         (1 + crit_rate * (crit_damage - 1))
 
-    e_damage = all_hp * 45.2 / 100 * elem_bonus * 2
+    # e技能只有一个能吃到夜兰自身大招增伤，开局两个都吃不到，但不考虑
+    # e吃不到雷神的增伤
+    e_elem_bonus = elem_bonus - sum(extra_q_bonus.values())
+    e_damage = all_hp * 45.2 / 100 * (e_elem_bonus * 2 - common_elem_bonus["夜兰大招平均增伤"])
     e_damage_crit = e_damage * crit_damage
     e_damage_expect = e_damage * (1 + crit_rate * (crit_damage - 1))
 
@@ -140,15 +154,7 @@ def calculate_score_callback(combine):
     expect_score = q_damage_expect + qx_damage_expect + \
         extra_qx_damage_expect + po_ju_shi_damage_expect + e_damage_expect
 
-    # # non_crit_score: 不暴击的情况下，相对于base的增幅
-    # non_crit_score= all_hp / base_hp * (base_water_bonus + extra_water_bonus) / base_water_bonus
-    # # crit_score: 暴击了的情况下，暴击伤害相对于base的增幅
-    # crit_score = non_crit_score* (base_crit_damage + extra_crit_damage) / base_crit_damage
-    # expect_crit_damage_bonus = crit_rate * (extra_crit_damage + base_crit_damage - 1)
-    # # 当前圣遗物组合的伤害期望
-    # expect_score = non_crit_score* (1 + expect_crit_damage_bonus)
-
-    return [expect_score, crit_score, int(all_hp), round(crit_rate, 3), round(crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
+    return [expect_score, crit_score, int(all_hp), round(elem_bonus, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]
 
 
 def find_syw_for_ye_lan():
