@@ -127,6 +127,7 @@ def calculate_score_callback(combine):
     elem_bonus = base_elem_bonus + extra_elem_bonus + 0.33  # 低于50%时的固有天赋0.33
     crit_damage = base_crit_damage + extra_crit_damage
 
+    # 11次az
     az_damage = all_atk * (69.3 + 200.9) / 100 * elem_bonus * 11
     az_damage_crit = az_damage * crit_damage
     az_damage_expect = az_damage * (1 + crit_rate * (crit_damage - 1))
