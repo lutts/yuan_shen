@@ -44,22 +44,25 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     bai_zhi_atk = wu_qi_atk + base_atk
 
     extra_elem_mastery = {
-        "wu qi": 265,
-        "deng ji tu po": 115,
-        "4 ming": 100,
-        "q from jiu qi ren": 243,  # 固有天赋，阿忍带圣显，四饰金加的150可以被纳西妲大招转化
-        "sheng xian": 76    # 久岐圣显
+        "武器": 265,
+        "等级突破加成": 115,
+        "四命最小加成": 100,
+        "大招转化自久岐扔": 243,  # 固有天赋，阿忍带圣显，四饰金加的150可以被纳西妲大招转化
+        "圣显": 76
     }
 
-    shen_lin_elem_bonus = 0.15      # 草套2件套效果
-    ming_1_elem_bonus = 0.316       # 1命
-    wu_qi_elem_bonus = 0.3          # 专武
+    extra_elem_bonus = {
+        "草套2件套效果": 0.15,
+        "一命计算一个火系": 0.316,
+        "专武(草行久钟)": 0.3  #
+    }
 
     panel_crit_rate = 0.05
     crit_damage = 1 + 0.5
     elem_mastery = sum(extra_elem_mastery.values())
-    panel_elem_mastery = extra_elem_mastery["wu qi"] + extra_elem_mastery["deng ji tu po"]
-    elem_bonus = shen_lin_elem_bonus + ming_1_elem_bonus + wu_qi_elem_bonus
+    panel_elem_mastery = extra_elem_mastery["武器"] + \
+        extra_elem_mastery["等级突破加成"]
+    elem_bonus = sum(extra_elem_bonus.values())
     atk = 311
     atk_per = 0
     energy_recharge = 0
