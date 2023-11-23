@@ -72,7 +72,7 @@ def calculate_score_callback(combine):
     atk_bei_lv = 2.193
     elem_bei_lv = 4.386
 
-    non_crit_score = atk_bei_lv * all_atk + elem_bei_lv * elem_mastery * elem_bonus
+    non_crit_score = (atk_bei_lv * all_atk + elem_bei_lv * elem_mastery) * elem_bonus
     crit_score = non_crit_score * crit_damage
     expect_score = non_crit_score * (1 + crit_rate * (crit_damage - 1))
     return [expect_score, crit_score, elem_mastery, panel_elem_mastery, int(all_atk), round(panel_crit_rate, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(total_energe_recharge, 3), combine]
