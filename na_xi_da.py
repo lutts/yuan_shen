@@ -54,7 +54,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     extra_elem_bonus = {
         "草套2件套效果": 0.15,
         "一命计算一个火系": 0.316,
-        "专武(草行久钟)": 0.3  #
+        "专武(草行久钟)": 0.3
     }
 
     panel_crit_rate = 0.05
@@ -62,7 +62,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     elem_mastery = sum(extra_elem_mastery.values())
     panel_elem_mastery = extra_elem_mastery["武器"] + \
         extra_elem_mastery["等级突破加成"]
-    elem_bonus = sum(extra_elem_bonus.values())
+    elem_bonus = 1 + sum(extra_elem_bonus.values())
     atk = 311
     atk_per = 0
     energy_recharge = 0
