@@ -73,10 +73,12 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         energe_recharge += p.energe_recharge
         elem_bonus += p.elem_bonus
 
+    crit_rate = round(crit_rate, 3)
     if crit_rate < 0.4:
         return None
     
     energe_recharge *= 100
+    energe_recharge = round(energe_recharge, 1)
     if energe_recharge <= 116.5:
         return None
     
@@ -93,7 +95,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     non_crit_score = all_atk / base_atk * elem_bonus / base_elem_bonus
     crit_score = non_crit_score * crit_damage / base_crit_damage
     expect_score = non_crit_score * (1 + real_crit_rate * (crit_damage - 1))
-    return [expect_score, crit_score, int(panel_atk), round(elem_bonus, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]
+    return [expect_score, crit_score, int(panel_atk), round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]
 
 
 def find_syw_for_ling_hua():

@@ -79,13 +79,16 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         atk_per += p.atk_per
         energy_recharge += p.energe_recharge
 
+    crit_rate = round(crit_rate, 3)
     if crit_rate < 0.6:
         return None
     
+    elem_mastery = round(elem_mastery, 1)
     if elem_mastery < 180:
         return None
     
     energy_recharge *= 100
+    energy_recharge = round(energy_recharge, 1)
     if energy_recharge < 220:
         return None
     

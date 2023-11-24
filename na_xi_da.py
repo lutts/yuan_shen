@@ -78,6 +78,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         energy_recharge += p.energe_recharge
 
     crit_rate = panel_crit_rate + + min((elem_mastery - 200) * 0.0003, 0.24)
+    crit_rate = round(crit_rate, 3)
     if crit_rate < 0.64:
         return None
 

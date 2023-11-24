@@ -80,6 +80,7 @@ def calculate_score_callback(combine : list[ShengYiWu]):
         atk_per += p.atk_per
         elem_bonus += p.elem_bonus
 
+    crit_rate = round(crit_rate, 3)
     if crit_rate < 0.65:
         return None
     

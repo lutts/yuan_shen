@@ -77,12 +77,14 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         energe_recharge += p.energe_recharge
         elem_bonus += p.elem_bonus
 
+    crit_rate = round(crit_rate, 3)
     if crit_rate < 0.6:
         return None
 
     energe_recharge *= 100
     panel_energe_recharge = energe_recharge - extra_energe_recharge["薙草之稻光开大加成"] * 100
 
+    panel_energe_recharge = round(panel_energe_recharge, 1)
     if panel_energe_recharge < 260:
         return None
     

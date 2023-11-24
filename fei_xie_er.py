@@ -61,6 +61,7 @@ def calculate_score_callback(combine):
     base_elem_bonus = 1 + wan_ye_bonus
 
     crit_rate = sum([p.crit_rate for p in combine]) + 0.05
+    crit_rate = round(crit_rate, 3)
     if crit_rate < 0.65:
         return None
 
@@ -70,6 +71,7 @@ def calculate_score_callback(combine):
     extra_elem_bonus = sum([p.elem_bonus for p in combine])
     elem_mastery = sum([p.elem_mastery for p in combine]) + base_elem_mastery
 
+    elem_mastery = round(elem_mastery, 1)
     if elem_mastery < 100:
         return None
     

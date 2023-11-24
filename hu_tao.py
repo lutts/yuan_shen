@@ -111,6 +111,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         elem_bonus += p.elem_bonus
         elem_mastery += p.elem_mastery
 
+    elem_mastery = round(elem_mastery, 1)
     if elem_mastery < 200:
         return None
     
@@ -133,6 +134,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
             if name_count[n] >= 4:
                 crit_rate += 0.36
 
+    crit_rate = round(crit_rate, 3)
     if crit_rate <= 0.65:
         return None
     
