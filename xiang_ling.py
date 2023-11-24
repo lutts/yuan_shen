@@ -35,50 +35,73 @@ def find_combins_callback():
     return list(itertools.combinations(jue_yuan, 4))
 
 
-def calculate_score_callback(combine):
-    max_atk = 735
-    ban_ni_te_atk = int(755 * 1.19)
-    shuang_huo_atk = int(max_atk * 0.25)
-    extra_atk = ban_ni_te_atk + shuang_huo_atk
-    base_atk = max_atk + 311 + extra_atk
-    base_crit_damage = 1 + 0.5
-    base_elem_mastery = 96
-    base_energy_recharge = 1 + (0.459 # 鱼叉
-                                + 0.2 # 绝缘
-                                )
-    wan_ye_bonus = 0.4
-    ye_lan_bonus = 0.29
-    lei_shen_bonus = 0.24
-    base_elem_bonus = 1 + lei_shen_bonus + wan_ye_bonus + ye_lan_bonus
+def calculate_score_callback(combine: list[ShengYiWu]):
+    base_atk = 225
+    wu_qi_atk = 510
+    bai_zhi_atk = base_atk + wu_qi_atk
 
-    crit_rate = sum([p.crit_rate for p in combine]) + 0.05
-    if crit_rate < 0.5:
-        return None
+    extra_atk = {
+        "班尼特": int(755 * 1.19),
+        "双火": int(bai_zhi_atk * 0.25),
+    }
 
-    real_crit_rate = crit_rate + 0.12 # 鱼叉
+    extra_energy_recharge = {
+        "渔获": 0.459,
+        "绝缘2件套": 0.2,
+    }
 
-    atk = sum([p.atk for p in combine])
-    atk_per = sum([p.atk_per for p in combine])
-    extra_crit_damage = sum([p.crit_damage for p in combine])
-    total_energe_recharge = (
-        sum([p.energe_recharge for p in combine]) + base_energy_recharge) * 100
-    elem_mastery = sum([p.elem_mastery for p in combine]) + base_elem_mastery
+    extra_elem_bonus = {
+        "万叶": 0.4,
+        "夜兰平均增伤": 0.29,
+        "雷神e": 0.003 * 80
+    }
 
-    if total_energe_recharge < 220:
+    extra_crit_rate = {
+        "渔获": 0.12,
+    }
+
+    crit_rate = 0.05 + sum(extra_crit_rate.values())
+    crit_damage = 1 + 0.5
+    base_crit_damage = crit_damage
+    elem_mastery = 96
+    elem_bonus = 1 + sum(extra_elem_bonus.values())
+    base_elem_bonus = elem_bonus
+    atk = 311 + sum(extra_atk.values())
+    atk_per = 0
+    energy_recharge = 1 + sum(extra_energy_recharge.values())
+
+    for p in combine:
+        crit_rate += p.crit_rate
+        crit_damage += p.crit_damage
+        elem_mastery += p.elem_mastery
+        elem_bonus += p.elem_bonus
+        atk += p.atk
+        atk_per += p.atk_per
+        energy_recharge += p.energe_recharge
+
+    if crit_rate < 0.6:
         return None
     
     if elem_mastery < 180:
         return None
     
-    extra_elem_bonus = min(total_energe_recharge / 4 / 100, 0.75)
+    energy_recharge *= 100
+    if energy_recharge < 220:
+        return None
+    
+    elem_bonus += min(energy_recharge / 4 / 100, 0.75)
 
-    all_atk = int(atk_per * max_atk) + atk + base_atk
+    all_atk = int(bai_zhi_atk * (1 + atk_per)) + atk
+    panel_atk = all_atk - sum(extra_atk.values())
 
-    non_crit_score = all_atk / base_atk * (extra_elem_bonus + base_elem_bonus) / base_elem_bonus
-    crit_score = non_crit_score * (base_crit_damage + extra_crit_damage) / base_crit_damage
-    expect_crit_damage_bonus = real_crit_rate * (extra_crit_damage + base_crit_damage - 1)
-    expect_score = non_crit_score * (1 + expect_crit_damage_bonus)
-    return [expect_score, crit_score, elem_mastery, int(all_atk), round(crit_rate, 3), round(base_crit_damage + extra_crit_damage - 1, 3), round(total_energe_recharge, 1), combine]
+    base_atk = bai_zhi_atk + 311 + sum(extra_atk.values())
+    non_crit_score = all_atk / base_atk * elem_bonus / base_elem_bonus
+    crit_score = non_crit_score * crit_damage / base_crit_damage
+    expect_score = non_crit_score * (1 + crit_rate * (crit_damage - 1))
+
+    panel_crit_rate = crit_rate - sum(extra_crit_rate.values())
+    return [expect_score, crit_score, elem_mastery, int(all_atk), int(panel_atk), 
+            round(panel_crit_rate, 3), round(crit_damage - 1, 3), round(energy_recharge, 1), combine]
 
 
 def find_syw_for_xiang_ling():
