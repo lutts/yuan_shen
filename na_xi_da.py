@@ -48,7 +48,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         "等级突破加成": 115,
         "四命最小加成": 100,
         "大招转化自久岐扔": 243,  # 固有天赋，阿忍带圣显，四饰金加的150可以被纳西妲大招转化
-        "圣显": 76
+        "圣显": 78
     }
 
     extra_elem_bonus = {
