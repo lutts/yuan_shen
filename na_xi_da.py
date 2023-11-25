@@ -35,7 +35,25 @@ def match_syw(s: ShengYiWu, expect_name):
 def find_combins_callback():
     shen_lin = find_syw(
         match_syw_callback=lambda s: match_syw(s, ShengYiWu.SHEN_LIN))
-    return list(itertools.combinations(shen_lin, 4))
+    shi_jin = find_syw(
+        match_syw_callback=lambda s: match_syw(s, ShengYiWu.SHI_JIN))
+    ju_tuan = find_syw(
+        match_syw_callback=lambda s: match_syw(s, ShengYiWu.JU_TUAN))
+    yue_tuan = find_syw(
+        match_syw_callback=lambda s: match_syw(s, ShengYiWu.YUE_TUAN))
+
+    shen_lin_2 = list(itertools.combinations(shen_lin, 2))
+    shi_jin_2 = list(itertools.combinations(shi_jin, 2))
+    ju_tuan_2 = list(itertools.combinations(ju_tuan, 2))
+    yue_tuan_2 = list(itertools.combinations(yue_tuan, 2))
+
+    all_2 = shen_lin_2 + shi_jin_2 + ju_tuan_2 + yue_tuan_2
+    all_4 = list(itertools.combinations(shen_lin, 4)) + \
+        list(itertools.combinations(shi_jin, 4)) + \
+            list(itertools.combinations(ju_tuan, 4))
+
+    return [(l[0] + l[1])
+            for l in list(itertools.combinations(all_2, 2))] + all_4
 
 
 def calculate_score_callback(combine: list[ShengYiWu]):
@@ -47,14 +65,14 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         "武器": 265,
         "等级突破加成": 115,
         "四命最小加成": 100,
-        "大招转化自久岐扔": 243,  # 固有天赋，阿忍带圣显，四饰金加的150可以被纳西妲大招转化
+        "大招转化自久岐忍": 243,  # 固有天赋，阿忍带圣显，四饰金加的150可以被纳西妲大招转化
         "圣显": 78
     }
 
     extra_elem_bonus = {
-        "草套2件套效果": 0.15,
+        # "草套2件套效果": 0.15,
         "一命计算一个火系": 0.316,
-        "专武(草行久钟)": 0.3
+        "专武(草行久钟)": 3 * 0.1,
     }
 
     panel_crit_rate = 0.05
@@ -81,6 +99,29 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     crit_rate = round(crit_rate, 3)
     if crit_rate < 0.64:
         return None
+
+    syw_names = [p.name for p in combine]
+    # print(syw_names)
+    name_count = {i: syw_names.count(i) for i in syw_names}
+    # print(name_count)
+    for n in name_count:
+        if name_count[n] < 2:  # 散件不计算套装效果
+            continue
+
+        if n == ShengYiWu.SHEN_LIN:
+            elem_bonus += 0.15
+        elif n == ShengYiWu.SHI_JIN:
+            elem_mastery += 80
+            panel_elem_mastery += 80
+            if name_count[n] >= 4:
+                elem_mastery += 150  # 草行久钟
+        elif n == ShengYiWu.JU_TUAN:
+            elem_bonus += 0.2
+            if name_count[n] >= 4:
+                elem_bonus += 0.25 + 0.25
+        elif n == ShengYiWu.YUE_TUAN:
+            elem_mastery += 80
+            panel_elem_mastery += 80
 
     elem_bonus += min((elem_mastery - 200) * 0.001, 0.8)
     all_atk = int(bai_zhi_atk * (1 + atk_per)) + atk

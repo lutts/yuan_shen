@@ -103,7 +103,7 @@ def calculate_score_callback(combine : list[ShengYiWu]):
     name_count = {i: syw_names.count(i) for i in syw_names}
     # print(name_count)
     for n in name_count:
-        if name_count[n] != 2:
+        if name_count[n] < 2: # 散件不计算套装效果
             continue
 
         # print(n)
