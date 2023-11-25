@@ -14,7 +14,7 @@ from fu_ling_na import find_syw_for_fu_ling_na
 from lei_shen import find_syw_for_lei_shen
 from ling_hua import find_syw_for_ling_hua
 from xiang_ling import find_syw_for_xiang_ling
-from na_xi_da import find_syw_for_na_xi_da
+from na_xi_da import find_syw_for_na_xi_da, find_syw_for_na_xi_da_all
 from fei_xie_er import find_syw_for_fei_xie_er
 from hu_tao import find_syw_for_hu_tao, find_syw_for_hu_tao_lie_ren
 from ai_er_hai_seng import find_syw_for_ai_er_hai_seng
@@ -41,10 +41,11 @@ if __name__ == '__main__':
         find_syw_for_lei_shen,
         find_syw_for_ling_hua,
         find_syw_for_xiang_ling,
+        find_syw_for_na_xi_da_all,
         find_syw_for_na_xi_da,
         find_syw_for_fei_xie_er,
-        find_syw_for_hu_tao,
         find_syw_for_hu_tao_lie_ren,
+        find_syw_for_hu_tao,
         find_syw_for_ai_er_hai_seng
     ]
 

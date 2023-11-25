@@ -32,7 +32,7 @@ def match_syw(s: ShengYiWu, expect_name):
         return True
 
 
-def find_combins_callback():
+def find_combins_callback_all():
     shen_lin = find_syw(
         match_syw_callback=lambda s: match_syw(s, ShengYiWu.SHEN_LIN))
     shi_jin = find_syw(
@@ -54,6 +54,12 @@ def find_combins_callback():
 
     return [(l[0] + l[1])
             for l in list(itertools.combinations(all_2, 2))] + all_4
+
+
+def find_combins_callback():
+    shen_lin = find_syw(
+        match_syw_callback=lambda s: match_syw(s, ShengYiWu.SHEN_LIN))
+    return list(itertools.combinations(shen_lin, 4))
 
 
 def calculate_score_callback(combine: list[ShengYiWu]):
@@ -133,13 +139,19 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     return [expect_score, crit_score, elem_mastery, panel_elem_mastery, int(all_atk), round(panel_crit_rate, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energy_recharge, 3), combine]
 
 
+def find_syw_for_na_xi_da_all():
+    return calculate_score(find_combine_callback=find_combins_callback_all,
+                           match_sha_callback=match_sha_callback,
+                           match_bei_callback=match_bei_callback,
+                           calculate_score_callbak=calculate_score_callback,
+                           result_txt_file="na_xi_da_syw.txt")
+
 def find_syw_for_na_xi_da():
     return calculate_score(find_combine_callback=find_combins_callback,
                            match_sha_callback=match_sha_callback,
                            match_bei_callback=match_bei_callback,
                            calculate_score_callbak=calculate_score_callback,
                            result_txt_file="na_xi_da_syw.txt")
-
 
 # Main body
 if __name__ == '__main__':
