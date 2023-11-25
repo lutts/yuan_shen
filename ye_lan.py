@@ -77,7 +77,7 @@ def calculate_score_callback(combine : list[ShengYiWu]):
     crit_damage = 1 + 0.5 + sum(extra_crit_damage.values())
     hp = 0
     hp_per = 0
-    elem_bonus = 1 + sum(common_elem_bonus.values()) + sum(extra_q_bonus.values())
+    elem_bonus = 1 + sum(common_elem_bonus.values())
     energe_recharge = 1
 
     for p in combine:
@@ -124,19 +124,20 @@ def calculate_score_callback(combine : list[ShengYiWu]):
     # 二命额外协同伤害：一般能打出5次，14%生命值上限 * 5
     # 强化破局矢伤害：20.84%生命上限 * 1.56 * 5
     # 两个e: 45.2生命值上限 * 2
-    q_damage = all_hp * 15.53 / 100 * (elem_bonus - common_elem_bonus["夜兰大招平均增伤"])
+    q_elem_bonus = elem_bonus + sum(extra_q_bonus.values())
+    q_damage = all_hp * 15.53 / 100 * (q_elem_bonus - common_elem_bonus["夜兰大招平均增伤"])
     q_damage_crit = q_damage * crit_damage
     q_damage_expect = q_damage * (1 + crit_rate * (crit_damage - 1))
 
-    qx_damage = all_hp * 10.35 / 100 * elem_bonus * 3 * 11
+    qx_damage = all_hp * 10.35 / 100 * q_elem_bonus * 3 * 11
     qx_damage_crit = qx_damage * crit_damage
     qx_damage_expect = qx_damage * (1 + crit_rate * (crit_damage - 1))
 
-    extra_qx_damage = all_hp * 14 / 100 * elem_bonus * 5
+    extra_qx_damage = all_hp * 14 / 100 * q_elem_bonus * 5
     extra_qx_damage_crit = extra_qx_damage * crit_damage
     extra_qx_damage_expect = extra_qx_damage * \
         (1 + crit_rate * (crit_damage - 1))
-
+    
     po_ju_shi_elem_bonus = (elem_bonus - common_elem_bonus["夜兰大招平均增伤"] + po_ju_shi_avg_bonus)
     po_ju_shi_damage = all_hp * 20.84 / 100 * po_ju_shi_elem_bonus * 1.56 * 5
     po_ju_shi_damage_crit = po_ju_shi_damage * crit_damage
@@ -144,9 +145,7 @@ def calculate_score_callback(combine : list[ShengYiWu]):
         (1 + crit_rate * (crit_damage - 1))
 
     # e技能只有一个能吃到夜兰自身大招增伤，开局两个都吃不到，但不考虑
-    # e吃不到雷神的增伤
-    e_elem_bonus = elem_bonus - sum(extra_q_bonus.values())
-    e_damage = all_hp * 45.2 / 100 * (e_elem_bonus * 2 - common_elem_bonus["夜兰大招平均增伤"])
+    e_damage = all_hp * 45.2 / 100 * (elem_bonus * 2 - common_elem_bonus["夜兰大招平均增伤"])
     e_damage_crit = e_damage * crit_damage
     e_damage_expect = e_damage * (1 + crit_rate * (crit_damage - 1))
 
