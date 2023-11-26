@@ -10,7 +10,7 @@ import logging
 
 from base_syw import find_syw, set_score_threshold
 from ye_lan import find_syw_for_ye_lan_with_fu_fu, find_syw_for_ye_lan_with_lei_shen
-from fu_ling_na import find_syw_for_fu_ling_na
+from fu_ning_na import find_syw_for_fu_ning_na
 from lei_shen import find_syw_for_lei_shen
 from ling_hua import find_syw_for_ling_hua
 from xiang_ling import find_syw_for_xiang_ling
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     used_syw_funcs = [
         find_syw_for_ye_lan_with_lei_shen,
         find_syw_for_ye_lan_with_fu_fu,
-        find_syw_for_fu_ling_na,
+        find_syw_for_fu_ning_na,
         find_syw_for_lei_shen,
         find_syw_for_ling_hua,
         find_syw_for_xiang_ling,
@@ -63,13 +63,3 @@ if __name__ == '__main__':
             if s.id in unused_syw_id_list:
                 f.write(str(s))
                 f.write('\n\n')
-
-
-    # ye_lan_syw = syw_dict_to_id_list(find_syw_for_ye_lan())
-    # fu_ling_na_syw = syw_dict_to_id_list(find_syw_for_fu_ling_na())
-    # lei_shen_syw = syw_dict_to_id_list(find_syw_for_lei_shen())
-    # ling_hua_syw = syw_dict_to_id_list(find_syw_for_ling_hua())
-    # xiang_ling_syw = syw_dict_to_id_list(find_syw_for_xiang_ling())
-    # na_xi_da_syw = syw_dict_to_id_list(find_syw_for_na_xi_da())
-
-    # used_syw_list = ye_lan_syw + fu_ling_na_syw

@@ -66,4 +66,3 @@ def calculate_score_callback(combine : list[ShengYiWu]):
         "夜兰四命保底两个e": 0.2,
     }
 ```
-

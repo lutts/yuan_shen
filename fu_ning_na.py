@@ -417,14 +417,14 @@ def calculate_score_callback(combine : list[ShengYiWu]):
     return [expect_score, crit_score, full_six_expect_zhan_bi, full_six_crit_zhan_bi, int(max_hp), int(panel_hp), round(e_bonus, 3), round(elem_bonus, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]
 
 
-def find_syw_for_fu_ling_na():
+def find_syw_for_fu_ning_na():
     return calculate_score(find_combine_callback=find_combine_callback,
                            match_sha_callback=match_sha_callback,
                            match_bei_callback=match_bei_callback,
                            calculate_score_callbak=calculate_score_callback,
-                           result_txt_file="fu_ling_na_syw.txt")
+                           result_txt_file="fu_ning_na_syw.txt")
 
 
 # Main body
 if __name__ == '__main__':
-    find_syw_for_fu_ling_na()
+    find_syw_for_fu_ning_na()
