@@ -46,12 +46,10 @@ def find_combine_callback():
                     for l in list(itertools.combinations(all_combins, 2))]
 
 
-def calculate_score_callback(combine : list[ShengYiWu]):
+def calculate_score_callback(combine : list[ShengYiWu], has_fu_fu = True, has_lei_shen = False):
     base_hp = 14450.0
 
     extra_hp_bonus = {
-        # "四色": 0.3,
-        "双水": 0.18 + 0.25,
         "专武": 0.16,
         "四命保底两个e": 0.2,
     }
@@ -59,17 +57,24 @@ def calculate_score_callback(combine : list[ShengYiWu]):
     common_elem_bonus = {
         "专武": 0.2,
         "万叶": 0.4,
-        "芙芙q": 1.24,
         "夜兰大招平均增伤": 0.27,
-    }
-
-    extra_q_bonus = {
-        #"雷神e": 70 * 0.003,
     }
 
     extra_crit_damage = {
         "专武": 0.882,
     }
+
+    extra_q_bonus = {
+    }
+
+    if has_fu_fu:
+        extra_hp_bonus["双水"] = 0.18 + 0.25
+        common_elem_bonus["芙芙q"] = 1.24
+    
+    if has_lei_shen:
+        extra_q_bonus["雷神e"] = 70 * 0.003
+        if not has_fu_fu:
+            extra_hp_bonus["四色"] = 0.3
 
     po_ju_shi_avg_bonus = 0.36  # 大招开启后第10秒左右切出来放打满命5下
     
@@ -157,13 +162,27 @@ def calculate_score_callback(combine : list[ShengYiWu]):
     return [expect_score, crit_score, int(all_hp), round(elem_bonus, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]
 
 
-def find_syw_for_ye_lan():
+def calculate_score_callback_only_fufu(combine):
+    return calculate_score_callback(combine)
+
+def calculate_score_callback_only_lei_shen(combine):
+    return calculate_score_callback(combine, False, True)
+
+def find_syw_for_ye_lan_with_fu_fu():
     return calculate_score(find_combine_callback=find_combine_callback,
                     match_sha_callback=match_sha_callback,
                     match_bei_callback=match_bei_callback,
-                    calculate_score_callbak=calculate_score_callback,
+                    calculate_score_callbak=calculate_score_callback_only_fufu,
                     result_txt_file="ye_lan_syw.txt")
+
+def find_syw_for_ye_lan_with_lei_shen():
+    return calculate_score(find_combine_callback=find_combine_callback,
+                    match_sha_callback=match_sha_callback,
+                    match_bei_callback=match_bei_callback,
+                    calculate_score_callbak=calculate_score_callback_only_lei_shen,
+                    result_txt_file="ye_lan_syw.txt")
+
 
 # Main body
 if __name__ == '__main__':
-    find_syw_for_ye_lan()
+    find_syw_for_ye_lan_with_fu_fu()

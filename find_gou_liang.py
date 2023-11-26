@@ -9,7 +9,7 @@ import os
 import logging
 
 from base_syw import find_syw, set_score_threshold
-from ye_lan import find_syw_for_ye_lan
+from ye_lan import find_syw_for_ye_lan_with_fu_fu, find_syw_for_ye_lan_with_lei_shen
 from fu_ling_na import find_syw_for_fu_ling_na
 from lei_shen import find_syw_for_lei_shen
 from ling_hua import find_syw_for_ling_hua
@@ -36,7 +36,8 @@ if __name__ == '__main__':
     all_id_list = [s.id for s in all_syw]
 
     used_syw_funcs = [
-        find_syw_for_ye_lan,
+        find_syw_for_ye_lan_with_lei_shen,
+        find_syw_for_ye_lan_with_fu_fu,
         find_syw_for_fu_ling_na,
         find_syw_for_lei_shen,
         find_syw_for_ling_hua,
