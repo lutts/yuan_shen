@@ -85,6 +85,8 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         gong_ming_elem_mastery = 50 + 30 + 20  # 双草共鸣
         zhuan_wu_extra_elem_mastery = 32 # 和装备者元素类型相同
         extra_elem_mastery["双草"] = gong_ming_elem_mastery + zhuan_wu_extra_elem_mastery
+    else:
+        extra_elem_mastery["双草"] = 0
 
     extra_elem_bonus = {
         # "草套2件套效果": 0.15,
