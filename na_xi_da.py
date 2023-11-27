@@ -106,8 +106,6 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     panel_crit_rate = 0.05
     crit_damage = 1 + 0.5
     elem_mastery = sum(extra_elem_mastery.values())
-    panel_elem_mastery = extra_elem_mastery["武器"] + \
-        extra_elem_mastery["等级突破加成"]
     elem_bonus = 1 + sum(extra_elem_bonus.values())
     atk = 311
     atk_per = 0
@@ -117,7 +115,6 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         panel_crit_rate += p.crit_rate
         crit_damage += p.crit_damage
         elem_mastery += p.elem_mastery
-        panel_elem_mastery += p.elem_mastery
         elem_bonus += p.elem_bonus
         atk += p.atk
         atk_per += p.atk_per
@@ -140,7 +137,6 @@ def calculate_score_callback(combine: list[ShengYiWu]):
             elem_bonus += 0.15
         elif n == ShengYiWu.SHI_JIN:
             elem_mastery += 80
-            panel_elem_mastery += 80
             if name_count[n] >= 4:
                 elem_mastery += 150  # 草行久钟
         elif n == ShengYiWu.JU_TUAN:
@@ -149,7 +145,6 @@ def calculate_score_callback(combine: list[ShengYiWu]):
                 elem_bonus += 0.25 + 0.25
         elif n == ShengYiWu.YUE_TUAN:
             elem_mastery += 80
-            panel_elem_mastery += 80
 
     elem_bonus += min((elem_mastery - 200) * 0.001, 0.8)
     all_atk = int(bai_zhi_atk * (1 + atk_per)) + atk
@@ -162,15 +157,16 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         atk_bei_lv = 1.858
         elem_mastery_bei_lv = 3.715
 
+    background_elem_mastery = elem_mastery - extra_elem_mastery["大招转化自久岐忍"]
     if qian_tai_damage:
         real_elem_mastery = elem_mastery
     else:
-        real_elem_mastery = panel_elem_mastery
+        real_elem_mastery = background_elem_mastery
 
     non_crit_score = (all_atk * atk_bei_lv + real_elem_mastery * elem_mastery_bei_lv) * elem_bonus
     crit_score = non_crit_score * crit_damage
     expect_score = non_crit_score * (1 + crit_rate * (crit_damage - 1))
-    return [expect_score, crit_score, elem_mastery, panel_elem_mastery, int(all_atk), round(panel_crit_rate, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energy_recharge, 3), combine]
+    return [expect_score, crit_score, elem_mastery, background_elem_mastery, int(all_atk), round(panel_crit_rate, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energy_recharge, 3), combine]
 
 
 def find_syw_for_na_xi_da_all():
