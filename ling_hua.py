@@ -74,7 +74,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         elem_bonus += p.elem_bonus
 
     crit_rate = round(crit_rate, 3)
-    if crit_rate < 0.4:
+    if crit_rate < 0.4 or crit_rate > 0.5:
         return None
     
     energe_recharge *= 100
