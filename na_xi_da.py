@@ -10,6 +10,9 @@ import logging
 import itertools
 from base_syw import ShengYiWu, calculate_score, find_syw
 
+ming_zuo_num = 6
+qian_tai_damage = True
+shuang_cao = False  # 双草
 
 def match_sha_callback(syw: ShengYiWu):
     return syw.elem_mastery == ShengYiWu.ELEM_MASTERY_MAIN
@@ -70,16 +73,33 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     extra_elem_mastery = {
         "武器": 265,
         "等级突破加成": 115,
-        "四命最小加成": 100,
         "大招转化自久岐忍": 243,  # 固有天赋，阿忍带圣显，四饰金加的150可以被纳西妲大招转化
-        "圣显": 78
+        "圣显": 78,
+        # "队友1000精通": 250,
     }
+
+    if ming_zuo_num >= 4:
+        extra_elem_mastery["四命最小加成"] = 100
+
+    if shuang_cao:
+        gong_ming_elem_mastery = 50 + 30 + 20  # 双草共鸣
+        zhuan_wu_extra_elem_mastery = 32 # 和装备者元素类型相同
+        extra_elem_mastery["双草"] = gong_ming_elem_mastery + zhuan_wu_extra_elem_mastery
 
     extra_elem_bonus = {
         # "草套2件套效果": 0.15,
-        "一命计算一个火系": 0.316,
-        "专武(草行久钟)": 3 * 0.1,
     }
+
+    if shuang_cao:
+        extra_elem_bonus["专武(草行久钟)"] = 2 * 0.1
+    else:
+        extra_elem_bonus["专武(草行久钟)"] = 3 * 0.1
+
+
+    if ming_zuo_num >= 5:
+        extra_elem_bonus["一命计算一个火系"] = 0.316
+    elif ming_zuo_num >= 1:
+        extra_elem_bonus["一命计算一个火系"] = 0.268
 
     panel_crit_rate = 0.05
     crit_damage = 1 + 0.5
@@ -133,7 +153,19 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     all_atk = int(bai_zhi_atk * (1 + atk_per)) + atk
     energy_recharge = (energy_recharge + 1) * 100
 
-    non_crit_score = (all_atk * 2.193 + elem_mastery * 4.386) * elem_bonus
+    if ming_zuo_num >= 3:
+        atk_bei_lv = 2.193
+        elem_mastery_bei_lv = 4.386
+    else:
+        atk_bei_lv = 1.858
+        elem_mastery_bei_lv = 3.715
+
+    if qian_tai_damage:
+        real_elem_mastery = elem_mastery
+    else:
+        real_elem_mastery = panel_elem_mastery
+
+    non_crit_score = (all_atk * atk_bei_lv + real_elem_mastery * elem_mastery_bei_lv) * elem_bonus
     crit_score = non_crit_score * crit_damage
     expect_score = non_crit_score * (1 + crit_rate * (crit_damage - 1))
     return [expect_score, crit_score, elem_mastery, panel_elem_mastery, int(all_atk), round(panel_crit_rate, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energy_recharge, 3), combine]
