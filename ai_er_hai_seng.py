@@ -54,6 +54,7 @@ def find_combins_callback():
 def calculate_score_callback(combine: list[ShengYiWu]):
     base_atk = 314
     wu_qi_atk = 608  # 波波刀/苍古
+    #wu_qi_atk = 542  # 专武
     bai_zhi_atk = base_atk + wu_qi_atk
 
     na_xi_da_zhuan_wu_elem_mastery = 40
@@ -64,15 +65,24 @@ def calculate_score_callback(combine: list[ShengYiWu]):
 
     bo_bo_dao_bonus = 0.12
     bo_bo_dao_a_bonus = 2 * 0.2     # 波波刀2层
-    bo_bo_dao_crit_rate =0.331
+    bo_bo_dao_crit_rate = 0.331
 
     cang_gu_mastery = 0 #198
     cang_gu_elem_bonus = 0 #0.1    # 苍古
     cang_gu_a_bonus = 0 #0.16
     cang_gu_atk_per = 0 #0.2
 
-    crit_rate = 0.05 + bo_bo_dao_crit_rate
-    crit_damage = 1 + 0.5
+    has_zhuan_wu = False
+
+    if has_zhuan_wu:
+        zhuan_wu_crit_rate = 0.04
+        zhuan_wu_crit_damage = 0.882
+    else:
+        zhuan_wu_crit_rate = 0
+        zhuan_wu_crit_damage = 0
+
+    crit_rate = 0.05 + bo_bo_dao_crit_rate + zhuan_wu_crit_rate
+    crit_damage = 1 + 0.5 + zhuan_wu_crit_damage
     elem_mastery = na_xi_da_zhuan_wu_elem_mastery + \
         shuang_cao_elem_mastery + sheng_xian_mastery + cang_gu_mastery
     panel_elem_mastery = 0
@@ -123,19 +133,24 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     all_atk = int(bai_zhi_atk * (1 + atk_per)) + atk
     panel_atk = int(bai_zhi_atk * (1 + panel_atk_per)) + atk
 
+    if has_zhuan_wu:
+        a_e_extra_damage = elem_mastery * 1.2
+    else:
+        a_e_extra_damage = 0
+
     # 以下计算基于以下手法
     # Q 切久岐忍e 再切回海哥 aaa闪 aaa e aaa闪 aaa z aaa aaa，共计六发满层光幕攻击
     # 波波刀的普攻增伤需要海哥e之后才有，能覆盖开e后续所有的平A
     q_damage = (all_atk * 218.9 / 100 +
                 elem_mastery * 175.1 / 100) * elem_bonus
 
-    aaa_damage = all_atk * (91 + 93.2 + 62.8 + 62.8) / 100
+    aaa_damage = all_atk * (91 + 93.2 + 62.8 + 62.8) / 100 + 4 * a_e_extra_damage
     z_damage = all_atk * (101.5 + 101.5) / 100
 
+    
     e_damage = (all_atk * 3.485 / 100 +
-                elem_mastery * 2.788 / 100) * elem_bonus
-    guang_mu_damage = (all_atk * 121 / 100 + elem_mastery *
-                       241.9 / 100) * 3 * elem_bonus * 6  # 六剑雨
+                elem_mastery * 2.788 / 100 + a_e_extra_damage) * elem_bonus
+    guang_mu_damage = (all_atk * 121 / 100 + elem_mastery * 241.9 / 100 + a_e_extra_damage) * 3 * elem_bonus * 6  # 六剑雨
 
     if cang_gu_a_bonus != 0:
         a_without_extra_bonus_num = 0
