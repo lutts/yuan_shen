@@ -120,11 +120,6 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         atk_per += p.atk_per
         energy_recharge += p.energe_recharge
 
-    crit_rate = panel_crit_rate + + min((elem_mastery - 200) * 0.0003, 0.24)
-    crit_rate = round(crit_rate, 3)
-    if crit_rate < 0.64:
-        return None
-
     syw_names = [p.name for p in combine]
     # print(syw_names)
     name_count = {i: syw_names.count(i) for i in syw_names}
@@ -146,7 +141,18 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         elif n == ShengYiWu.YUE_TUAN:
             elem_mastery += 80
 
-    elem_bonus += min((elem_mastery - 200) * 0.001, 0.8)
+    background_elem_mastery = elem_mastery - extra_elem_mastery["大招转化自久岐忍"]
+    if qian_tai_damage:
+        real_elem_mastery = elem_mastery
+    else:
+        real_elem_mastery = background_elem_mastery
+
+    crit_rate = panel_crit_rate + min((real_elem_mastery - 200) * 0.0003, 0.24)
+    crit_rate = round(crit_rate, 3)
+    if crit_rate < 0.64:
+        return None
+    
+    elem_bonus += min((real_elem_mastery - 200) * 0.001, 0.8)
     all_atk = int(bai_zhi_atk * (1 + atk_per)) + atk
     energy_recharge = (energy_recharge + 1) * 100
 
@@ -156,12 +162,6 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     else:
         atk_bei_lv = 1.858
         elem_mastery_bei_lv = 3.715
-
-    background_elem_mastery = elem_mastery - extra_elem_mastery["大招转化自久岐忍"]
-    if qian_tai_damage:
-        real_elem_mastery = elem_mastery
-    else:
-        real_elem_mastery = background_elem_mastery
 
     non_crit_score = (all_atk * atk_bei_lv + real_elem_mastery * elem_mastery_bei_lv) * elem_bonus
     crit_score = non_crit_score * crit_damage
