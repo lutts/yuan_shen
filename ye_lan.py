@@ -141,12 +141,19 @@ def calculate_score_callback(combine : list[ShengYiWu], has_fu_fu = True, has_le
     # 二命额外协同伤害：一般能打出5次，14%生命值上限 * 5
     # 强化破局矢伤害：20.84%生命上限 * 1.56 * 5
     # 两个e: 45.2生命值上限 * 2
+    if ming_zuo_num >= 3:
+        q_bei_lv = 15.53
+        qx_bei_lv = 10.35
+    else:
+        q_bei_lv = 13.89
+        qx_bei_lv = 9.26
+        
     q_elem_bonus = elem_bonus + sum(extra_q_bonus.values())
-    q_damage = all_hp * 15.53 / 100 * (q_elem_bonus - common_elem_bonus["夜兰大招平均增伤"])
+    q_damage = all_hp * q_bei_lv / 100 * (q_elem_bonus - common_elem_bonus["夜兰大招平均增伤"])
     q_damage_crit = q_damage * crit_damage
     q_damage_expect = q_damage * (1 + crit_rate * (crit_damage - 1))
 
-    qx_damage = all_hp * 10.35 / 100 * q_elem_bonus * 3 * 11
+    qx_damage = all_hp * qx_bei_lv / 100 * q_elem_bonus * 3 * 11
     qx_damage_crit = qx_damage * crit_damage
     qx_damage_expect = qx_damage * (1 + crit_rate * (crit_damage - 1))
 
@@ -170,7 +177,11 @@ def calculate_score_callback(combine : list[ShengYiWu], has_fu_fu = True, has_le
         po_ju_shi_damage_expect = 0
 
     # e技能只有一个能吃到夜兰自身大招增伤，开局两个都吃不到，但不考虑
-    e_damage = all_hp * 45.2 / 100 * (elem_bonus * 2 - common_elem_bonus["夜兰大招平均增伤"])
+    if ming_zuo_num >= 1:
+        e_damage = all_hp * 45.2 / 100 * (elem_bonus * 2 - common_elem_bonus["夜兰大招平均增伤"])
+    else:
+        e_damage = all_hp * 45.2 / 100 * elem_bonus
+
     e_damage_crit = e_damage * crit_damage
     e_damage_expect = e_damage * (1 + crit_rate * (crit_damage - 1))
 
