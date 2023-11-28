@@ -775,9 +775,9 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
 
         all_score_data.append(score_data)
 
+    score_dict = {}
     if all_score_data:
         # print(len(all_score_data))
-        score_dict = {}
         for score_data in all_score_data:
             expect_score = score_data[0]
             crit_score = score_data[1]

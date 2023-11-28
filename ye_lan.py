@@ -178,9 +178,18 @@ def calculate_score_callback(combine : list[ShengYiWu], has_fu_fu = True, has_le
 
     # e技能只有一个能吃到夜兰自身大招增伤，开局两个都吃不到，但不考虑
     if ming_zuo_num >= 1:
-        e_damage = all_hp * 45.2 / 100 * (elem_bonus * 2 - common_elem_bonus["夜兰大招平均增伤"])
+        if ming_zuo_num == 6:
+            e_bei_lv = 48.1
+        else: # 非满命一般只会升到9
+            if ming_zuo_num == 5:
+                e_bei_lv = 45.2
+            else:
+                e_bei_lv = 38.4
+
+        e_damage = all_hp * e_bei_lv / 100 * (elem_bonus * 2 - common_elem_bonus["夜兰大招平均增伤"])
     else:
-        e_damage = all_hp * 45.2 / 100 * elem_bonus
+        # 0命一般只会升到9级
+        e_damage = all_hp * 38.4 / 100 * elem_bonus
 
     e_damage_crit = e_damage * crit_damage
     e_damage_expect = e_damage * (1 + crit_rate * (crit_damage - 1))
