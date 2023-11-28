@@ -42,22 +42,16 @@ python版本要求：3.10及以上版本
 
 以下面的芙宁娜部分代码片断为例
 
-* 如果你不是满命的，q增伤倍率就不是0.0031了，十级最多为0.0025
-* 如果没有二命，则需要将ming_2_hp_bonus_max设置为0
-* 如果不是满命，那么only_e需要置为True
-* 如果不是专武，和专武相关的参数也需要自行调整
-* 等等等等，需要根据你的实际情况进行调整
+* 将ming_zuo_num修改为你的芙宁娜命座数
+* 根据你的常用配队将include_extra置为True或False
+* 如果和那维莱特组队，将has_na_wei_lai_te置为True
+* 如果我用的不是专武，和专武相关的参数也需要删除，并添加你自已的武器的相关参数
+* 如果你的夜兰不是四命，或者不和夜兰组队， 和夜兰相关的参数也需要删除
 
 ```python
-shui_shen_q_bonus_bei_lv = 0.0031
-shui_shen_q_bonus = 400 * shui_shen_q_bonus_bei_lv
-fu_ning_na_Max_Hp = 15307.0
-ming_2_hp_bonus_max = 1.4  # 140%
-
-def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
-    include_extra = False    # 带雷夜芙的时候，e技能持续时间能吃满
-    only_e = False   # 芙芙没时间砍满命6刀时置为true
-    e_extra_damage = 1.4  # 队友大于50%血量，e技能伤害为原来的1.4倍 （注：实测为1.542倍)
+ming_zuo_num = 6
+include_extra = False    # 某些配队，在芙芙大招结束后还继续输出，不切芙芙出来续大，此时将include_extra置为True
+has_na_wei_lai_te = False
 
     ......
 def calculate_score_callback(combine : list[ShengYiWu]):
