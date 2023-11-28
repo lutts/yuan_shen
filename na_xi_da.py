@@ -175,7 +175,7 @@ def find_syw_for_na_xi_da_all():
                            match_sha_callback=match_sha_callback,
                            match_bei_callback=match_bei_callback,
                            calculate_score_callbak=calculate_score_callback,
-                           result_txt_file="na_xi_da_syw.txt",
+                           result_txt_file="na_xi_da_syw_all.txt",
                            result_description=result_description
                            )
 
@@ -184,7 +184,7 @@ def find_syw_for_na_xi_da():
                            match_sha_callback=match_sha_callback,
                            match_bei_callback=match_bei_callback,
                            calculate_score_callbak=calculate_score_callback,
-                           result_txt_file="na_xi_da_syw.txt",
+                           result_txt_file="na_xi_da_syw_shen_lin.txt",
                            result_description=result_description)
 
 # Main body

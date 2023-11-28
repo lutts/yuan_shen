@@ -207,7 +207,7 @@ def find_syw_for_ye_lan_with_fu_fu():
                     match_sha_callback=match_sha_callback,
                     match_bei_callback=match_bei_callback,
                     calculate_score_callbak=calculate_score_callback_only_fufu,
-                    result_txt_file="ye_lan_syw.txt",
+                    result_txt_file="ye_lan_syw_with_fu_fu.txt",
                     result_description=result_description)
 
 def find_syw_for_ye_lan_with_lei_shen():
@@ -215,7 +215,7 @@ def find_syw_for_ye_lan_with_lei_shen():
                     match_sha_callback=match_sha_callback,
                     match_bei_callback=match_bei_callback,
                     calculate_score_callbak=calculate_score_callback_only_lei_shen,
-                    result_txt_file="ye_lan_syw.txt",
+                    result_txt_file="ye_lan_syw_with_lei_shen.txt",
                     result_description=result_description)
 
 

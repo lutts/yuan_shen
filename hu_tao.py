@@ -29,7 +29,12 @@ def match_syw(s: ShengYiWu, expect_name):
     else:
         return True
     
+use_lie_ren = False
+    
 def find_combins_callback_lie_ren():
+    global use_lie_ren
+    use_lie_ren = True
+
     zhui_yi = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.ZHUI_YI))
     lie_ren = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.LIE_REN))
     jue_dou_shi = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.JUE_DOU_SHI))
@@ -50,6 +55,9 @@ def find_combins_callback_lie_ren():
     return all_combins
 
 def find_combins_callback():
+    global use_lie_ren
+    use_lie_ren = False
+
     zhui_yi = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.ZHUI_YI))
     lie_ren = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.LIE_REN))
     jue_dou_shi = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.JUE_DOU_SHI))
@@ -84,8 +92,10 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     extra_elem_bonus = {
         "生命低于50%时的固有天赋": 0.33,
         "夜兰平均增伤": 0.29,
-        "水神增伤": 1.24,
     }
+
+    if use_lie_ren:
+        extra_elem_bonus["水神增伤"] = 1.24
 
     extra_hp_bonus = {
         "护摩": 0.2,
@@ -163,7 +173,7 @@ def find_syw_for_hu_tao():
                     match_sha_callback=match_sha_callback,
                     match_bei_callback=match_bei_callback,
                     calculate_score_callbak=calculate_score_callback,
-                    result_txt_file="hu_tao_syw.txt",
+                    result_txt_file="hu_tao_syw_no_lie_ren.txt",
                     result_description=result_description)
 
 def find_syw_for_hu_tao_lie_ren():
@@ -171,9 +181,9 @@ def find_syw_for_hu_tao_lie_ren():
                     match_sha_callback=match_sha_callback,
                     match_bei_callback=match_bei_callback,
                     calculate_score_callbak=calculate_score_callback,
-                    result_txt_file="hu_tao_syw.txt",
+                    result_txt_file="hu_tao_syw_lie_ren.txt",
                     result_description=result_description)
 
 # Main body
 if __name__ == '__main__':
-    find_syw_for_hu_tao()
+    find_syw_for_hu_tao_lie_ren()
