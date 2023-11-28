@@ -66,6 +66,17 @@ def match_syw(s: ShengYiWu, expect_name):
 
 
 def find_combine_callback():
+    # return [
+    #     (ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_HUA, 
+    #               crit_rate=0.035, crit_damage=0.218, hp_percent=0.157, atk=31),
+    #     ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_YU, 
+    #               crit_rate=0.117, crit_damage=0.194, def_v=23, elem_mastery=23),
+    #     ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_SHA,
+    #               crit_rate=0.074, crit_damage=0.218, hp_percent=ShengYiWu.BONUS_MAX, energe_recharge=0.091,  atk=18),
+    #     ShengYiWu(ShengYiWu.JUE_DOU_SHI, ShengYiWu.PART_TOU, crit_rate=ShengYiWu.CRIT_RATE_MAIN,
+    #               crit_damage=0.303, hp_percent=0.053, hp=209, atk=39))
+    # ]
+
     ju_tuan = find_syw(
         match_syw_callback=lambda s: match_syw(s, ShengYiWu.JU_TUAN))
     hua_hai = find_syw(
@@ -203,19 +214,22 @@ class Qi:
             self.initial_qi = 0
 
         self.__qi = self.initial_qi
+        #print("inital qi: " + str(self.__qi))
 
         self.__hp = hp
         self.__extra_qi = 0
         self.e_bonus_withoud_q = e_bonus - shui_shen_q_bonus
 
-    def append(self, new_qi):
-        if ming_zuo_num >= 2:
+    def append(self, new_qi, bei_lv = 0):
+        if ming_zuo_num >= 2 and bei_lv == 0:
             new_qi *= 3.5
+        else:
+            new_qi *= bei_lv
         self.__qi += new_qi
 
         if ming_zuo_num > 0 and self.__qi > 400:
             if ming_zuo_num >= 2:
-                self.__extra_qi = self.__qi - 400
+                self.__extra_qi += self.__qi - 400
                 if self.__extra_qi > 400:
                     self.__extra_qi = 400
             self.__qi = 400
@@ -244,6 +258,9 @@ class Qi:
     def qi(self):
         return self.__qi
     
+    def extra_qi(self):
+        return self.__extra_qi
+    
     def e_bonus(self):
         if self.q_stopped:
             return self.e_bonus_withoud_q
@@ -255,9 +272,14 @@ class Qi:
             return self.__hp
         else:
             return int(self.__hp + self.__extra_qi * Qi.MING_2_HP_BEI_LV * fu_ning_na_Max_Hp)
+        
+    def __str__(self):
+        return str(self.qi()) +  "(" + str(self.extra_qi()) + ")" + ", " + str(self.e_bonus()) + ", " + str(self.hp())
 
+    def __repr__(self) -> str:
+        return self.__str__()
 
-def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
+def construct_e_damage_list_for_0_5_ming(hp, e_bonus):
     e_damage_patter_0_5_ming = []
     qi = Qi(hp, e_bonus)
 
@@ -267,11 +289,19 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
     e_damage_patter_0_5_ming.append(qi.append_pang_xie())
     # 勋爵：00:00:09.164			(2.4s)
     e_damage_patter_0_5_ming.append(qi.append_xun_jue())
-
     # 夫人：00:00:10.204			(3.44s)
     e_damage_patter_0_5_ming.append(qi.append_fu_ren())
+
     # 夫人：00:00:11.923			(5.159s)
     e_damage_patter_0_5_ming.append(qi.append_fu_ren())
+
+    # 全队奶，假设能奶满
+    exhausted_hp_per = qi.qi() - qi.initial_qi
+    # print("checkpoint1: " + str(qi) + ", exhausted_hp_per:" + str(exhausted_hp_per))
+    qi.append(exhausted_hp_per, 1)
+
+    # print("checkpoint2: " + str(qi))
+
     # 勋爵：00:00:12.524			(5.76s)
     e_damage_patter_0_5_ming.append(qi.append_xun_jue())
     # 夫人：00:00:13.484			(6.72s)
@@ -280,10 +310,6 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
     e_damage_patter_0_5_ming.append(qi.append_pang_xie())
     # 夫人：00:00:15.164			(8.4s)
     e_damage_patter_0_5_ming.append(qi.append_fu_ren())
-
-    # 全队奶，假设能奶满
-    exhausted_hp_per = qi.qi() - qi.initial_qi
-    qi.append(exhausted_hp_per)
 
     # 此时那维莱特满血，所以没有回血的48加成
     if has_na_wei_lai_te:
@@ -331,7 +357,9 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
     e_damage_patter_0_5_ming.append(qi.append_fu_ren())
 
     # 大招消失
+    #print("before q stop: " + str(qi))
     qi.stop()
+    #print("after q stop: " + str(qi))
 
     # 夫人：00:00:28.204			(21.44)
     e_damage_patter_0_5_ming.append(qi.append_fu_ren())
@@ -358,6 +386,9 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
     # 夫人：00:00:35.884			(29.12)
     e_damage_patter_0_5_ming.append(qi.append_fu_ren(is_extra=True))
 
+    return e_damage_patter_0_5_ming
+
+def construct_e_damage_list_for_bai_fu(hp, e_bonus):
     full_hp = hp + int(fu_ning_na_Max_Hp * ming_2_hp_bonus_max)
     e_bonus_withoud_q = e_bonus - shui_shen_q_bonus
 
@@ -435,11 +466,14 @@ def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
                            e_bonus_withoud_q, is_extra=True),
     ]
 
-    
+    return e_damage_list_man_ming_bai_fu
+
+
+def calc_score(hp, e_bonus, full_bonus, crit_rate, crit_damage):
     if only_e:
-        e_damage_list = e_damage_patter_0_5_ming
+        e_damage_list = construct_e_damage_list_for_0_5_ming(hp, e_bonus)
     else:
-        e_damage_list = e_damage_list_man_ming_bai_fu
+        e_damage_list = construct_e_damage_list_for_bai_fu(hp, e_bonus)
 
     e_score_non_crit = 0
 
