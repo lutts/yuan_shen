@@ -556,8 +556,6 @@ all_syw = {
         ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_BEI, hp_percent=ShengYiWu.BONUS_MAX,
                   energe_recharge=0.13, def_per=0.204, hp=568, def_v=16),
 
-        ShengYiWu(ShengYiWu.CHEN_LUN, ShengYiWu.PART_BEI, elem_bonus=ShengYiWu.BONUS_MAX, elem_type=ShengYiWu.ELEM_TYPE_CAO,
-                  crit_damage=0.21,  elem_mastery=16, def_v=32, hp_percent=0.099),
         ShengYiWu(ShengYiWu.CHEN_LUN, ShengYiWu.PART_BEI, elem_bonus=ShengYiWu.BONUS_MAX, elem_type=ShengYiWu.ELEM_TYPE_BING,
                   def_per=0.058, crit_rate=0.07, crit_damage=0.218, atk=33),
 
@@ -585,10 +583,10 @@ all_syw = {
 
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, elem_bonus=ShengYiWu.BONUS_MAX, elem_type=ShengYiWu.ELEM_TYPE_HUO,
                   crit_damage=0.256, def_per=0.139, energe_recharge=0.091, atk_per=0.058),
-         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, hp_percent=ShengYiWu.BONUS_MAX,
+        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, hp_percent=ShengYiWu.BONUS_MAX,
                    atk=27, crit_damage=0.225, crit_rate=0.058, def_v=46),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, elem_bonus=ShengYiWu.BONUS_MAX, elem_type=ShengYiWu.ELEM_TYPE_BING,
-                  crit_damage=0.14, hp=956, def_v=21, energe_recharge=0.052),
+                  crit_damage=0.21, hp_percent=0.058, energe_recharge=0.155, atk_per=0.047),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, elem_bonus=ShengYiWu.BONUS_MAX, elem_type=ShengYiWu.ELEM_TYPE_SHUI,
                   atk=14, hp_percent=0.14, crit_damage=0.202, hp=269),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, elem_bonus=ShengYiWu.BONUS_MAX, elem_type=ShengYiWu.ELEM_TYPE_HUO,
@@ -706,7 +704,7 @@ def set_score_threshold(new_threashold):
     global score_threshold
     score_threshold = new_threashold
 
-def calculate_score(find_combine_callback, match_sha_callback, match_bei_callback, calculate_score_callbak, result_txt_file):
+def calculate_score(find_combine_callback, match_sha_callback, match_bei_callback, calculate_score_callbak, result_txt_file, result_description):
     # all_syw = {}
     # all_syw.update(all_syw_exclude_s_b)
     # all_syw.update(syw_s_b)
@@ -800,6 +798,8 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
                     f.write(str((round(i, 4), c, )))
                     f.write('\n\n')
 
+            f.write(str(result_description))
+            f.write('\n')
             f.write("expect_max: " + str(max_expect_score))
             f.write('\n')
             f.write("crit_max: " + str(max_crit_score))

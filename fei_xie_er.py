@@ -108,12 +108,15 @@ def calculate_score_callback(combine):
     return [e_damage_expect, e_damage_crit, elem_mastery, int(all_atk), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
 
 
+result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "精通", "实战攻击力", "暴击率", "暴击伤害", "圣遗物组合"]
+
 def find_syw_for_fei_xie_er():
     return calculate_score(find_combine_callback=find_combins_callback,
                     match_sha_callback=match_sha_callback,
                     match_bei_callback=match_bei_callback,
                     calculate_score_callbak=calculate_score_callback,
-                    result_txt_file="fei_xie_er_syw.txt")
+                    result_txt_file="fei_xie_er_syw.txt",
+                    result_description=result_description)
 
 # Main body
 if __name__ == '__main__':

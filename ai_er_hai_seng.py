@@ -168,12 +168,15 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     return [expect_score, crit_score, elem_mastery, panel_elem_mastery, int(panel_atk), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
 
 
+result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "实战精通", "面板精通", "面板攻击力", "暴击率", "暴伤", "圣遗物组合"]
+
 def find_syw_for_ai_er_hai_seng():
     return calculate_score(find_combine_callback=find_combins_callback,
                            match_sha_callback=match_sha_callback,
                            match_bei_callback=match_bei_callback,
                            calculate_score_callbak=calculate_score_callback,
-                           result_txt_file="ai_er_hai_seng_syw.txt")
+                           result_txt_file="ai_er_hai_seng_syw.txt",
+                           result_description=result_description)
 
 
 # Main body

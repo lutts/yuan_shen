@@ -107,12 +107,16 @@ def calculate_score_callback(combine: list[ShengYiWu]):
             round(panel_crit_rate, 3), round(crit_damage - 1, 3), round(energy_recharge, 1), combine]
 
 
+result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "元素精通", "实战攻击力", "面板攻击力", "面板暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
+
+
 def find_syw_for_xiang_ling():
     return calculate_score(find_combine_callback=find_combins_callback,
                     match_sha_callback=match_sha_callback,
                     match_bei_callback=match_bei_callback,
                     calculate_score_callbak=calculate_score_callback,
-                    result_txt_file="xiang_ling_syw.txt")
+                    result_txt_file="xiang_ling_syw.txt",
+                    result_description=result_description)
 
 # Main body
 if __name__ == '__main__':

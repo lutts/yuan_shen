@@ -417,12 +417,16 @@ def calculate_score_callback(combine : list[ShengYiWu]):
     return [expect_score, crit_score, full_six_expect_zhan_bi, full_six_crit_zhan_bi, int(max_hp), int(panel_hp), round(e_bonus, 3), round(elem_bonus, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]
 
 
+result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "满命六刀伤害期望占比", "满命六刀暴击伤害占比", "实战最大生命值上限", "面板最大生命值", "战技元素伤害加成", "满命六刀元素伤害加成", "暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
+
+
 def find_syw_for_fu_ning_na():
     return calculate_score(find_combine_callback=find_combine_callback,
                            match_sha_callback=match_sha_callback,
                            match_bei_callback=match_bei_callback,
                            calculate_score_callbak=calculate_score_callback,
-                           result_txt_file="fu_ning_na_syw.txt")
+                           result_txt_file="fu_ning_na_syw.txt",
+                           result_description=result_description)
 
 
 # Main body

@@ -147,7 +147,7 @@ def calculate_score_callback(combine : list[ShengYiWu], has_fu_fu = True, has_le
     else:
         q_bei_lv = 13.89
         qx_bei_lv = 9.26
-        
+
     q_elem_bonus = elem_bonus + sum(extra_q_bonus.values())
     q_damage = all_hp * q_bei_lv / 100 * (q_elem_bonus - common_elem_bonus["夜兰大招平均增伤"])
     q_damage_crit = q_damage * crit_damage
@@ -193,6 +193,9 @@ def calculate_score_callback(combine : list[ShengYiWu], has_fu_fu = True, has_le
     return [expect_score, crit_score, int(all_hp), round(elem_bonus, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]
 
 
+result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "实战生命值上限", "实战元素伤害加成", "暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
+
+
 def calculate_score_callback_only_fufu(combine):
     return calculate_score_callback(combine)
 
@@ -204,14 +207,16 @@ def find_syw_for_ye_lan_with_fu_fu():
                     match_sha_callback=match_sha_callback,
                     match_bei_callback=match_bei_callback,
                     calculate_score_callbak=calculate_score_callback_only_fufu,
-                    result_txt_file="ye_lan_syw.txt")
+                    result_txt_file="ye_lan_syw.txt",
+                    result_description=result_description)
 
 def find_syw_for_ye_lan_with_lei_shen():
     return calculate_score(find_combine_callback=find_combine_callback,
                     match_sha_callback=match_sha_callback,
                     match_bei_callback=match_bei_callback,
                     calculate_score_callbak=calculate_score_callback_only_lei_shen,
-                    result_txt_file="ye_lan_syw.txt")
+                    result_txt_file="ye_lan_syw.txt",
+                    result_description=result_description)
 
 
 # Main body

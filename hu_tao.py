@@ -155,19 +155,24 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     return [az_damage_expect, az_damage_crit, panel_hp, elem_mastery, int(all_atk), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
 
 
+result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "面板生命值上限", "元素精通", "实战攻击力", "暴击率", "暴击伤害", "圣遗物组合"]
+
+
 def find_syw_for_hu_tao():
     return calculate_score(find_combine_callback=find_combins_callback,
                     match_sha_callback=match_sha_callback,
                     match_bei_callback=match_bei_callback,
                     calculate_score_callbak=calculate_score_callback,
-                    result_txt_file="hu_tao_syw.txt")
+                    result_txt_file="hu_tao_syw.txt",
+                    result_description=result_description)
 
 def find_syw_for_hu_tao_lie_ren():
     return calculate_score(find_combine_callback=find_combins_callback_lie_ren,
                     match_sha_callback=match_sha_callback,
                     match_bei_callback=match_bei_callback,
                     calculate_score_callbak=calculate_score_callback,
-                    result_txt_file="hu_tao_syw.txt")
+                    result_txt_file="hu_tao_syw.txt",
+                    result_description=result_description)
 
 # Main body
 if __name__ == '__main__':
