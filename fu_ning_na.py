@@ -46,7 +46,7 @@ fu_ning_na_Max_Hp = 15307.0
 
 
 def match_sha_callback(syw: ShengYiWu):
-    return syw.hp_percent == 0.466
+    return syw.hp_percent == 0.466 or syw.energe_recharge == ShengYiWu.ENERGE_RECHARGE_MAX
 
 
 def match_bei_callback(syw: ShengYiWu):
