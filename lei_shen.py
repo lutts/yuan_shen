@@ -78,7 +78,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         elem_bonus += p.elem_bonus
 
     crit_rate = round(crit_rate, 3)
-    if crit_rate < 0.6:
+    if crit_rate < 0.65:
         return None
 
     energe_recharge *= 100
@@ -134,12 +134,9 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     crit_score = q_damage_crit + qa1_damage_crit + qa2_damage_crit + qa3_damage_crit + qa4_damage_crit + qa5_damage_crit
     expect_score = q_damage_expect + qa1_damage_expect + qa2_damage_expect + qa3_damage_expect + qa4_damage_expect + qa5_damage_expect
 
-    # expect_crit_damage_bonus = crit_rate * (extra_crit_damage + base_crit_damage - 1)
-
-    # base_score = all_atk / base_atk * (extra_elem_bonus + base_elem_bonus) / base_elem_bonus
-    # crit_score = base_score * (base_crit_damage + extra_crit_damage) / base_crit_damage
-    # expect_score = base_score * (1 + expect_crit_damage_bonus)
-    return [expect_score, crit_score, int(all_atk), int(panel_atk), round(crit_rate, 3), round(crit_damage - 1, 3), round(panel_energe_recharge, 1), combine]
+    panel_crit_damage = crit_damage - sum(extra_crit_damage.values())
+    panel_crit_damage = round(panel_crit_damage - 1, 3)
+    return [expect_score, crit_score, int(all_atk), int(panel_atk), round(crit_rate, 3), panel_crit_damage, round(panel_energe_recharge, 1), combine]
 
 
 result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "实战攻击力", "面板攻击力", "暴击率", "暴击伤害", "面板充能效率", "圣遗物组合"]

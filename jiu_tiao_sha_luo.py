@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, calculate_score, find_syw
+from base_syw import ShengYiWu, calculate_score, find_syw, set_score_threshold
 
 
 def match_sha_callback(syw: ShengYiWu):
@@ -96,8 +96,9 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     crit_score = all_damage * crit_damage
     expect_score = all_damage * (1 + crit_rate * (crit_damage - 1))
 
+    panel_atk = all_atk - sum(extra_atk.values())
     panel_crit_damage = crit_damage - 1 - sum(extra_crit_damage.values()) + extra_crit_damage["天空之翼"]
-    return [expect_score, crit_score, int(all_atk), crit_rate, round(panel_crit_damage, 3), energe_recharge, combine]
+    return [expect_score, crit_score, int(panel_atk), crit_rate, round(panel_crit_damage, 3), energe_recharge, combine]
     
 
 result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "攻击力", "暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
@@ -113,5 +114,6 @@ def find_syw_for_jiu_tiao_sha_luo():
 
 # Main body
 if __name__ == '__main__':
+    set_score_threshold(1.7)
     find_syw_for_jiu_tiao_sha_luo()
     
