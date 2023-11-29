@@ -666,9 +666,6 @@ all_syw = {
         ShengYiWu(ShengYiWu.RU_LEI, ShengYiWu.PART_TOU, crit_rate=ShengYiWu.CRIT_RATE_MAIN,
                   hp=777, atk=27, crit_damage=0.132, elem_mastery=23),
 
-        ShengYiWu(ShengYiWu.YUE_TUAN, ShengYiWu.PART_TOU, crit_rate=ShengYiWu.CRIT_RATE_MAIN,
-                  hp=508, crit_damage=0.14, atk=45, atk_per=0.099),
-
         ShengYiWu(ShengYiWu.FENG_TAO, ShengYiWu.PART_TOU, crit_rate=ShengYiWu.CRIT_RATE_MAIN,
                   crit_damage=0.272, def_v=23, hp=538, hp_percent=0.041),
 
