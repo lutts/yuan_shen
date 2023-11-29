@@ -395,7 +395,7 @@ all_syw = {
         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_SHA, atk_per=ShengYiWu.BONUS_MAX,
                   crit_damage=0.21, hp=568, crit_rate=0.078, hp_percent=0.093),
         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_SHA, hp_percent=ShengYiWu.BONUS_MAX,
-                  atk=47, crit_damage=0.062, crit_rate=0.113, atk_per=0.053),
+                  atk_per=0.152, energe_recharge=0.065, crit_rate=0.101, crit_damage=0.078),
         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_SHA, hp_percent=ShengYiWu.BONUS_MAX,
                   energe_recharge=0.052, crit_damage=0.202, elem_mastery=44, crit_rate=0.062),
 
@@ -479,6 +479,8 @@ all_syw = {
         ShengYiWu(ShengYiWu.FENG_TAO, ShengYiWu.PART_SHA, elem_mastery=ShengYiWu.ELEM_MASTERY_MAIN,
                   atk_per=0.047, energe_recharge=0.168, def_v=32, atk=37),
 
+        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_SHA, atk_per=ShengYiWu.BONUS_MAX,
+                  atk=14, def_v=37, crit_damage=0.14, crit_rate=0.124),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_SHA, hp_percent=ShengYiWu.BONUS_MAX,
                   energe_recharge=0.091, crit_rate=0.163, crit_damage=0.078, hp=239),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_SHA, atk_per=ShengYiWu.BONUS_MAX,
