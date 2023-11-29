@@ -784,20 +784,33 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
                 crit_score) + '(' + str(round(crit_score / max_crit_score, 4)) + ')'
 
             score = expect_score / max_expect_score + crit_score / max_crit_score
-            if score < score_threshold: #0.85 * 2:
-                continue
+            score_data.insert(0, round(score, 4))
+            #if score < score_threshold: #0.85 * 2:
+            #    continue
 
             if score in score_dict:
                 score_dict[score].append(score_data)
             else:
                 score_dict[score] = [score_data]
 
+        sorted_score_data = []
+        above_threshold_num = 0
+        for score in sorted(score_dict):
+            score_data = score_dict[score]
+            if score >= score_threshold:
+                above_threshold_num += len(score_data)
+            sorted_score_data += score_data
+
+        min_write_num = max(30, above_threshold_num)
+        print("min_write_num:" + str(min_write_num))
+        sorted_score_data = sorted_score_data[-min_write_num:]
+
         with open(result_txt_file, 'w', encoding='utf-8') as f:
-            for i in sorted(score_dict):
-                for c in score_dict[i]:
-                    # print((i, c))
-                    f.write(str((round(i, 4), c, )))
-                    f.write('\n\n')
+            for c in sorted_score_data:
+                # print((i, c))
+                #f.write(str((round(score, 4), c, )))
+                f.write(str(c))
+                f.write('\n\n')
 
             f.write(str(result_description))
             f.write('\n')
@@ -806,4 +819,4 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
             f.write("crit_max: " + str(max_crit_score))
             f.write('\n')
 
-    return score_dict
+    return sorted_score_data

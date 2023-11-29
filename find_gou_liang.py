@@ -19,13 +19,12 @@ from fei_xie_er import find_syw_for_fei_xie_er
 from hu_tao import find_syw_for_hu_tao, find_syw_for_hu_tao_lie_ren
 from ai_er_hai_seng import find_syw_for_ai_er_hai_seng
 
-def syw_dict_to_id_list(syw_dict):
+def syw_list_to_id_list(syw_list):
     id_list = []
-    for sl in syw_dict.values():
-        for sc in sl:
-            for s in sc[-1]:
-                #print(s)
-                id_list.append(s.id)
+    for sc in syw_list:
+        for s in sc[-1]:
+            #print(s)
+            id_list.append(s.id)
 
     return id_list
 
@@ -54,7 +53,7 @@ if __name__ == '__main__':
 
     set_score_threshold(1.85)
     for func in used_syw_funcs:
-        used_syw_id_list += syw_dict_to_id_list(func())
+        used_syw_id_list += syw_list_to_id_list(func())
 
     unused_syw_id_list = list(set(all_id_list) - set(used_syw_id_list))
 
