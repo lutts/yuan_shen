@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
     used_syw_id_list = []
 
-    set_score_threshold(1.85)
+    set_score_threshold(1.9)
     for func in used_syw_funcs:
         used_syw_id_list += syw_list_to_id_list(func())
 
