@@ -12,6 +12,8 @@ from base_syw import ShengYiWu, find_syw, calculate_score
 
 ming_zuo_num = 6
 
+ye_lan_base_hp = 14450.0
+
 def match_sha_callback(syw:ShengYiWu):
     return syw.hp_percent == 0.466 or syw.energe_recharge == ShengYiWu.ENERGE_RECHARGE_MAX
 
@@ -51,9 +53,35 @@ def find_combine_callback():
                     for l in list(itertools.combinations(all_combins, 2))] + jue_yuan_4
 
 
-def calculate_score_callback(combine : list[ShengYiWu], has_fu_fu = True, has_lei_shen = False):
-    base_hp = 14450.0
+class YeLanQBonus:
+    def __init__(self):
+        self.__invalid = False
+        self.__stopped = True
 
+    def invalidate(self):
+        self.__invalid = True
+
+    def start(self, start_time):
+        self.__stopped = False
+        self.__start_time = start_time
+    
+    def bonus(self, checkpoint_time):
+        if self.__stopped or self.__invalid:
+            return 0
+        
+        dur = checkpoint_time - self.__start_time
+        if dur <= 0:
+            return 0
+        
+        if dur >= 15:
+            return 0
+        
+        return (1 + int(dur) * 3.5) / 100
+    
+    def stop(self):
+        self.__stopped = True
+
+def calculate_score_callback(combine : list[ShengYiWu], has_fu_fu = True, has_lei_shen = False):
     extra_hp_bonus = {
         "专武": 0.16,
     }
@@ -133,7 +161,7 @@ def calculate_score_callback(combine : list[ShengYiWu], has_fu_fu = True, has_le
     if ShengYiWu.JUE_YUAN in name_count and name_count[ShengYiWu.JUE_YUAN] >= 4:
         extra_q_bonus["绝缘4件套"] = min(energe_recharge / 4 / 100, 0.75)
     
-    all_hp = int(base_hp * (1 + hp_per + sum(extra_hp_bonus.values()))) + hp + 4780
+    all_hp = int(ye_lan_base_hp * (1 + hp_per + sum(extra_hp_bonus.values()))) + hp + 4780
 
     # 扣除切人时间，按一轮循环中11次协同攻击算
     # 技能伤害：15.53%生命值上限
