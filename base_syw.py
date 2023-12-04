@@ -537,8 +537,6 @@ all_syw = {
                   crit_rate=0.066, crit_damage=0.171, atk=27, energe_recharge=0.045),
         ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_BEI, elem_bonus=ShengYiWu.BONUS_MAX, elem_type=ShengYiWu.ELEM_TYPE_FENG,
                   crit_damage=0.148, atk=14, crit_rate=0.121, def_v=19),
-        ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_BEI, elem_bonus=ShengYiWu.BONUS_MAX, elem_type=ShengYiWu.ELEM_TYPE_SHUI,
-                  hp_percent=0.152, crit_damage=0.194, def_v=21, hp=239),
         ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_BEI, elem_bonus=ShengYiWu.BONUS_MAX, elem_type=ShengYiWu.ELEM_TYPE_HUO,
                   crit_rate=0.062, crit_damage=0.28, atk=14, def_v=16),
         ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_BEI, elem_bonus=ShengYiWu.BONUS_MAX, elem_type=ShengYiWu.ELEM_TYPE_CAO,
