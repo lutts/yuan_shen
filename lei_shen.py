@@ -54,11 +54,11 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     extra_atk = {
         "班尼特": int(755 * 1.19),
         "双火": 0, # int(945 * 0.25),
-        "九条": 0, # int(858 * 0.86),
+        "九条": 0, #int(858 * 0.86),
     }
 
     extra_crit_damage = {
-        "九条": 0, # 0.6,
+        "九条": 0, #0.6,
     }
 
     extra_elem_bonus = {
@@ -131,58 +131,88 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         # 五段：131.9% + 78.6% = 210.5%
         # 重击：(109.9% + 78.6% = 188.5%) + (132.7% + 78.6% = 211.3%)
 
-        ye_lan_bonus = YeLanQBonus()
-        ye_lan_bonus.start(4.369)
+        qa1_bei_lv = 158.4
+        qa2_bei_lv = 157
+        qa3_bei_lv = 174.6
+        qa4_1_bei_lv = 133.7
+        qa4_2_bei_lv = 133.9
+        qa5_bei_lv = 210.5
+        qaz_1_bei_lv = 188.5
+        qaz_2_bei_lv = 211.3
 
-        if not has_ye_lan:
-            ye_lan_bonus.invalidate()
+        use_5az = False
 
-        q_damage = all_atk * 1141 / 100 * (elem_bonus + ye_lan_bonus.bonus(12.104))
-        # qa1_damage = all_atk * 158.4 / 100 * elem_bonus * 3
-        # qa2_damage = all_atk * 157 / 100 * elem_bonus * 3
-        # qa3_damage = all_atk * 174.6 / 100 * elem_bonus * 3
-        # qa4_damage = all_atk * 133.7 / 100 * elem_bonus * 3 + all_atk * 133.9 / 100 * elem_bonus * 3
-        # qa5_damage = all_atk * 210.5 / 100 * elem_bonus * 2
+        if use_5az: 
+            a_timestamps = [
+                12.937, 14.404, 15.887, 17.321, 18.771
+            ]
 
-        a_timestamps = [
-            12.937, 14.404, 15.887, 17.321, 18.771
-        ]
+            z1_timestamps = [
+                13.554, 15.038, 16.554, 17.953, 19.354
+            ]
 
-        z1_timestamps = [
-            13.554, 15.038, 16.554, 17.953, 19.354
-        ]
+            z2_timestamps = [
+                13.704, 15.221, 16.637, 18.071, 19.554
+            ]
 
-        z2_timestamps = [
-            13.704, 15.221, 16.637, 18.071, 19.554
-        ]
+            ye_lan_bonus = YeLanQBonus()
+            ye_lan_bonus.start(4.369)
 
-        n = 0
-        qa1_damage = 0
-        for t in a_timestamps:
-            qa1_elem_bonus = elem_bonus + ye_lan_bonus.bonus(t)
-            if n >= 3:
-                qa1_elem_bonus -= extra_elem_bonus["万叶"]
-            qa1_damage += all_atk * 158.4 / 100 * qa1_elem_bonus
-            n += 1
+            if not has_ye_lan:
+                ye_lan_bonus.invalidate()
 
-        n = 0
-        qz_damage = 0
-        for t in z1_timestamps:
-            z1_elem_bonus = elem_bonus + ye_lan_bonus.bonus(t)
-            if n >= 3:
-                z1_elem_bonus -= extra_elem_bonus["万叶"]
-            qz_damage += all_atk * 188.5 / 100 * z1_elem_bonus
-            n += 1
+            q_damage = all_atk * 1141 / 100 * (elem_bonus + ye_lan_bonus.bonus(12.104))
 
-        n = 0
-        for t in z2_timestamps:
-            z2_elem_bonus = elem_bonus + ye_lan_bonus.bonus(t)
-            if n >= 3:
-                z2_elem_bonus -= extra_elem_bonus["万叶"]
-            qz_damage += all_atk * 211.3 / 100 * z2_elem_bonus
-            n += 1
+            all_damage = q_damage
 
-        all_damage = q_damage + qa1_damage + qz_damage
+            for t in a_timestamps:
+                qa1_elem_bonus = elem_bonus + ye_lan_bonus.bonus(t)
+                all_damage += all_atk * qa1_bei_lv / 100 * qa1_elem_bonus
+
+            for t in z1_timestamps:
+                z1_elem_bonus = elem_bonus + ye_lan_bonus.bonus(t)
+                all_damage += all_atk * qaz_1_bei_lv / 100 * z1_elem_bonus
+
+            for t in z2_timestamps:
+                z2_elem_bonus = elem_bonus + ye_lan_bonus.bonus(t)
+                all_damage += all_atk * qaz_2_bei_lv / 100 * z2_elem_bonus
+        else: # 全程普攻
+            ye_lan_bonus = YeLanQBonus()
+            ye_lan_bonus.start(3.884)
+
+            if not has_ye_lan:
+                ye_lan_bonus.invalidate()
+
+            q_damage = all_atk * 1141 / 100 * (elem_bonus + ye_lan_bonus.bonus(11.686))
+
+            all_damage = q_damage
+
+            timestamps_and_bei_lv = [
+                (12.271, qa1_bei_lv),
+                (12.704, qa2_bei_lv),
+                (12.954, qa3_bei_lv),
+                (13.487, qa4_1_bei_lv),
+                (13.741, qa4_2_bei_lv),
+                (14.454, qa5_bei_lv),
+
+                (15.187, qa1_bei_lv),
+                (15.671, qa2_bei_lv),
+                (16.02, qa3_bei_lv),
+                (16.437, qa4_1_bei_lv),
+                (16.737, qa4_2_bei_lv),
+                (17.471, qa5_bei_lv),
+
+                (18.171, qa1_bei_lv),
+                (18.537, qa2_bei_lv),
+                (18.904, qa3_bei_lv),
+                (19.403, qa4_1_bei_lv),
+                (19.604, qa4_2_bei_lv)
+            ]
+
+            for tb in timestamps_and_bei_lv:
+                t, bei_lv = tb
+                bonus_with_ye_lan = elem_bonus + ye_lan_bonus.bonus(t)
+                all_damage += all_atk * bei_lv / 100 * bonus_with_ye_lan
     
     crit_score = all_damage * crit_damage
     expect_score = all_damage * (1 + crit_rate * (crit_damage - 1))
