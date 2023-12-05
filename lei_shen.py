@@ -9,6 +9,7 @@ import os
 import logging
 import itertools
 from base_syw import ShengYiWu, calculate_score, find_syw
+from ye_lan import YeLanQBonus
 
 
 def match_sha_callback(syw: ShengYiWu):
@@ -40,6 +41,10 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     wu_qi_atk = 608
     bai_zhi_atk = base_atk + wu_qi_atk
 
+    has_ye_lan = True
+    ye_lan_ming_zuo_num = 6
+    has_fu_fu = False
+
     extra_energe_recharge = {
         "绝缘2件套": 0.2,
         "薙草之稻光": 0.551,
@@ -53,14 +58,15 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     }
 
     extra_crit_damage = {
-        "九条": 0, #0.6,
+        "九条": 0, # 0.6,
     }
 
     extra_elem_bonus = {
         "万叶": 0.4,
-        "夜兰": 0.25,
-        "水神": 0, # 1.24,
     }
+
+    if has_fu_fu:
+        extra_elem_bonus["芙芙"] = 1.24
 
     crit_rate = 0.05
     crit_damage = 1 + 0.5 + sum(extra_crit_damage.values())
@@ -97,49 +103,96 @@ def calculate_score_callback(combine: list[ShengYiWu]):
    
     all_atk = int(bai_zhi_atk * (1 + atk_per)) + atk
 
-    # 一轮伤害：两套普攻 + 4下
-    # 愿力层数：夜兰70 + 万叶60 + 班尼特60 = 190 * 0.2 = 38 * 1.2 = 45层，所有队友产球5颗就有60层
-    # 雷九万班：60层肯定没问题
-    # 梦想一刀：(721% + 420%=1141%)攻击力
-    # 一段：79.8% + 78.6% = 158.4%
-    # 二段：78.4% + 78.6% = 157%
-    # 三段：96.0% + 78.6% = 174.6%
-    # 四段：(55.1% + 78.6% = 133.7%) + (55.3% + 78.6% = 133.9%)
-    # 五段：131.9% + 78.6% = 210.5%
+    if has_ye_lan and ye_lan_ming_zuo_num == 6:
+        ye_lan_bonus = YeLanQBonus()
+        ye_lan_bonus.start(3.567)
 
-    q_damage = all_atk * 1141 / 100 * elem_bonus
-    q_damage_crit = q_damage * crit_damage
-    q_damage_expect = q_damage * (1 + crit_rate * (crit_damage - 1))
+        # 和满命夜兰配队不能采用az打法，因为时间只够打2次az，虽然2次az比5a伤害还高些，但只能触发两次回能，5a能触发3次
+        # 和满命夜兰配队本来就因为影宝砍不满导致充能压力大，所以5a是最理想的
 
-    qa1_damage = all_atk * 158.4 / 100 * elem_bonus * 3
-    qa1_damage_crit = qa1_damage * crit_damage
-    qa1_damage_expect = qa1_damage * (1 + crit_rate * (crit_damage - 1))
+        q_damage = all_atk * 1141 / 100 * (elem_bonus + ye_lan_bonus.bonus(11.319))
+        qa1_damage = all_atk * 158.4 / 100 * (elem_bonus + ye_lan_bonus.bonus(11.752))
+        qa2_damage = all_atk * 157 / 100 * (elem_bonus + ye_lan_bonus.bonus(12.053))
+        qa3_damage = all_atk * 174.6 / 100 * (elem_bonus + ye_lan_bonus.bonus(12.053))
+        qa4_bonus = elem_bonus + ye_lan_bonus.bonus(13.137)
+        qa4_damage = all_atk * 133.7 / 100 * qa4_bonus + all_atk * 133.9 / 100 * qa4_bonus
+        qa5_damage = all_atk * 210.5 / 100 * (elem_bonus + ye_lan_bonus.bonus(13.871))
 
-    qa2_damage = all_atk * 157 / 100 * elem_bonus * 3
-    qa2_damage_crit = qa2_damage * crit_damage
-    qa2_damage_expect = qa2_damage * (1 + crit_rate * (crit_damage - 1))
+        all_damage = q_damage + qa1_damage + qa2_damage + qa3_damage + qa4_damage + qa5_damage
+    else:
+        # 一轮伤害：两套普攻 + 4下 或者 5az
+        # 愿力层数：夜兰70 + 万叶60 + 班尼特60 = 190 * 0.2 = 38 * 1.2 = 45层，所有队友产球5颗就有60层
+        # 雷九万班：60层肯定没问题
+        # 梦想一刀：(721% + 420%=1141%)攻击力
+        # 一段：79.8% + 78.6% = 158.4%
+        # 二段：78.4% + 78.6% = 157%
+        # 三段：96.0% + 78.6% = 174.6%
+        # 四段：(55.1% + 78.6% = 133.7%) + (55.3% + 78.6% = 133.9%)
+        # 五段：131.9% + 78.6% = 210.5%
+        # 重击：(109.9% + 78.6% = 188.5%) + (132.7% + 78.6% = 211.3%)
 
-    qa3_damage = all_atk * 174.6 / 100 * elem_bonus * 3
-    qa3_damage_crit = qa3_damage * crit_damage
-    qa3_damage_expect = qa3_damage * (1 + crit_rate * (crit_damage - 1))
+        ye_lan_bonus = YeLanQBonus()
+        ye_lan_bonus.start(4.369)
 
-    qa4_damage = all_atk * 133.7 / 100 * elem_bonus * 3 + all_atk * 133.9 / 100 * elem_bonus * 3
-    qa4_damage_crit = qa4_damage * crit_damage
-    qa4_damage_expect = qa4_damage * (1 + crit_rate * (crit_damage - 1))
+        if not has_ye_lan:
+            ye_lan_bonus.invalidate()
 
-    qa5_damage = all_atk * 210.5 / 100 * elem_bonus * 2
-    qa5_damage_crit = qa5_damage * crit_damage
-    qa5_damage_expect = qa5_damage * (1 + crit_rate * (crit_damage - 1))
+        q_damage = all_atk * 1141 / 100 * (elem_bonus + ye_lan_bonus.bonus(12.104))
+        # qa1_damage = all_atk * 158.4 / 100 * elem_bonus * 3
+        # qa2_damage = all_atk * 157 / 100 * elem_bonus * 3
+        # qa3_damage = all_atk * 174.6 / 100 * elem_bonus * 3
+        # qa4_damage = all_atk * 133.7 / 100 * elem_bonus * 3 + all_atk * 133.9 / 100 * elem_bonus * 3
+        # qa5_damage = all_atk * 210.5 / 100 * elem_bonus * 2
 
-    crit_score = q_damage_crit + qa1_damage_crit + qa2_damage_crit + qa3_damage_crit + qa4_damage_crit + qa5_damage_crit
-    expect_score = q_damage_expect + qa1_damage_expect + qa2_damage_expect + qa3_damage_expect + qa4_damage_expect + qa5_damage_expect
+        a_timestamps = [
+            12.937, 14.404, 15.887, 17.321, 18.771
+        ]
+
+        z1_timestamps = [
+            13.554, 15.038, 16.554, 17.953, 19.354
+        ]
+
+        z2_timestamps = [
+            13.704, 15.221, 16.637, 18.071, 19.554
+        ]
+
+        n = 0
+        qa1_damage = 0
+        for t in a_timestamps:
+            qa1_elem_bonus = elem_bonus + ye_lan_bonus.bonus(t)
+            if n >= 3:
+                qa1_elem_bonus -= extra_elem_bonus["万叶"]
+            qa1_damage += all_atk * 158.4 / 100 * qa1_elem_bonus
+            n += 1
+
+        n = 0
+        qz_damage = 0
+        for t in z1_timestamps:
+            z1_elem_bonus = elem_bonus + ye_lan_bonus.bonus(t)
+            if n >= 3:
+                z1_elem_bonus -= extra_elem_bonus["万叶"]
+            qz_damage += all_atk * 188.5 / 100 * z1_elem_bonus
+            n += 1
+
+        n = 0
+        for t in z2_timestamps:
+            z2_elem_bonus = elem_bonus + ye_lan_bonus.bonus(t)
+            if n >= 3:
+                z2_elem_bonus -= extra_elem_bonus["万叶"]
+            qz_damage += all_atk * 211.3 / 100 * z2_elem_bonus
+            n += 1
+
+        all_damage = q_damage + qa1_damage + qz_damage
+    
+    crit_score = all_damage * crit_damage
+    expect_score = all_damage * (1 + crit_rate * (crit_damage - 1))
 
     panel_crit_damage = crit_damage - sum(extra_crit_damage.values())
     panel_crit_damage = round(panel_crit_damage - 1, 3)
-    return [expect_score, crit_score, int(all_atk), int(panel_atk), round(crit_rate, 3), panel_crit_damage, round(panel_energe_recharge, 1), combine]
+    return [expect_score, crit_score, int(all_atk), int(panel_atk), round(elem_bonus, 3), round(crit_rate, 3), panel_crit_damage, round(panel_energe_recharge, 1), combine]
 
 
-result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "实战攻击力", "面板攻击力", "暴击率", "暴击伤害", "面板充能效率", "圣遗物组合"]
+result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "实战攻击力", "面板攻击力", "实战最大伤害加成", "暴击率", "暴击伤害", "面板充能效率", "圣遗物组合"]
 
 
 def find_syw_for_lei_shen():
