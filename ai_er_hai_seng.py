@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, calculate_score, find_syw
+from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_score
 
 
 def match_sha_callback(syw: ShengYiWu):
@@ -163,7 +163,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         e_damage + z_damage + a_with_extra_bonus_num * \
         aaa_damage * a_elem_bonus + guang_mu_damage
     crit_score = non_crit_score * crit_damage
-    expect_score = non_crit_score * (1 + crit_rate * (crit_damage - 1))
+    expect_score = calc_expect_score(non_crit_score, crit_rate, crit_damage)
 
     return [expect_score, crit_score, elem_mastery, panel_elem_mastery, int(panel_atk), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
 

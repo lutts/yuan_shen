@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, find_syw, calculate_score
+from base_syw import ShengYiWu, find_syw, calculate_score, calc_expect_score
 
 ming_zuo_num = 6
 
@@ -31,6 +31,7 @@ else:
     e_bei_lv = 38.4  # 9级
 
 fu_fu_q_bonus = 1.24
+wan_ye_bonus = 0.4
 
 ye_lan_base_hp = 14450.0
 
@@ -127,23 +128,96 @@ class YeLanQBonus:
 
 
 def calc_qx_and_po_ju_shi_damage(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, qx_damage_timestamps,
-                                 extra_qx_damage_timestamps, po_ju_shi_timestamps, ye_lan_q_bonus):
+                                 extra_qx_damage_timestamps, po_ju_shi_timestamps, ye_lan_q_bonus, e3_timestamp):
     all_damage = 0
     for t in qx_damage_timestamps:
         qx_bonus = q_elem_bonus + ye_lan_q_bonus.bonus(t)
-        all_damage += all_hp * qx_bei_lv / 100 * qx_bonus
+        hp = all_hp
+        if e3_timestamp != 0 and t > e3_timestamp and ming_zuo_num >= 4:
+            hp += int(0.1 * ye_lan_base_hp)
+        all_damage += hp * qx_bei_lv / 100 * qx_bonus
 
     if ming_zuo_num >= 2:
         for t in extra_qx_damage_timestamps:
             qx_bonus = q_elem_bonus + ye_lan_q_bonus.bonus(t)
-            all_damage += all_hp * 14 / 100 * qx_bonus
+            hp = all_hp
+            if e3_timestamp != 0 and t > e3_timestamp and ming_zuo_num >= 4:
+                hp += int(0.1 * ye_lan_base_hp)
+            all_damage += hp * 14 / 100 * qx_bonus
 
     if ming_zuo_num == 6:
         for t in po_ju_shi_timestamps:
             po_ju_shi_bonus = e_po_ju_shi_elem_bonus + ye_lan_q_bonus.bonus(t)
-            all_damage += all_hp * 20.84 / 100 * 1.56 * po_ju_shi_bonus
+            hp = all_hp
+            if e3_timestamp != 0 and t > e3_timestamp and ming_zuo_num >= 4:
+                hp += int(0.1 * ye_lan_base_hp)
+            all_damage += hp * 20.84 / 100 * 1.56 * po_ju_shi_bonus
 
     return all_damage
+
+def calc_score_with_fu_fu_2(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage):
+    all_damage = 0
+
+    # 第一个e 3/4芙芙增伤
+    e1_damage = all_hp * e_bei_lv / 100 * (e_po_ju_shi_elem_bonus - fu_fu_q_bonus / 4)
+
+    # 一个e最后增加10%
+    if ming_zuo_num >= 4:
+        all_hp += int(0.1 * ye_lan_base_hp)
+
+    # 按330层算
+    q_damage = all_hp * q_bei_lv / 100 * (q_elem_bonus - 70 * fu_fu_q_bonus / 400)
+
+    ye_lan_q_bonus = YeLanQBonus()
+    ye_lan_q_bonus.start(14.896)
+
+    # 第二个e满层
+    if ming_zuo_num >= 1:
+        e2_damage = e2_damage = all_hp * e_bei_lv / 100 * (e_po_ju_shi_elem_bonus + ye_lan_q_bonus.bonus(15.879))
+        # 再增加10%
+        if ming_zuo_num >= 4:
+            all_hp += int(0.1 * ye_lan_base_hp)
+    else:
+        e2_damage = 0
+
+    e3_timestamp = 24.614
+    e3_damage = all_hp * e_bei_lv / 100 * \
+        (e_po_ju_shi_elem_bonus + ye_lan_q_bonus.bonus(e3_timestamp))
+
+    qx_damage_timestamps = [
+        16.162, 16.362, 16.479,
+        17.596, 17.729, 17.812,
+        18.45, 18.596, 18.679,
+        21.847, 22.065, 22.164,
+        22.947, 23.065, 23.164,
+        23.914, 24.065, 24.164,
+        24.881, 24.931, 25.147,
+        25.164, 25.264, 25.264,
+        # 芙芙大招消失
+        # 25.98, 26.164, 26.264
+    ]
+
+    extra_qx_damage_timestamps = [
+        16.196, 18.596, 21.847, 23.914, 
+        # 芙芙大招消失
+        # 25.98
+    ]
+
+    po_ju_shi_timestamps = [
+        21.847, 22.164, 22.581, 23.164, 23.414
+    ]
+
+    all_damage = e1_damage + e2_damage + q_damage + e3_damage
+
+    all_damage += calc_qx_and_po_ju_shi_damage(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus,
+                                               qx_damage_timestamps, extra_qx_damage_timestamps, 
+                                               po_ju_shi_timestamps, ye_lan_q_bonus, e3_timestamp)
+
+    crit_score = all_damage * crit_damage
+    expect_score = calc_expect_score(all_damage, crit_rate, crit_damage)
+
+    return (expect_score, crit_score)
+    
 
 
 def calc_score_with_fu_fu(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage):
@@ -151,11 +225,16 @@ def calc_score_with_fu_fu(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rat
 
     # 起手第一个e没有任何增伤
     e1_damage = all_hp * e_bei_lv / 100 * \
-        (e_po_ju_shi_elem_bonus - fu_fu_q_bonus)
+        (e_po_ju_shi_elem_bonus - fu_fu_q_bonus - wan_ye_bonus)
+    
+    if ming_zuo_num >= 4:
+        all_hp += int(0.1 * ye_lan_base_hp)
 
     if ming_zuo_num >= 1:
         # 第二个e能吃到芙芙的满层增伤
         e2_damage = all_hp * e_bei_lv / 100 * e_po_ju_shi_elem_bonus
+        if ming_zuo_num >= 4:
+            all_hp += int(0.1 * ye_lan_base_hp)
     else:
         e2_damage = 0
 
@@ -164,8 +243,10 @@ def calc_score_with_fu_fu(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rat
     ye_lan_q_bonus = YeLanQBonus()
     ye_lan_q_bonus.start(13.71)
 
+    e3_timestamp = 20.422
+
     e3_damage = all_hp * e_bei_lv / 100 * \
-        (e_po_ju_shi_elem_bonus + ye_lan_q_bonus.bonus(20.422))
+        (e_po_ju_shi_elem_bonus + ye_lan_q_bonus.bonus(e3_timestamp))
 
     qx_damage_timestamps = [
         16.054, 16.287, 16.371,
@@ -176,15 +257,13 @@ def calc_score_with_fu_fu(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rat
         23.222, 23.272, 23.372,
         24.271, 24.372, 24.472,
 
-        # 25.372, 25.471, 25.589,
-        # 26.289, 26.489, 26.489,
-        # 27.106, 27.306, 27.506,
-        # 28.2, 28.28, 28.5,
+        25.372, 25.471, 25.589,
     ]
 
     extra_qx_damage_timestamps = [
         16.054, 20.706, 23.158, 
-        #25.172, 27.106
+
+        25.172
     ]
 
     po_ju_shi_timestamps = [
@@ -195,10 +274,10 @@ def calc_score_with_fu_fu(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rat
 
     all_damage += calc_qx_and_po_ju_shi_damage(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus,
                                                qx_damage_timestamps, extra_qx_damage_timestamps, 
-                                               po_ju_shi_timestamps, ye_lan_q_bonus)
+                                               po_ju_shi_timestamps, ye_lan_q_bonus, e3_timestamp)
 
     crit_score = all_damage * crit_damage
-    expect_score = all_damage * (1 + crit_rate * (crit_damage - 1))
+    expect_score = calc_expect_score(all_damage, crit_rate, crit_damage)
 
     return (expect_score, crit_score)
 
@@ -238,10 +317,10 @@ def calc_score_with_lei_shen(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_
 
     all_damage += calc_qx_and_po_ju_shi_damage(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus,
                                                qx_damage_timestamps, extra_qx_damage_timestamps, 
-                                               po_ju_shi_timestamps, ye_lan_q_bonus)
+                                               po_ju_shi_timestamps, ye_lan_q_bonus, 0)
 
     crit_score = all_damage * crit_damage
-    expect_score = all_damage * (1 + crit_rate * (crit_damage - 1))
+    expect_score = calc_expect_score(all_damage, crit_rate, crit_damage)
 
     return (expect_score, crit_score)
 
@@ -251,12 +330,9 @@ def calculate_score_callback(combine: list[ShengYiWu], has_fu_fu=True, has_lei_s
         "专武": 0.16,
     }
 
-    if ming_zuo_num >= 4:
-        extra_hp_bonus["四命保底两个e"] = 0.2
-
     common_elem_bonus = {
         "专武": 0.2,
-        "万叶": 0.4,
+        "万叶": wan_ye_bonus,
         "芙芙q": 0,
     }
 
@@ -329,14 +405,13 @@ def calculate_score_callback(combine: list[ShengYiWu], has_fu_fu=True, has_lei_s
     e_po_ju_shi_elem_bonus = elem_bonus
 
     if has_fu_fu:
-        expect_score, crit_score = calc_score_with_fu_fu(
+        expect_score, crit_score = calc_score_with_fu_fu_2(
             all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage)
     else:
         expect_score, crit_score = calc_score_with_lei_shen(
             all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage)
 
-    panel_hp = int(ye_lan_base_hp * (1 + hp_per -
-                   extra_hp_bonus["四命保底两个e"])) + hp
+    panel_hp = int(ye_lan_base_hp * (1 + hp_per)) + hp
     return [expect_score, crit_score, int(panel_hp), round(elem_bonus, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]
 
 

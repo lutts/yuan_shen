@@ -142,6 +142,8 @@ all_syw = {
                   energe_recharge=0.045, hp_percent=0.053, crit_damage=0.326, atk_per=0.099),
         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_HUA,
                   crit_damage=0.218, crit_rate=0.035, hp_percent=0.157, atk=31),
+        ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_HUA,
+                  crit_damage=0.14, def_per=0.051, hp_percent=0.146, crit_rate=0.07),
         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_HUA, crit_rate=0.14,
                   atk_per=0.117, crit_damage=0.07, energe_recharge=0.045),
         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_HUA, crit_damage=0.078,
@@ -705,6 +707,10 @@ score_threshold = 1.8
 def set_score_threshold(new_threashold):
     global score_threshold
     score_threshold = new_threashold
+
+def calc_expect_score(non_crit_score, crit_rate, crit_damage):
+    c = min(crit_rate, 1)
+    return non_crit_score * (1 + c * (crit_damage - 1))
 
 def calculate_score(find_combine_callback, match_sha_callback, match_bei_callback, calculate_score_callbak, result_txt_file, result_description):
     # all_syw = {}

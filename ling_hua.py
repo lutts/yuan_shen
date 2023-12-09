@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, calculate_score, find_syw
+from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_score
 
 def match_sha_callback(syw: ShengYiWu):
     return syw.atk_per == ShengYiWu.BONUS_MAX
@@ -94,7 +94,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     base_atk = int(bai_zhi_atk * (1 + sum(extra_atk_per.values()))) + 311
     non_crit_score = all_atk / base_atk * elem_bonus / base_elem_bonus
     crit_score = non_crit_score * crit_damage / base_crit_damage
-    expect_score = non_crit_score * (1 + real_crit_rate * (crit_damage - 1))
+    expect_score = calc_expect_score(non_crit_score, real_crit_rate, crit_damage)
     return [expect_score, crit_score, int(panel_atk), round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]
 
 
