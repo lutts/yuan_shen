@@ -38,6 +38,9 @@ else:
     XUN_JUE_BEI_LV = 10.73
     PANG_XIE_BEI_LV = 14.92
 
+q_bei_lv = 24.2
+e_bei_lv = 16.7
+
 if ming_zuo_num >= 5:
     fu_ning_na_q_bonus_bei_lv = 0.0031
 else:
@@ -58,7 +61,7 @@ common_elem_bonus = {
 }
 
 extra_e_bonus = {
-   #"固有天赋2": 0.28,  # 基本是能吃满的，操作得当，生命基本能保持在50%以上
+    # "固有天赋2": 0.28,  # 基本是能吃满的，操作得当，生命基本能保持在50%以上
 }
 
 variable_e_bonus = {
@@ -226,8 +229,11 @@ def find_combine_callback():
 #
 # 注：一轮循环按24秒计算
 
+def gu_you_tian_fu_2_bonus(hp):
+    return min(hp / 1000 * 0.007, 0.28)
+
 class E_Damage:
-    def __init__(self, bei_lv, hp, bonus, has_feng_tao = True, is_extra=False):
+    def __init__(self, bei_lv, hp, bonus, has_feng_tao=True, is_extra=False):
         self.bei_lv = bei_lv
         self.__hp = hp
         self.bonus = bonus
@@ -235,26 +241,46 @@ class E_Damage:
         self.is_extra = is_extra
 
     def score(self):
-        gu_you_tian_fu_2_bonus = min(self.__hp / 1000 * 0.007, 0.28)
-        d = self.__hp * self.bei_lv / 100 * e_extra_damage * (self.bonus + gu_you_tian_fu_2_bonus)
+        d = self.__hp * self.bei_lv / 100 * e_extra_damage * \
+            (self.bonus + gu_you_tian_fu_2_bonus(self.__hp))
         if not self.has_feng_tao:
-            d /= 1.2777 # 风套增伤27.77%
+            d /= 1.2777  # 风套增伤27.77%
         return d
 
 
 class Fu_Ren_E_Damage(E_Damage):
-    def __init__(self, hp, bonus, has_feng_tao = True, is_extra=False):
+    def __init__(self, hp, bonus, has_feng_tao=True, is_extra=False):
         super().__init__(FU_REN_BEI_LV, hp, bonus, has_feng_tao, is_extra)
 
 
 class Xun_Jue_E_Damage(E_Damage):
-    def __init__(self, hp, bonus, has_feng_tao = True, is_extra=False):
+    def __init__(self, hp, bonus, has_feng_tao=True, is_extra=False):
         super().__init__(XUN_JUE_BEI_LV, hp, bonus, has_feng_tao, is_extra)
 
 
 class Pang_Xie_E_Damage(E_Damage):
-    def __init__(self, hp, bonus, has_feng_tao = True, is_extra=False):
+    def __init__(self, hp, bonus, has_feng_tao=True, is_extra=False):
         super().__init__(PANG_XIE_BEI_LV, hp, bonus, has_feng_tao, is_extra)
+
+
+HEI_FU_BEI_LV = 18
+BAI_FU_BEI_LV = 18 + 25
+
+
+class full_damage_component:
+    def __init__(self, fixed_hp, hp_bonus, elem_bonus, bei_lv, has_feng_tao=True):
+        self.__fixed_hp = fixed_hp
+        self.__hp_bonus = hp_bonus
+        self.__elem_bonus = elem_bonus
+        self.__bei_lv = bei_lv
+        self.__has_feng_tao = has_feng_tao
+
+    def score(self):
+        d = (self.__fixed_hp + int(self.__hp_bonus * fu_ning_na_Max_Hp)) * \
+            self.__bei_lv / 100 * self.__elem_bonus
+        if not self.__has_feng_tao:
+            d /= 1.2777
+        return d
 
 
 class ZhiLiao:
@@ -351,7 +377,7 @@ class Qi:
             return self.e_bonus_withoud_q
         else:
             return self.e_bonus_withoud_q + self.ye_lan_bonus.bonus(timestamp) + self.__qi * fu_ning_na_q_bonus_bei_lv
-        
+
     def add_hp(self, extra_hp):
         self.__hp += extra_hp
 
@@ -371,8 +397,8 @@ class Qi:
 def construct_e_damage_list_for_0_5_ming(fixed_hp, fixed_e_bonus):
     e_damage_patter_0_5_ming = []
 
-     # 三小只发动攻击前会扣血，专武叠一层（虽然是三次攻击，但0.2秒内只叠一层)
-    qi = Qi(fixed_hp + int(zhuan_wu_hp_bei_lv * fu_ning_na_Max_Hp), 
+    # 三小只发动攻击前会扣血，专武叠一层（虽然是三次攻击，但0.2秒内只叠一层)
+    qi = Qi(fixed_hp + int(zhuan_wu_hp_bei_lv * fu_ning_na_Max_Hp),
             fixed_e_bonus + zhuan_wu_e_bonus_bei_lv)
 
     # 夫人：00:00:08.564			(1.8s)
@@ -519,13 +545,15 @@ def construct_e_damage_list_for_bai_fu(fixed_hp, fixed_e_bonus):
     variable_hp_per += zhuan_wu_hp_bei_lv
     # print("checkpoint1: variable_hp_per = " + str(variable_hp_per))
     cur_hp = fixed_hp + int(variable_hp_per * fu_ning_na_Max_Hp)
-    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv + 256 * fu_ning_na_q_bonus_bei_lv
+    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv + \
+        256 * fu_ning_na_q_bonus_bei_lv
 
     # 前三次吃不到万叶加成
     cur_bonus -= common_elem_bonus["万叶"]
 
     damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus, has_feng_tao=False))
-    damage_list.append(Pang_Xie_E_Damage(cur_hp, cur_bonus, has_feng_tao=False))
+    damage_list.append(Pang_Xie_E_Damage(
+        cur_hp, cur_bonus, has_feng_tao=False))
     damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus, has_feng_tao=False))
 
     # 夫人发动攻击再次扣血，叠一层专武，hp叠满2层，战技2层
@@ -534,7 +562,8 @@ def construct_e_damage_list_for_bai_fu(fixed_hp, fixed_e_bonus):
     variable_hp_per += zhuan_wu_hp_bei_lv
     # print("checkpoint2: variable_hp_per = " + str(variable_hp_per))
     cur_hp = fixed_hp + int(variable_hp_per * fu_ning_na_Max_Hp)
-    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv * 3 + 350 * fu_ning_na_q_bonus_bei_lv
+    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv * \
+        3 + 350 * fu_ning_na_q_bonus_bei_lv
 
     damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
 
@@ -603,7 +632,8 @@ def construct_e_damage_list_for_bai_fu(fixed_hp, fixed_e_bonus):
     damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus))
 
     # 大招效果消失
-    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv * 3 + ye_lan_bonus.bonus(24.339)
+    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv * \
+        3 + ye_lan_bonus.bonus(24.339)
     cur_hp = fixed_hp + int(variable_hp_per * fu_ning_na_Max_Hp)
     # print("checkpoint5: cur_hp = " + str(cur_hp) + ", cur_bonus = " + str(cur_bonus))
     damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
@@ -612,19 +642,20 @@ def construct_e_damage_list_for_bai_fu(fixed_hp, fixed_e_bonus):
     ye_lan_bonus.stop()
 
     # 以下为特殊配队才会有的伤害，增伤只剩下专武的了
-    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv * 3 - common_elem_bonus["万叶"]
+    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv * \
+        3 - common_elem_bonus["万叶"]
 
     #     夫人：00:00:25.906	伤害871
     damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus, has_feng_tao=False,))
     # 勋爵：00:00:26.639  伤害1606
     damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus, has_feng_tao=False))
     # 螃蟹：00:00:27.256
-    damage_list.append(Pang_Xie_E_Damage(cur_hp, cur_bonus, has_feng_tao=False))
+    damage_list.append(Pang_Xie_E_Damage(
+        cur_hp, cur_bonus, has_feng_tao=False))
     # 夫人：00:00:27.472		伤害871
     damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus, has_feng_tao=False))
     # 夫人：00:00:29.174
     damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus, has_feng_tao=False))
-
 
     # 勋爵：00:00:29.875	伤害1606
     damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus, is_extra=True))
@@ -644,10 +675,103 @@ def construct_e_damage_list_for_bai_fu(fixed_hp, fixed_e_bonus):
     return damage_list
 
 
+def construct_full_six_damage_list(fixed_hp, fixed_full_bonus):
+    full_damage_list = []
+
+    ye_lan_bonus = YeLanQBonus()
+
+    if not has_ye_lan:
+        ye_lan_bonus.invalidate()
+
+    cur_hp_bonus = 0
+    if has_ye_lan:
+        cur_hp_bonus = 0.1
+
+    # 第一刀: 只有夜兰一命的hp加成，且没有万叶加成
+    cur_elem_bonus = fixed_full_bonus + 150 * \
+        fu_ning_na_q_bonus_bei_lv - common_elem_bonus["万叶"]
+    # print("第一刀：" + str(round(cur_hp_bonus,  3)) + ", " + str(round(cur_elem_bonus, 3)))
+    fd = full_damage_component(
+        fixed_hp, cur_hp_bonus, cur_elem_bonus, HEI_FU_BEI_LV, has_feng_tao=False)
+    full_damage_list.append(fd)
+
+    cur_hp_bonus += 0.14  # 专武叠一层
+    # 第二刀也没有万叶加成
+    cur_elem_bonus = fixed_full_bonus - common_elem_bonus["万叶"] + 256 * \
+        fu_ning_na_q_bonus_bei_lv  # 三小只扣血，叠层到256
+
+    # print("第二刀：" + str(round(cur_hp_bonus,  3)) + ", " + str(round(cur_elem_bonus, 4)))
+    fd = full_damage_component(
+        fixed_hp, cur_hp_bonus, cur_elem_bonus, HEI_FU_BEI_LV, has_feng_tao=False)
+    full_damage_list.append(fd)
+
+    # 夜兰e
+    if has_ye_lan:
+        cur_hp_bonus += 0.1
+    # 专武肯定叠满
+    cur_hp_bonus += 0.14
+
+    # 夜兰q增伤开始生效
+    ye_lan_bonus.start(10.655)
+
+    cur_elem_bonus = fixed_full_bonus + \
+        fu_ning_na_q_max_bonus + ye_lan_bonus.bonus(12.102)
+
+    # print("第三刀：" + str(round(cur_hp_bonus,  3)) + ", " + str(round(cur_elem_bonus, 3)))
+    fd = full_damage_component(fixed_hp,
+                               cur_hp_bonus + 0.408, cur_elem_bonus, HEI_FU_BEI_LV)
+    full_damage_list.append(fd)
+
+    cur_elem_bonus = fixed_full_bonus + \
+        fu_ning_na_q_max_bonus + ye_lan_bonus.bonus(13.038)
+
+    # print("第四刀：" + str(round(cur_hp_bonus,  3)) + ", " + str(round(cur_elem_bonus, 3)))
+    fd = full_damage_component(fixed_hp,
+                               cur_hp_bonus + 0.7855, cur_elem_bonus, BAI_FU_BEI_LV)
+    full_damage_list.append(fd)
+
+    cur_elem_bonus = fixed_full_bonus + \
+        fu_ning_na_q_max_bonus + ye_lan_bonus.bonus(13.471)
+
+    # print("第五刀：" + str(round(cur_hp_bonus,  3)) + ", " + str(round(cur_elem_bonus, 3)))
+    fd = full_damage_component(fixed_hp,
+                               cur_hp_bonus + 0.8535, cur_elem_bonus, BAI_FU_BEI_LV)
+    full_damage_list.append(fd)
+
+    cur_elem_bonus = fixed_full_bonus + \
+        fu_ning_na_q_max_bonus + ye_lan_bonus.bonus(14.071)
+
+    # print("第六刀：" + str(round(cur_hp_bonus,  3)) + ", " + str(round(cur_elem_bonus, 3)))
+    fd = full_damage_component(fixed_hp,
+                               cur_hp_bonus + 0.994, cur_elem_bonus, BAI_FU_BEI_LV)
+    full_damage_list.append(fd)
+
+    return full_damage_list
+
+
+def calc_qe_score(fixed_hp, fixed_e_bonus, fixed_full_bonus, crit_rate, crit_damage):
+    if has_ye_lan:
+        hp = fixed_hp + int(0.1 * fu_ning_na_Max_Hp)
+
+    q_bonus = fixed_full_bonus - common_elem_bonus["万叶"]
+    e_bonus = fixed_e_bonus - common_elem_bonus["万叶"] + gu_you_tian_fu_2_bonus(hp)
+
+    q_damage = hp * q_bei_lv / 100 * q_bonus
+    e_damage = hp * e_bei_lv / 100 * e_bonus
+
+    non_crit_score = e_damage + q_damage
+    crit_score =  non_crit_score * crit_damage
+    except_score = calc_expect_score(non_crit_score, crit_rate, crit_damage)
+
+    return (except_score, crit_score)
+
 def calc_score(fixed_hp, fixed_e_bonus, fixed_full_bonus, crit_rate, crit_damage):
     # print("fixed_hp:" + str(fixed_hp))
     # print("fixed_e_bonus:" + str(fixed_e_bonus))
     # print("fixed_full_bonus:" + str(fixed_full_bonus))
+
+    qe_expect_score, qe_crit_score = calc_qe_score(fixed_hp, fixed_e_bonus, fixed_full_bonus, crit_rate, crit_damage)
+
     if only_e:
         e_damage_list = construct_e_damage_list_for_0_5_ming(
             fixed_hp, fixed_e_bonus)
@@ -664,105 +788,25 @@ def calc_score(fixed_hp, fixed_e_bonus, fixed_full_bonus, crit_rate, crit_damage
         e_score_non_crit += d.score()
 
     e_score_crit = e_score_non_crit * crit_damage
-    e_score_expect = calc_expect_score(e_score_non_crit, crit_rate, crit_damage)
+    e_score_expect = calc_expect_score(
+        e_score_non_crit, crit_rate, crit_damage)
 
     if not only_e:
-        class full_damage_component:
-            def __init__(self, hp_bonus, elem_bonus, bei_lv, has_feng_tao = True):
-                self.__hp_bonus = hp_bonus
-                self.__elem_bonus = elem_bonus
-                self.__bei_lv = bei_lv
-                self.__has_feng_tao = has_feng_tao
-
-            def score(self):
-                d = (fixed_hp + int(self.__hp_bonus * fu_ning_na_Max_Hp)) * self.__bei_lv / 100 * self.__elem_bonus
-                if not self.__has_feng_tao:
-                    d /= 1.2777
-                return d
-
-        HEI_FU_BEI_LV = 18
-        BAI_FU_BEI_LV = 18 + 25
-
-        full_damage_list = []
-
-        ye_lan_bonus = YeLanQBonus()
-
-        if not has_ye_lan:
-            ye_lan_bonus.invalidate()
-
-        cur_hp_bonus = 0
-        if has_ye_lan:
-            cur_hp_bonus = 0.1
-
-        # 第一刀: 只有夜兰一命的hp加成，且没有万叶加成
-        cur_elem_bonus = fixed_full_bonus + 150 * fu_ning_na_q_bonus_bei_lv - common_elem_bonus["万叶"]
-        # print("第一刀：" + str(round(cur_hp_bonus,  3)) + ", " + str(round(cur_elem_bonus, 3)))
-        fd = full_damage_component(cur_hp_bonus, cur_elem_bonus, HEI_FU_BEI_LV, has_feng_tao=False)
-        full_damage_list.append(fd)
-
-        cur_hp_bonus += 0.14  # 专武叠一层
-        # 第二刀也没有万叶加成
-        cur_elem_bonus = fixed_full_bonus - common_elem_bonus["万叶"] + 256 * \
-            fu_ning_na_q_bonus_bei_lv  # 三小只扣血，叠层到256
-        
-        # print("第二刀：" + str(round(cur_hp_bonus,  3)) + ", " + str(round(cur_elem_bonus, 4)))
-        fd = full_damage_component(cur_hp_bonus, cur_elem_bonus, HEI_FU_BEI_LV, has_feng_tao=False)
-        full_damage_list.append(fd)
-
-        # 夜兰e
-        if has_ye_lan:
-            cur_hp_bonus += 0.1
-        # 专武肯定叠满
-        cur_hp_bonus += 0.14
-
-        # 夜兰q增伤开始生效
-        ye_lan_bonus.start(10.655)
-
-        cur_elem_bonus = fixed_full_bonus + \
-            fu_ning_na_q_max_bonus + ye_lan_bonus.bonus(12.102)
-        
-        # print("第三刀：" + str(round(cur_hp_bonus,  3)) + ", " + str(round(cur_elem_bonus, 3)))
-        fd = full_damage_component(
-            cur_hp_bonus + 0.408, cur_elem_bonus, HEI_FU_BEI_LV)
-        full_damage_list.append(fd)
-
-        cur_elem_bonus = fixed_full_bonus + \
-            fu_ning_na_q_max_bonus + ye_lan_bonus.bonus(13.038)
-        
-        # print("第四刀：" + str(round(cur_hp_bonus,  3)) + ", " + str(round(cur_elem_bonus, 3)))
-        fd = full_damage_component(
-            cur_hp_bonus + 0.7855, cur_elem_bonus, BAI_FU_BEI_LV)
-        full_damage_list.append(fd)
-
-        cur_elem_bonus = fixed_full_bonus + \
-            fu_ning_na_q_max_bonus + ye_lan_bonus.bonus(13.471)
-        
-        # print("第五刀：" + str(round(cur_hp_bonus,  3)) + ", " + str(round(cur_elem_bonus, 3)))
-        fd = full_damage_component(
-            cur_hp_bonus + 0.8535, cur_elem_bonus, BAI_FU_BEI_LV)
-        full_damage_list.append(fd)
-
-        cur_elem_bonus = fixed_full_bonus + \
-            fu_ning_na_q_max_bonus + ye_lan_bonus.bonus(14.071)
-        
-        # print("第六刀：" + str(round(cur_hp_bonus,  3)) + ", " + str(round(cur_elem_bonus, 3)))
-        fd = full_damage_component(
-            cur_hp_bonus + 0.994, cur_elem_bonus, BAI_FU_BEI_LV)
-        full_damage_list.append(fd)
-
+        full_damage_list = construct_full_six_damage_list(
+            fixed_hp, fixed_full_bonus)
         full_six_damage_non_crit = 0
         for d in full_damage_list:
             full_six_damage_non_crit += d.score()
 
         full_six_damage_crit = full_six_damage_non_crit * crit_damage
-        full_six_damage_expect = full_six_damage_non_crit * \
-            (1 + crit_rate * (crit_damage - 1))
+        full_six_damage_expect = calc_expect_score(
+            full_six_damage_non_crit, crit_rate, crit_damage - 1)
     else:
         full_six_damage_crit = 0
         full_six_damage_expect = 0
 
-    all_crit = e_score_crit + full_six_damage_crit
-    all_expect = e_score_expect + full_six_damage_expect
+    all_crit = qe_crit_score + e_score_crit + full_six_damage_crit
+    all_expect = qe_expect_score + e_score_expect + full_six_damage_expect
 
     return (all_crit, all_expect, round(full_six_damage_crit / all_crit, 3))
 
@@ -831,7 +875,8 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     panel_hp = fu_ning_na_Max_Hp * (1 + hp_per) + hp
 
     max_e_bonus = e_bonus + \
-        sum(variable_e_bonus.values()) + fu_ning_na_q_max_bonus + 0.28  # 固有天赋2吃满
+        sum(variable_e_bonus.values()) + \
+        fu_ning_na_q_max_bonus + 0.28  # 固有天赋2吃满
     max_six_bonus = six_bonus + fu_ning_na_q_max_bonus
 
     return [expect_score, crit_score, full_six_zhan_bi, int(max_hp), int(panel_hp), round(max_e_bonus, 3), round(max_six_bonus, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]

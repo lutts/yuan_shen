@@ -165,8 +165,8 @@ def calc_score_with_fu_fu_2(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_r
     if ming_zuo_num >= 4:
         all_hp += int(0.1 * ye_lan_base_hp)
 
-    # 按330层算
-    q_damage = all_hp * q_bei_lv / 100 * (q_elem_bonus - 70 * fu_fu_q_bonus / 400)
+    # 按350层算
+    q_damage = all_hp * q_bei_lv / 100 * (q_elem_bonus - 50 * fu_fu_q_bonus / 400)
 
     ye_lan_q_bonus = YeLanQBonus()
     ye_lan_q_bonus.start(14.896)
