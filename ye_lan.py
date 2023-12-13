@@ -130,16 +130,24 @@ class YeLanQBonus:
 def calc_qx_and_po_ju_shi_damage(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, qx_damage_timestamps,
                                  extra_qx_damage_timestamps, po_ju_shi_timestamps, ye_lan_q_bonus, e3_timestamp):
     all_damage = 0
-    for t in qx_damage_timestamps:
-        qx_bonus = q_elem_bonus + ye_lan_q_bonus.bonus(t)
+    for tf in qx_damage_timestamps:
+        t, in_front = tf
+        if in_front:
+            qx_bonus = q_elem_bonus + ye_lan_q_bonus.bonus(t)
+        else:
+            qx_bonus = q_elem_bonus
         hp = all_hp
         if e3_timestamp != 0 and t > e3_timestamp and ming_zuo_num >= 4:
             hp += int(0.1 * ye_lan_base_hp)
         all_damage += hp * qx_bei_lv / 100 * qx_bonus
 
     if ming_zuo_num >= 2:
-        for t in extra_qx_damage_timestamps:
-            qx_bonus = q_elem_bonus + ye_lan_q_bonus.bonus(t)
+        for tf in extra_qx_damage_timestamps:
+            t, in_front = tf
+            if in_front:
+                qx_bonus = q_elem_bonus + ye_lan_q_bonus.bonus(t)
+            else:
+                qx_bonus = q_elem_bonus
             hp = all_hp
             if e3_timestamp != 0 and t > e3_timestamp and ming_zuo_num >= 4:
                 hp += int(0.1 * ye_lan_base_hp)
@@ -185,20 +193,25 @@ def calc_score_with_fu_fu_2(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_r
         (e_po_ju_shi_elem_bonus + ye_lan_q_bonus.bonus(e3_timestamp))
 
     qx_damage_timestamps = [
-        16.162, 16.362, 16.479,
-        17.596, 17.729, 17.812,
-        18.45, 18.596, 18.679,
-        21.847, 22.065, 22.164,
-        22.947, 23.065, 23.164,
-        23.914, 24.065, 24.164,
-        24.881, 24.931, 25.147,
-        25.164, 25.264, 25.264,
+        (16.162, True), (16.362, True), (16.479, True),
+        # 芙芙站场，吃不到Q增伤
+        (17.596, False), (17.729, False), (17.812, False),
+        (18.45, False), (18.596, False), (18.679, False),
+        # 夜兰再次站场
+        (21.847, True), (22.065, True), (22.164, True),
+        (22.947, True), (23.065, True), (23.164, True),
+        (23.914, True), (24.065, True), (24.164, True),
+        (24.881, True), (24.931, True), (25.147, True),
+        (25.164, True), (25.264, True), (25.264, True),
         # 芙芙大招消失
         # 25.98, 26.164, 26.264
     ]
 
     extra_qx_damage_timestamps = [
-        16.196, 18.596, 21.847, 23.914, 
+        (16.196, True), 
+        (18.596, False), 
+        (21.847, True), 
+        (23.914, False), 
         # 芙芙大招消失
         # 25.98
     ]
@@ -249,21 +262,25 @@ def calc_score_with_fu_fu(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rat
         (e_po_ju_shi_elem_bonus + ye_lan_q_bonus.bonus(e3_timestamp))
 
     qx_damage_timestamps = [
-        16.054, 16.287, 16.371,
-        16.954, 17.036, 17.187,
-        20.822, 20.956, 20.956,
-        20.989, 21.289, 21.406,
-        22.056, 22.139, 22.239,
-        23.222, 23.272, 23.372,
-        24.271, 24.372, 24.472,
+        # 芙芙站场
+        (16.054, False), (16.287, False), (16.371, False),
+        (16.954, False), (17.036, False), (17.187, False),
+        # 夜兰站场
+        (20.822, True), (20.956, True), (20.956, True),
+        (20.989, True), (21.289, True), (21.406, True),
+        (22.056, True), (22.139, True), (22.239, True),
+        (23.222, True), (23.272, True), (23.372, True),
+        (24.271, True), (24.372, True), (24.472, True),
 
-        25.372, 25.471, 25.589,
+        (25.372, True), (25.471, True), (25.589, True),
     ]
 
     extra_qx_damage_timestamps = [
-        16.054, 20.706, 23.158, 
+        (16.054, False), 
+        (20.706, True), 
+        (23.158, True), 
 
-        25.172
+        (25.172, True)
     ]
 
     po_ju_shi_timestamps = [
@@ -296,17 +313,23 @@ def calc_score_with_lei_shen(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_
         e2_damage = 0
 
     qx_damage_timestamps = [
-        4.968, 5.186, 5.286,
-        11.869, 12.053, 12.171,
-        12.704, 12.821, 12.904,
-        13.771, 13.854, 13.921,
-        15.437, 15.571, 15.671,
-        17.471, 17.637, 17.754,
-        18.504, 18.504, 18.504
+        (4.968, True), (5.186, True), (5.286, True),
+        # 雷神站场
+        (11.869, False), (12.053, False), (12.171, False),
+        (12.704, False), (12.821, False), (12.904, False),
+        (13.771, False), (13.854, False), (13.921, False),
+        # 万叶站场
+        (15.437, False), (15.571, False), (15.671, False),
+        # 夜兰站场
+        (17.471, True), (17.637, True), (17.754, True),
+        (18.504, True), (18.504, True), (18.504, True)
     ]
 
     extra_qx_damage_timestamps = [
-        4.968, 11.786, 13.771, 17.471
+        (4.968, True), 
+        (11.786, False), 
+        (13.771, False), 
+        (17.471, True)
     ]
 
     po_ju_shi_timestamps = [
@@ -405,7 +428,7 @@ def calculate_score_callback(combine: list[ShengYiWu], has_fu_fu=True, has_lei_s
     e_po_ju_shi_elem_bonus = elem_bonus
 
     if has_fu_fu:
-        expect_score, crit_score = calc_score_with_fu_fu_2(
+        expect_score, crit_score = calc_score_with_fu_fu(
             all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage)
     else:
         expect_score, crit_score = calc_score_with_lei_shen(

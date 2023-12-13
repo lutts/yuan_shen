@@ -327,10 +327,6 @@ class Qi:
         self.__extra_qi = 0
         self.e_bonus_withoud_q = e_bonus
 
-        self.ye_lan_bonus = YeLanQBonus()
-        if not has_ye_lan:
-            self.ye_lan_bonus.invalidate()
-
     def append(self, new_qi, bei_lv=0):
         if ming_zuo_num >= 2 and bei_lv == 0:
             new_qi *= 3.5
@@ -349,17 +345,17 @@ class Qi:
             self.__qi = 300
 
     def append_fu_ren(self, timestamp, is_extra=False):
-        ed = Fu_Ren_E_Damage(self.hp(), self.e_bonus(timestamp), is_extra)
+        ed = Fu_Ren_E_Damage(self.hp(), self.e_bonus(), is_extra)
         self.append(4 * Qi.FU_RE_QI_FEN_ZHI)
         return ed
 
     def append_xun_jue(self, timestamp, is_extra=False):
-        ed = Xun_Jue_E_Damage(self.hp(), self.e_bonus(timestamp), is_extra)
+        ed = Xun_Jue_E_Damage(self.hp(), self.e_bonus(), is_extra)
         self.append(4 * Qi.XUN_JUE_QI_FEN_ZHI)
         return ed
 
     def append_pang_xie(self, timestamp, is_extra=False):
-        ed = Pang_Xie_E_Damage(self.hp(), self.e_bonus(timestamp), is_extra)
+        ed = Pang_Xie_E_Damage(self.hp(), self.e_bonus(), is_extra)
         self.append(4 * Qi.PANG_XIE_QI_FEN_ZHI)
         return ed
 
@@ -372,11 +368,11 @@ class Qi:
     def extra_qi(self):
         return self.__extra_qi
 
-    def e_bonus(self, timestamp):
+    def e_bonus(self):
         if self.q_stopped:
             return self.e_bonus_withoud_q
         else:
-            return self.e_bonus_withoud_q + self.ye_lan_bonus.bonus(timestamp) + self.__qi * fu_ning_na_q_bonus_bei_lv
+            return self.e_bonus_withoud_q + self.__qi * fu_ning_na_q_bonus_bei_lv
 
     def add_hp(self, extra_hp):
         self.__hp += extra_hp
@@ -421,8 +417,6 @@ def construct_e_damage_list_for_0_5_ming(fixed_hp, fixed_e_bonus):
 
     # 下次攻击发动前扣血，专武战技增伤再叠一层（满了)
     qi.e_bonus_withoud_q += zhuan_wu_e_bonus_bei_lv
-
-    qi.ye_lan_bonus.start(11.709)
 
     # 夫人：00:00:11.923			(5.159s)
     e_damage_patter_0_5_ming.append(qi.append_fu_ren(11.923))
@@ -583,57 +577,43 @@ def construct_e_damage_list_for_bai_fu(fixed_hp, fixed_e_bonus):
 
     # 勋爵的下一次攻击叠层大约来到507层，107 * 0.35% = 37.45%, 按34%计算
     cur_hp = fixed_hp + int((variable_hp_per + 0.34) * fu_ning_na_Max_Hp)
-    cur_bonus = full_fixed_e_bonus + ye_lan_bonus.bonus(11.135)
-
     # print("checkpoint4: cur_hp = " + str(cur_hp) + ", cur_bonus = " + str(cur_bonus))
-
     damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus))
 
     # 夫人的下次攻击二命hp加成为41.9%
+    # 此时芙芙才切出来，夫人的这一次攻击能吃到夜兰的增伤
     cur_hp = fixed_hp + int((variable_hp_per + 0.419) * fu_ning_na_Max_Hp)
     cur_bonus = full_fixed_e_bonus + ye_lan_bonus.bonus(12.052)
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
 
     # 切为白芙，三刀后再切黑芙，三小只行动重置
+    # 注：此后芙芙切到了后台，夜兰的增伤是不生效的
     cur_hp = fixed_hp + int((variable_hp_per + 1.2) * fu_ning_na_Max_Hp)
-    cur_bonus = full_fixed_e_bonus + ye_lan_bonus.bonus(16.204)
+    cur_bonus = full_fixed_e_bonus
 
     damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
 
     # 二命hp也叠满了
     cur_hp = fixed_hp + int((variable_hp_per + 1.4) * fu_ning_na_Max_Hp)
-
-    cur_bonus = full_fixed_e_bonus + ye_lan_bonus.bonus(16.754)
     # print("checkpoint5: cur_hp = " + str(cur_hp) + ", cur_bonus = " + str(cur_bonus))
     damage_list.append(Pang_Xie_E_Damage(cur_hp, cur_bonus))
-
-    cur_bonus = full_fixed_e_bonus + ye_lan_bonus.bonus(16.804)
     damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus))
 
-    cur_bonus = full_fixed_e_bonus + ye_lan_bonus.bonus(17.754)
-    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
+    if has_ye_lan:
+        variable_hp_per += 0.1
+    cur_hp = fixed_hp + int((variable_hp_per + 1.4) * fu_ning_na_Max_Hp)
 
-    cur_bonus = full_fixed_e_bonus + ye_lan_bonus.bonus(19.621)
     damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
-
-    cur_bonus = full_fixed_e_bonus + ye_lan_bonus.bonus(20.239)
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
     damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus))
-
-    cur_bonus = full_fixed_e_bonus + ye_lan_bonus.bonus(21.039)
     damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
-
-    cur_bonus = full_fixed_e_bonus + ye_lan_bonus.bonus(22.072)
     damage_list.append(Pang_Xie_E_Damage(cur_hp, cur_bonus))
-
-    cur_bonus = full_fixed_e_bonus + ye_lan_bonus.bonus(22.589)
     damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
-
     # 大招动画消失，但大招效果还在
-    cur_bonus = full_fixed_e_bonus + ye_lan_bonus.bonus(23.406)
     damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus))
 
     # 大招效果消失
-    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv * \
-        3 + ye_lan_bonus.bonus(24.339)
+    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv * 3
     cur_hp = fixed_hp + int(variable_hp_per * fu_ning_na_Max_Hp)
     # print("checkpoint5: cur_hp = " + str(cur_hp) + ", cur_bonus = " + str(cur_bonus))
     damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
@@ -642,16 +622,14 @@ def construct_e_damage_list_for_bai_fu(fixed_hp, fixed_e_bonus):
     ye_lan_bonus.stop()
 
     # 以下为特殊配队才会有的伤害，增伤只剩下专武的了
-    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv * \
-        3 - common_elem_bonus["万叶"]
+    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv * 3 - common_elem_bonus["万叶"]
 
     #     夫人：00:00:25.906	伤害871
-    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus, has_feng_tao=False,))
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
     # 勋爵：00:00:26.639  伤害1606
     damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus, has_feng_tao=False))
     # 螃蟹：00:00:27.256
-    damage_list.append(Pang_Xie_E_Damage(
-        cur_hp, cur_bonus, has_feng_tao=False))
+    damage_list.append(Pang_Xie_E_Damage(cur_hp, cur_bonus, has_feng_tao=False))
     # 夫人：00:00:27.472		伤害871
     damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus, has_feng_tao=False))
     # 夫人：00:00:29.174
@@ -765,18 +743,198 @@ def calc_qe_score(fixed_hp, fixed_e_bonus, fixed_full_bonus, crit_rate, crit_dam
 
     return (except_score, crit_score)
 
+
+def construct_e_damage_list_for_bai_fu_2(fixed_hp, fixed_e_bonus):
+    # 手法：芙芙q，万叶q，芙芙eaa 夜兰eqe，芙芙zaaz, 万叶e, 夜兰aaaeaa......
+    # 参考：UFZH5352.txt
+    damage_list = []
+
+    # 三小只先扣血，然后才造成伤害，因此第一次的攻击就能吃到专武一层hp和战技增伤，同时能吃到256层左右的芙芙大招增伤
+    variable_hp_per = zhuan_wu_hp_bei_lv
+    cur_hp = fixed_hp + int(variable_hp_per * fu_ning_na_Max_Hp)
+    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv + \
+        256 * fu_ning_na_q_bonus_bei_lv
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
+    damage_list.append(Pang_Xie_E_Damage(cur_hp, cur_bonus))
+    damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus))
+
+    # 夜兰e
+    if has_ye_lan:
+        variable_hp_per += 0.1
+
+    # 夫人发动攻击再次扣血，叠一层专武，hp叠满2层，战技2层
+    # 芙芙奶刀这期间会加一次血，战技3层，叠满
+    # 此时叠层大约会有350层
+    variable_hp_per += zhuan_wu_hp_bei_lv
+    cur_hp = fixed_hp + int(variable_hp_per * fu_ning_na_Max_Hp)
+    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv * \
+        3 + 350 * fu_ning_na_q_bonus_bei_lv
+    
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
+
+    # 夜兰再e
+    if has_ye_lan:
+        variable_hp_per += 0.1
+
+    # q增伤叠满层，大约441层，41 * 0.35% = 14.35，按11%算
+    cur_hp = fixed_hp + int((variable_hp_per + 0.11) * fu_ning_na_Max_Hp)
+    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv * 3 + 400 * fu_ning_na_q_bonus_bei_lv
+
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
+
+    cur_hp = fixed_hp + int((variable_hp_per + 0.222) * fu_ning_na_Max_Hp)
+    damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus))
+
+    # 切白芙，再切回黑芙，三小只行动重置
+    cur_hp = fixed_hp + int((variable_hp_per + 1.204) * fu_ning_na_Max_Hp)
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
+
+    cur_hp = fixed_hp + int((variable_hp_per + 1.278) * fu_ning_na_Max_Hp)
+    damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus))
+
+    cur_hp = fixed_hp + int((variable_hp_per + 1.278) * fu_ning_na_Max_Hp)
+    damage_list.append(Pang_Xie_E_Damage(cur_hp, cur_bonus))
+
+    cur_hp = fixed_hp + int((variable_hp_per + 1.4) * fu_ning_na_Max_Hp)
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
+
+    # 二命hp叠满了
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
+
+    # 夜兰e好了
+    if has_ye_lan:
+        variable_hp_per += 0.1
+
+    cur_hp = fixed_hp + int((variable_hp_per + 1.4) * fu_ning_na_Max_Hp)
+
+    damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus))
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
+
+    # 大招动画消失，但大招效果还在
+    damage_list.append(Pang_Xie_E_Damage(cur_hp, cur_bonus))
+
+    # 大招效果消失
+    cur_hp = fixed_hp + int(variable_hp_per * fu_ning_na_Max_Hp)
+    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv * 3
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
+    damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus))
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
+
+    # 万叶增伤失效
+    cur_bonus = fixed_e_bonus + zhuan_wu_e_bonus_bei_lv * 3 - common_elem_bonus["万叶"]
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus))
+    damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus))
+
+    # 风套减抗失效
+    damage_list.append(Pang_Xie_E_Damage(cur_hp, cur_bonus, has_feng_tao=False))
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus, has_feng_tao=False))
+
+    # 以下为特殊配队才有
+    # 夫人：00:00:30.807（12924）
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus, has_feng_tao=False, is_extra=True))
+    # 勋爵：00:00:31.691（23832）
+    damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus, has_feng_tao=False, is_extra=True))
+    # 夫人：00:00:32.257（12924）
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus, has_feng_tao=False, is_extra=True))
+    # 夫人：00:00:33.891（12924）
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus, has_feng_tao=False, is_extra=True))
+    # 螃蟹：00:00:34.157（8819）
+    damage_list.append(Pang_Xie_E_Damage(cur_hp, cur_bonus, has_feng_tao=False, is_extra=True))
+    # 勋爵：00:00:34.907（23832）
+    damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus, has_feng_tao=False, is_extra=True))
+    # 夫人：00:00:35.524（3439）
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus, has_feng_tao=False, is_extra=True))
+    # 夫人：00:00:37.109（3439）
+    damage_list.append(Fu_Ren_E_Damage(cur_hp, cur_bonus, has_feng_tao=False, is_extra=True))
+    # 勋爵：00:00:38.159（22130）
+    damage_list.append(Xun_Jue_E_Damage(cur_hp, cur_bonus, has_feng_tao=False, is_extra=True))
+
+    return damage_list
+    
+
+def construct_full_six_damage_list_2(fixed_hp, fixed_full_bonus):
+    full_damage_list = []
+
+    ye_lan_bonus = YeLanQBonus()
+
+    if not has_ye_lan:
+        ye_lan_bonus.invalidate()
+
+    cur_hp_bonus = 0
+
+    # 第一刀：只有芙芙一命加成
+    cur_elem_bonus = fixed_full_bonus + 150 * fu_ning_na_q_bonus_bei_lv
+    fd = full_damage_component(
+        fixed_hp, cur_hp_bonus, cur_elem_bonus, HEI_FU_BEI_LV)
+    full_damage_list.append(fd)
+
+    # 第二刀：专武叠一层
+    cur_hp_bonus += 0.14
+    cur_elem_bonus = fixed_full_bonus + 256 * fu_ning_na_q_bonus_bei_lv
+    fd = full_damage_component(
+        fixed_hp, cur_hp_bonus, cur_elem_bonus, HEI_FU_BEI_LV)
+    full_damage_list.append(fd)
+
+    # 第三刀：专武肯定叠满，夜兰两个e
+    cur_hp_bonus += 0.2 + 0.14
+    ye_lan_bonus.start(12.771)
+
+    cur_elem_bonus = fixed_full_bonus + \
+        fu_ning_na_q_max_bonus + ye_lan_bonus.bonus(14.871)
+    fd = full_damage_component(fixed_hp,
+                               cur_hp_bonus + 0.458, cur_elem_bonus, HEI_FU_BEI_LV)
+    full_damage_list.append(fd)
+    
+    # 切为了白芙
+    # 第四刀
+    cur_elem_bonus = fixed_full_bonus + \
+        fu_ning_na_q_max_bonus + ye_lan_bonus.bonus(15.637)
+    fd = full_damage_component(fixed_hp,
+                               cur_hp_bonus + 0.536, cur_elem_bonus, BAI_FU_BEI_LV)
+    full_damage_list.append(fd)
+
+    # 第五刀
+    cur_elem_bonus = fixed_full_bonus + \
+        fu_ning_na_q_max_bonus + ye_lan_bonus.bonus(16.054)
+    fd = full_damage_component(fixed_hp,
+                               cur_hp_bonus + 0.548, cur_elem_bonus, BAI_FU_BEI_LV)
+    full_damage_list.append(fd)
+
+    # 第六刀
+    cur_elem_bonus = fixed_full_bonus + \
+        fu_ning_na_q_max_bonus + ye_lan_bonus.bonus(16.737)
+    fd = full_damage_component(fixed_hp,
+                               cur_hp_bonus + 0.648, cur_elem_bonus, BAI_FU_BEI_LV)
+    full_damage_list.append(fd)
+
+    return full_damage_list
+
+
+def calc_qe_score_2(fixed_hp, fixed_e_bonus, fixed_full_bonus, crit_rate, crit_damage):
+    q_bonus = fixed_full_bonus - common_elem_bonus["万叶"]
+    e_bonus = fixed_e_bonus + gu_you_tian_fu_2_bonus(fixed_hp)
+
+    q_damage = fixed_hp * q_bei_lv / 100 * q_bonus
+    e_damage = fixed_hp * e_bei_lv / 100 * e_bonus
+
+    non_crit_score = e_damage + q_damage
+    crit_score =  non_crit_score * crit_damage
+    except_score = calc_expect_score(non_crit_score, crit_rate, crit_damage)
+
+    return (except_score, crit_score)
+
 def calc_score(fixed_hp, fixed_e_bonus, fixed_full_bonus, crit_rate, crit_damage):
     # print("fixed_hp:" + str(fixed_hp))
     # print("fixed_e_bonus:" + str(fixed_e_bonus))
     # print("fixed_full_bonus:" + str(fixed_full_bonus))
 
-    qe_expect_score, qe_crit_score = calc_qe_score(fixed_hp, fixed_e_bonus, fixed_full_bonus, crit_rate, crit_damage)
+    qe_expect_score, qe_crit_score = calc_qe_score_2(fixed_hp, fixed_e_bonus, fixed_full_bonus, crit_rate, crit_damage)
 
     if only_e:
         e_damage_list = construct_e_damage_list_for_0_5_ming(
             fixed_hp, fixed_e_bonus)
     else:
-        e_damage_list = construct_e_damage_list_for_bai_fu(
+        e_damage_list = construct_e_damage_list_for_bai_fu_2(
             fixed_hp, fixed_e_bonus)
 
     e_score_non_crit = 0
@@ -792,7 +950,7 @@ def calc_score(fixed_hp, fixed_e_bonus, fixed_full_bonus, crit_rate, crit_damage
         e_score_non_crit, crit_rate, crit_damage)
 
     if not only_e:
-        full_damage_list = construct_full_six_damage_list(
+        full_damage_list = construct_full_six_damage_list_2(
             fixed_hp, fixed_full_bonus)
         full_six_damage_non_crit = 0
         for d in full_damage_list:
