@@ -73,8 +73,8 @@ def calculate_score_callback(combine):
     elem_mastery = sum([p.elem_mastery for p in combine]) + base_elem_mastery
 
     elem_mastery = round(elem_mastery, 1)
-    if elem_mastery < 100:
-        return None
+    #if elem_mastery < 100:
+    #    return None
     
     syw_names = [p.name for p in combine]
     # print(syw_names)
@@ -103,10 +103,25 @@ def calculate_score_callback(combine):
     e_bonus = base_elem_bonus + extra_elem_bonus
     crit_damage = base_crit_damage + extra_crit_damage
 
-    e_damage = all_atk * 178 / 100 * e_bonus
-    e_damage_crit = e_damage * crit_damage
-    e_damage_expect = calc_expect_score(e_damage, crit_rate, crit_damage)
-    return [e_damage_expect, e_damage_crit, elem_mastery, int(all_atk), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
+    # 刻晴eqe4az手法时，伤害来源
+    # 召唤奥兹：原激化
+    # 奥兹：8次伤害，其中3次超激化
+    # 断罪雷影：9次超激化
+    # 这里按12级e计算
+
+    zhao_huan_damage = all_atk * 231 / 100 * e_bonus
+
+    ao_zi_damage = all_atk * 178 / 100 * e_bonus * 5
+
+    chao_ji_hua_bonus = 1446.85 * 1.15 * (1 + 5 * elem_mastery / (elem_mastery + 1200))
+    ao_zi_damage += (all_atk * 178 / 100 + chao_ji_hua_bonus) * e_bonus * 3
+
+    duan_zui_lei_ying_damage = (all_atk * 80 / 100 + chao_ji_hua_bonus) * e_bonus * 9
+
+    all_damage = zhao_huan_damage + ao_zi_damage + duan_zui_lei_ying_damage
+    all_damage_crit = all_damage * crit_damage
+    all_damage_expect = calc_expect_score(all_damage, crit_rate, crit_damage)
+    return [all_damage_expect, all_damage_crit, elem_mastery, int(all_atk), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
 
 
 result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "精通", "实战攻击力", "暴击率", "暴击伤害", "圣遗物组合"]
