@@ -45,7 +45,7 @@ if __name__ == '__main__':
         find_syw_for_na_xi_da,
         find_syw_for_fei_xie_er,
         find_syw_for_hu_tao_lie_ren,
-        find_syw_for_hu_tao,
+        # find_syw_for_hu_tao,
         find_syw_for_ai_er_hai_seng
     ]
 
