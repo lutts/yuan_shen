@@ -119,9 +119,9 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     
     all_atk = int(bai_zhi_atk * (1 + atk_per)) + atk
     if is_4_jue_yuan:
-        elem_bonus += min(energe_recharge / 4 / 100, 0.75)
+        extra_q_bonus += min(energe_recharge / 4 / 100, 0.75)
 
-    e_damage_1 = all_atk * (336 * 382) / 100 * elem_bonus
+    e_damage_1 = all_atk * (336 + 382) / 100 * elem_bonus
     e_damage_2 = all_atk * (336 + 382) / 100 * (elem_bonus + 0.5)  # 四命
     e_damage = e_damage_1 + e_damage_2
     
@@ -132,10 +132,11 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     crit_score = all_damage * crit_damage
     expect_score = calc_expect_score(all_damage, crit_rate, crit_damage)
 
-    return [expect_score, crit_score, int(all_atk), crit_rate, round(crit_damage - 1, 3), energe_recharge, combine]
+    q_bonus = elem_bonus + extra_q_bonus
+    return [expect_score, crit_score, int(all_atk), round(elem_bonus, 3), round(q_bonus, 3), int(e_damage), int(q_damage), crit_rate, round(crit_damage - 1, 3), energe_recharge, combine]
     
 
-result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "攻击力", "暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
+result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "攻击力", "e增伤", "q增伤", "e伤害", "q伤害", "暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
 
 
 def find_syw_for_xing_qiu():
