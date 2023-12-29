@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_score
+from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_score, set_score_threshold
 
 
 def match_sha_callback(syw: ShengYiWu):
@@ -33,7 +33,23 @@ def match_syw(s: ShengYiWu, expect_name):
 
 def find_combins_callback():
     jue_yuan = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.JUE_YUAN))
-    return list(itertools.combinations(jue_yuan, 4))
+    zong_shi = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.ZONG_SHI))
+    chen_lun = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.CHEN_LUN))
+    shui_xian = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.SHUI_XIAN))
+    zhui_yi = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.ZHUI_YI))
+    jue_dou_shi = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.JUE_DOU_SHI))
+
+    zong_shi_2 = list(itertools.combinations(zong_shi, 2))
+    chen_lun_2 = list(itertools.combinations(chen_lun, 2))
+    shui_xian_2 = list(itertools.combinations(shui_xian, 2))
+    zhui_yi_2 = list(itertools.combinations(zhui_yi, 2))
+    jue_dou_shi_2 = list(itertools.combinations(jue_dou_shi, 2))
+    jue_yuan_2 = list(itertools.combinations(jue_yuan, 2))
+
+    all_2 = zong_shi_2 + chen_lun_2 + shui_xian_2 + zhui_yi_2 + jue_dou_shi_2 + jue_yuan_2
+
+    return [(l[0] + l[1])
+            for l in list(itertools.combinations(all_2, 2))] + list(itertools.combinations(jue_yuan, 4))
 
 def calculate_score_callback(combine: list[ShengYiWu]):
     base_atk = 191  # 82级
@@ -42,7 +58,6 @@ def calculate_score_callback(combine: list[ShengYiWu]):
 
     extra_energe_recharge = {
         "祭礼剑": 0.613,
-        "绝缘2件套": 0.2
     }
 
     extra_atk_per = {
@@ -72,20 +87,46 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     if crit_rate < 0.55:
         return None
     
+    extra_q_bonus = 0
+    is_4_jue_yuan = False
+    syw_names = [p.name for p in combine]
+    # print(syw_names)
+    name_count = {i: syw_names.count(i) for i in syw_names}
+    # print(name_count)
+    for n in name_count:
+        if name_count[n] < 2:  # 散件不计算套装效果
+            continue
+
+        if n == ShengYiWu.CHEN_LUN:
+            elem_bonus += 0.2
+        elif n == ShengYiWu.SHUI_XIAN:
+            elem_bonus += 0.2
+        elif n == ShengYiWu.ZONG_SHI:
+            extra_q_bonus += 0.2
+        elif n == ShengYiWu.ZHUI_YI:
+            atk_per += 0.18
+        elif n == ShengYiWu.JUE_DOU_SHI:
+            atk_per += 0.18
+        elif n == ShengYiWu.JUE_YUAN:
+            energe_recharge += 0.2
+            if name_count[n] >= 4:
+                is_4_jue_yuan = True
+    
     energe_recharge *= 100
     energe_recharge = round(energe_recharge, 1)
     if energe_recharge < 200:
         return None
     
     all_atk = int(bai_zhi_atk * (1 + atk_per)) + atk
-    elem_bonus += min(energe_recharge / 4 / 100, 0.75)
+    if is_4_jue_yuan:
+        elem_bonus += min(energe_recharge / 4 / 100, 0.75)
 
     e_damage_1 = all_atk * (336 * 382) / 100 * elem_bonus
     e_damage_2 = all_atk * (336 + 382) / 100 * (elem_bonus + 0.5)  # 四命
     e_damage = e_damage_1 + e_damage_2
     
     q_num = 2 + 3 + 5 + 2 + 3 + 5 + 2 + 3 + 5 + 2 + 3 + 5
-    q_damage = all_atk * 115 / 100 * elem_bonus * q_num
+    q_damage = all_atk * 115 / 100 * (elem_bonus + extra_q_bonus) * q_num
 
     all_damage = e_damage + q_damage
     crit_score = all_damage * crit_damage
