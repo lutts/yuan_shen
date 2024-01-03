@@ -93,7 +93,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     }
 
     if shuang_cao:
-        extra_elem_bonus["专武(草行久钟)"] = 2 * 0.1
+        extra_elem_bonus["专武(草行久瑶)"] = 2 * 0.1
         extra_elem_bonus["瑶瑶一命"] = 0.15
     else:
         extra_elem_bonus["专武(草行久钟)"] = 3 * 0.1
