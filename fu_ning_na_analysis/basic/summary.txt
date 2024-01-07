@@ -895,7 +895,7 @@ fixme: 其他人站前台，是不是治疗机制也有不同？
 00:00:07.202：2/4动画
 							 生效延迟：7.202 - 7.169 = 0.033
 00:00:07.236：生命值调整，专武生命叠一层生效
-							 生效延迟：7.236 - 7.169 = 0.067
+							 专武生效延迟：7.236 - 7.169 = 0.067
 00:00:07.502：芙芙第二刀(吃到256.4层)
 00:00:07.719：夫人出伤（吃到256.4层）
 00:00:08.119：勋爵、螃蟹出伤，芙芙第三刀（吃到256.4层）
@@ -906,7 +906,7 @@ fixme: 其他人站前台，是不是治疗机制也有不同？
 							生效延迟：8.336 - 8.302 = 0.034
 00:00:08.402：治疗芙芙（333.95层）
 00:00:08.402：生命值调整，专武生命叠二层生效
-							生效延迟：8.402 - 8.302 = 0.1
+							专武生效延迟：8.402 - 8.302 = 0.1
 【预计8.802线程运行】
 00:00:08.802：夫人扣血（356.35层）
 【预计9.302线程运行，但从后面夫人只吃到356.48层看，实际可能提前到了9.236之前】
@@ -961,7 +961,7 @@ fixme: 其他人站前台，是不是治疗机制也有不同？
 							 生效延迟：0.1
 							
 生命值调整间隔：0.55,  0.515, 0.484, 0.483, 0.551, 0.449, 0.483, 0.517, 0.5
-生效延迟：0.067, 0.1, 0.134, 0.1, 0.1
+生效延迟：0.033, 0.034, 0.134, 0.1, 0.1
 
 ---
 
@@ -972,7 +972,7 @@ fixme: 其他人站前台，是不是治疗机制也有不同？
 00:00:06.661：2/4动画
 							生效延迟：6.661 - 6.627 = 0.034
 00:00:06.711：生命值调整，专武生命叠一层生效
-							生效延迟：6.711 - 6.627 = 0.084
+							专武生效延迟：6.711 - 6.627 = 0.084
 00:00:07.076：夫人出伤（吃到222.8层）
 【预计7.127线程运行】
 00:00:07.561：勋爵出伤（吃到256.4层）
@@ -984,7 +984,7 @@ fixme: 其他人站前台，是不是治疗机制也有不同？
 							生效延迟：7.877 - 7.861 = 0.016
 00:00:07.944：治疗芙芙（333.95层）
 00:00:07.944：生命值调整，专武生命二层生效
-							生效延迟：7.944 - 7.861 = 0.083
+							专武生效延迟：7.944 - 7.861 = 0.083
 00:00:08.227：夫人扣血（356.35层）
 【预计8.361线程运行】
 00:00:08.761：夫人出伤（吃到356.39层）
@@ -1035,7 +1035,7 @@ fixme: 其他人站前台，是不是治疗机制也有不同？
 00:00:14.879：生命值调整，14.879 - 14.329 - 0.55
 
 生命值调整间隔：0.466， 0.55， 0.534， 0.5， 0.501， 0.466， 0.567， 0.45
-生效延迟：0.084， 0.083， 0.117
+生效延迟：0.034, 0.016, 0.117
 
 -----
 
@@ -1044,12 +1044,13 @@ fixme: 其他人站前台，是不是治疗机制也有不同？
 00:00:06.069：2/4动画
 						生效延迟：0.001
 00:00:06.152：生命值调整，专武生命值一层生效
-						生效延迟：0.084
+						专武生效延迟：0.084
 00:00:06.469：夫人出伤（吃到256.4层）
 00:00:07.086：治疗后台三人（316.1层）
 【线程立即运行】
 00:00:07.186：治疗芙芙（ 333.95层）
 00:00:07.186：生命值调整，专武生命值二层生效
+							专武生效延迟：0.1
 【预计7.586线程运行】
 00:00:07.602：3/4动画
 00:00:07.669：夫人扣血（356.35层）
@@ -1104,41 +1105,105 @@ fixme: 其他人站前台，是不是治疗机制也有不同？
 							生效延迟：0.181
 							
 生命值调整间隔：0.55, 0.533, 0.5, 0.5, 0.55, 0.483, 0.552, 0.483, 0.534
-生效延迟：0.084， 0.1， 0.181
+生效延迟：0.01, 0.1, 0.181
 
 -----
 
-生命值调整间隔汇总：0.55,  0.515, 0.484, 0.483, 0.551, 0.449, 0.483, 0.517, 0.5, 0.466， 0.55， 0.534， 0.5， 0.501， 0.466， 0.567， 0.45, 0.55, 0.533, 0.5, 0.5, 0.55, 0.483, 0.552, 0.483, 0.534
-排序:  [0.449, 0.45, 0.466, 0.466, 0.483, 0.483, 0.483, 0.483, 0.484, 0.5, 0.5, 0.5, 0.5, 0.501, 0.515, 0.517, 0.533, 0.534, 0.534, 0.55, 0.55, 0.55, 0.55, 0.551, 0.552, 0.567]
-        数量：26
-        最大：0.567, +0.057
-        最小：0.449, -0.061
-        平均：0.51
-        最大-最小平均：0.508
-        最大-最小-平均-差值: 0.059
-        最小-最大范围：[0.449, 0.567]
-        quantile range:  (0.388, 0.641)
-        2-sigma range:  (0.442, 0.578)
-        3-sigma range:  (0.408, 0.612)
-生效延迟汇总：0.067, 0.1, 0.134, 0.1, 0.1, 0.084， 0.083， 0.117, 0.084， 0.1, 0.181
-排序:  [0.067, 0.083, 0.084, 0.084, 0.1, 0.1, 0.1, 0.1, 0.117, 0.134, 0.181]
+生命值调整间隔汇总：0.55,  0.515, 0.484, 0.483, 0.551, 0.449, 0.483, 0.517, 0.5, 0.466， 0.55， 0.534， 0.5， 0.501， 0.466， 0.567， 0.45, 0.55, 0.533, 0.5, 0.5, 0.55, 0.483, 0.552, 0.483, 0.534,
+0.517, 0.499, 0.535, 0.465, 0.601, 0.466,
+0.567, 0.433, 0.567, 0.45, 0.583, 0.45,
+0.483, 0.5, 0.5, 0.5, 0.5, 0.571, 0.5, 0.466,
+0.466, 0.483, 0.517, 0.5, 0.5, 0.466, 0.517, 0.583
+排序:  [0.433, 0.449, 0.45, 0.45, 0.45, 0.465, 0.466, 0.466, 0.466, 0.466, 0.466, 0.466, 0.483, 0.483, 0.483, 0.483, 0.483, 0.483, 0.484, 0.499, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.501, 0.515, 0.517, 0.517, 0.517, 0.517, 0.533, 0.534, 0.534, 0.535, 0.55, 0.55, 0.55, 0.55, 0.551, 0.552, 0.567, 0.567, 0.567, 0.571, 0.583, 0.583, 0.601]
+        数量：54
+        最大：0.601, +0.093
+        最小：0.433, -0.075
+        平均：0.508
+        最大-最小平均：0.517
+        最大-最小-平均-差值: 0.084
+        最小-最大范围：[0.433, 0.601]
+        quantile range:  (0.405, 0.613)
+        2-sigma range:  (0.429, 0.587)
+        3-sigma range:  (0.389, 0.627)
+生效延迟汇总：0.134, 0.1, 0.1,  0.117,  0.1, 0.181,0.066, 0.15, 0.1, 0.1,0.15
+排序:  [0.066, 0.1, 0.1, 0.1, 0.1, 0.1, 0.117, 0.134, 0.15, 0.15, 0.181]
         数量：11
-        最大：0.181, +0.076
-        最小：0.067, -0.038
-        平均：0.105
-        最大-最小平均：0.124
-        最大-最小-平均-差值: 0.057
-        最小-最大范围：[0.067, 0.181]
-        quantile range:  (0.047, 0.146)
-        2-sigma range:  (0.045, 0.164)
-        3-sigma range:  (0.016, 0.193)
+        最大：0.181, +0.063
+        最小：0.066, -0.052
+        平均：0.118
+        最大-最小平均：0.123
+        最大-最小-平均-差值: 0.058
+        最小-最大范围：[0.066, 0.181]
+        quantile range:  (0.037, 0.205)
+        2-sigma range:  (0.056, 0.18)
+        3-sigma range:  (0.025, 0.211)
+
 
 ## 专武叠层
 
 ### 生命值叠层
 
-第一层：三小只首次发动攻击时
-第二层：芙芙治疗，芙芙治疗是1.2秒左右就开始，芙芙的第一刀和夫人扣血也几乎同时，芙人的扣血在大约1.6秒之后，所以必定是芙芙的治疗先触发专武二层
+测试方法：让后台三个角色损失少量生命，前台芙芙满血，快速按便携营养袋连续给后台角色加血，看芙芙生命值的变化
+多次测试，测试结果如下，从最后一次的结果可以看到，芙芙的生命值叠层生效机制和气氛值不同，没有0.5秒的间隔
+
+00:00:03.076：钟离加血
+00:00:03.142：芙芙吃到一层，3.142 - 3.076 = 0.066
+00:00:03.542：万叶加血
+00:00:03.676：芙芙吃到两层，3.676 - 3.542 = 0.134
+
+---
+
+00:00:02.066：钟离加血
+00:00:02.101：芙芙吃到一层，2.101 - 2.066 = 0.035
+00:00:02.417：夜兰加血，2.417 - 2.066  = 0.351
+00:00:02.517：芙芙吃到两层，+0.1， 2.517 - 2.101 = 0.416
+
+---
+
+00:00:00.601：钟离加血
+00:00:00.701：芙芙吃到一层，+0.1
+00:00:00.801：夜兰加血，这哈好是0.2，能生效么？
+00:00:00.983：万叶加血，0.983 - 0.601 - 0.383
+00:00:01.101：芙芙吃到二层，1.101 - 0.983 = 0.118， 1.101 - 0.701 = 0.4
+
+---
+
+00:00:02.451：钟离加血
+00:00:02.567：芙芙吃到一层，+0.116
+00:00:02.651：夜兰加血，2.651 - 2.451 = 0.2，又是恰好0.2
+00:00:02.951：万叶加血
+00:00:03.067：芙芙吃到二层，3.067 - 2.951 = 0.116
+
+---
+
+00:00:00.567：钟离加血
+00:00:00.667：芙芙吃到一层，+0.1
+00:00:00.967：夜兰加血
+00:00:01.068：芙芙吃到两层，+0.101
+
+---
+
+00:00:00.701：钟离加血
+00:00:00.784：芙芙吃到一层，+0.083
+00:00:00.984：夜兰加血，+0.283，超过了专武的0.2秒判定标准
+00:00:01.084：芙芙吃到二层，+0.1，1.084 - 0.784 = 0.3
+
+这一次测试最为理想
+
+生效延迟：0.066, 0.134, 0.035, 0.1, 0.1, 0.118, 0.116, 0.116, 0.1, 0.101, 0.083, 0.1, 0.067, 0.1, 0.084, 0.083, 0.084, 0.1, 0.066, 0.066, 0.117, 0.067
+排序:  [0.035, 0.066, 0.066, 0.066, 0.067, 0.067, 0.083, 0.083, 0.084, 0.084, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.101, 0.116, 0.116, 0.117, 0.118, 0.134]
+        数量：22
+        最大：0.134, +0.043
+        最小：0.035, -0.056
+        平均：0.091
+        最大-最小平均：0.085
+        最大-最小-平均-差值: 0.049
+        最小-最大范围：[0.035, 0.134]
+        quantile range:  (0.026, 0.146)
+        2-sigma range:  (0.045, 0.137)
+        3-sigma range:  (0.023, 0.16)
+		
+		建议范围：[0.066, 0.118]
 
 ### 战技增伤叠层
 
@@ -1146,7 +1211,7 @@ fixme: 其他人站前台，是不是治疗机制也有不同？
 第二层：芙芙1.3秒左右治疗自已
 第三层：夫人扣血
 
-# 满命六刀时机
+## 满命六刀时机
 
 第一刀：只有150层基础增伤
 第二刀：
@@ -1315,18 +1380,141 @@ q: 芙芙q出伤
 			* 如果当前事件会引发气氛值、增伤、hp变化，则立即对当前的事件进行结算并以当前的事件时间为基准重新计算下一次结算点
 						【TODO: 相邻极近的两个事件如何一起结算？】
 									---> 将adjust做成一个单独的事件AdjustAction，do()的时候，会往后检查一小段时间的事件，如果可以“合并”计算，则将那个事件设置为done
+									---> 注：一旦合并结算了，则“生效时间”在合并结算之后！！！
 						
-class AdustThread:
-	cur_hp
-	cur_e_bonus
-	cur_q_bonus
+触发式action: hp变化时或造成伤害时触发(普攻，战技，元素爆发）
+例如：专武叠层
+如何实现这些触发式action呢？		事件回调，注册对某类事件感兴趣，发生此类事件时就会有回调
+一个action，不光要有功能性，还可能触发其他事件
+			
+关于生效延迟：我们收入快照snapshot，因为是fufu主动action.do()，因此fufu是知道当前正在do的action时间的
+
+FIXME: 万叶增伤何时生效，何时失效的问题如何处理？ 单独写一个 增伤失效的Action和减抗失效的Action即可，不需要处理的太复杂
 	
-	prev_hp
-	prev_e_bonus
-	prev_q_bonus
+FIXME: 专武生命值叠层是遵循0.5秒结算机制，还是立即生效？
 	
-	affected_time 用于生效延迟模拟，在affected_time之前取出来的是prev_xxx，在affected_time之后取出来的是cur_xxx
-	
+class Qi_HP_Bonus:
+    def __init__(self, fixed_hp, fixed_e_bonus, fixed_common_bonus,
+                 qi_fen_level, zhuan_wu_hp_level, zhuan_wu_e_bonus_level,
+                 ye_lan_e_num=0, ye_lan_q_bonus=0):
+        self.fixed_hp = fixed_hp
+        self.fixed_e_bonus = fixed_e_bonus
+        self.fixed_common_bonus = fixed_common_bonus
+
+        self.qi_fen_level = qi_fen_level
+        self.zhuan_wu_hp_level = zhuan_wu_hp_level
+        self.zhuan_wu_e_bonus_level = zhuan_wu_e_bonus_level
+        self.ye_lan_e_num = ye_lan_e_num
+        self.ye_lan_q_bonus = ye_lan_q_bonus
+
+        self.__hp = None
+        self.__common_bonus = None
+        self.__e_bonus = None
+
+    def hp(self):
+        if not self.__hp:
+            extra_hp_percent = self.ye_lan_e_num * 0.1
+            extra_hp_percent += self.zhuan_wu_hp_level * zhuan_wu_hp_bei_lv
+            if ming_zuo_num >= 2 and self.qi_fen_level > 400:
+                extra_hp_percent += min((self.qi_fen_level - 400)
+                                        * 0.0035, 1.4)
+
+            self.__hp = self.fixed_hp + \
+                int(fu_ning_na_base_hp * extra_hp_percent)
+
+        return self.__hp
+
+    def common_elem_bonus(self, has_extra_bonus=True, in_front=False):
+        if not self.__common_bonus:
+            bonus = self.fixed_common_bonus
+            bonus += min(400, self.qi_fen_level) * qi_bonus_bei_lv
+            if in_front:
+                bonus += self.ye_lan_q_bonus
+            if not has_extra_bonus:
+                bonus -= sum(extra_common_elem_bonus.values())
+
+            self.__common_bonus = bonus
+
+        return self.__common_bonus
+
+    def e_bonus(self, has_extra_bonus=True, in_front=False):
+        if not self.__e_bonus:
+            bonus = self.fixed_e_bonus
+            bonus += self.zhuan_wu_e_bonus_level * zhuan_wu_e_bonus_bei_lv
+            bonus += gu_you_tian_fu_2_bonus(self.hp())
+            bonus += min(400, self.qi_fen_level) * qi_bonus_bei_lv
+            if in_front:
+                bonus += self.ye_lan_q_bonus
+            if not has_extra_bonus:
+                bonus -= sum(extra_e_bonus.values())
+
+            self.__e_bonus = bonus
+
+        return self.__e_bonus
+
+
+class Damage:
+    def __init__(self, bei_lv, has_feng_tao=True, is_extra=False, has_extra_bonus=True, in_front=False):
+        self.bei_lv = bei_lv
+        self.has_feng_tao = has_feng_tao
+        self.is_extra = is_extra
+        self.has_extra_bonus = has_extra_bonus
+        self.in_front = in_front
+
+    def set_qi_hp_bonus(self, qi_hp_bonus: Qi_HP_Bonus):
+        self.qi_hp_bonus = qi_hp_bonus
+
+    def damage(self):
+        return 0
+
+
+class E_Damage(Damage):
+    def damage(self):
+        elem_bonus = self.qi_hp_bonus.e_bonus(
+            self.has_extra_bonus, self.in_front)
+        d = self.qi_hp_bonus.hp() * self.bei_lv / 100 * e_extra_damage_bonus * elem_bonus
+        if not self.has_feng_tao:
+            d /= 1.2777  # 风套增伤27.77%
+        return d
+
+
+class Fu_Ren_E_Damage(E_Damage):
+    def __init__(self, has_feng_tao=True, is_extra=False, has_extra_bonus=True, in_front=False):
+        super().__init__(FU_REN_BEI_LV, has_feng_tao, is_extra, has_extra_bonus, in_front)
+
+
+class Xun_Jue_E_Damage(E_Damage):
+    def __init__(self, has_feng_tao=True, is_extra=False, has_extra_bonus=True, in_front=False):
+        super().__init__(XUN_JUE_BEI_LV,  has_feng_tao, is_extra, has_extra_bonus, in_front)
+
+
+class Pang_Xie_E_Damage(E_Damage):
+    def __init__(self, has_feng_tao=True, is_extra=False, has_extra_bonus=True, in_front=False):
+        super().__init__(PANG_XIE_BEI_LV, has_feng_tao, is_extra, has_extra_bonus, in_front)
+
+
+class Ming_6_Damage(Damage):
+    def __init__(self, bei_lv):
+        super().__init__(bei_lv, has_feng_tao=True,
+                         is_extra=False, has_extra_bonus=True, in_front=True)
+
+    def damage(self):
+        elem_bonus = self.qi_hp_bonus.common_elem_bonus(
+            self.has_extra_bonus, in_front=True)
+        d = self.qi_hp_bonus.hp() * self.bei_lv / 100 * elem_bonus
+        if not self.has_feng_tao:
+            d /= 1.2777
+        return d
+
+
+class Bai_Fu_Damage(Ming_6_Damage):
+    def __init__(self):
+        super().__init__(BAI_FU_BEI_LV)
+
+
+class Hei_Fu_Damage(Ming_6_Damage):
+    def __init__(self):
+        super().__init__(HEI_FU_BEI_LV)
 
 ## FIXME
 

@@ -12,88 +12,140 @@ from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_score
 from ye_lan import YeLanQBonus
 
 
+# 命座
 ming_zuo_num = 6
-include_extra = False    # 某些配队，在芙芙大招结束后还继续输出，不切芙芙出来续大，此时将include_extra置为True
-has_na_wei_lai_te = False
-has_ye_lan = True
+# 是否有专武
+has_zhuan_wu = True
 
-if has_ye_lan or has_na_wei_lai_te:
-    has_shuang_shui = True
-else:
-    has_shuang_shui = False
+include_extra = False    # 某些配队，在芙芙大招结束后还继续输出，不切芙芙出来续大，此时将include_extra置为True
+
+# 队友生命值上限
 
 
 class Teammate_HP:
-    def __init__(self, base_hp, max_hp):
+    def __init__(self, base_hp, max_hp, elem_type=None):
         self.base_hp = base_hp
         self.max_hp = max_hp
+        self.elem_type = elem_type
 
 
 teammate_hp = {
-    Teammate_HP(14450, 46461),  # 夜兰
-    Teammate_HP(14695, 58661),  # 钟离
+    # 夜兰
+    Teammate_HP(14450, 46461, elem_type=ShengYiWu.ELEM_TYPE_SHUI),
+    # 钟离
+    Teammate_HP(14695, 58661),
+    # 万叶
     Teammate_HP(13348, 23505),  # 万叶
 }
 
-if ming_zuo_num < 6:
-    only_e = True
-else:
-    only_e = False
+# 是否有四命夜兰，仅用于最终生命值上限的展示，不影响最终伤害的计算
+has_4_ming_ye_lan = True
 
-e_extra_damage = 1.4  # 队友大于50%血量，e技能伤害为原来的1.4倍 （注：实测为1.542倍)
+has_shuang_shui = False
+for t in teammate_hp:
+    if t.elem_type == ShengYiWu.ELEM_TYPE_SHUI:
+        has_shuang_shui = True
+        break
 
-if ming_zuo_num >= 2:
-    ming_2_hp_bonus_max = 1.4  # 140%
-else:
-    ming_2_hp_bonus_max = 0
+# 以下是队友或武器带来的一些额外属性（专武不需要手动填）
+# 四命夜兰的生命值加成是在具体的流程中动态计算的，不能写死
 
-if ming_zuo_num >= 3:
-    FU_REN_BEI_LV = 6.87
-    XUN_JUE_BEI_LV = 12.67
-    PANG_XIE_BEI_LV = 17.61
-else:
-    FU_REN_BEI_LV = 5.82
-    XUN_JUE_BEI_LV = 10.73
-    PANG_XIE_BEI_LV = 14.92
-
-q_bei_lv = 24.2
-e_bei_lv = 16.7
-
-HEI_FU_BEI_LV = 18
-BAI_FU_BEI_LV = 18 + 25
-
-if ming_zuo_num >= 5:
-    fu_ning_na_qi_bonus_bei_lv = 0.0031
-else:
-    fu_ning_na_qi_bonus_bei_lv = 0.0025
-
-fu_ning_na_q_max_bonus = 400 * fu_ning_na_qi_bonus_bei_lv
-fu_ning_na_Max_Hp = 15307.0
-
-zhuan_wu_hp_bei_lv = 0.14
-zhuan_wu_e_bonus_bei_lv = 0.08
-
+# 武器或队友增加的暴伤
 extra_crit_damage = {
-    "专武": 0.882
 }
 
+# 武器或队友增加的生命值加成，双水不需要手动填，会自动根据上面的teammate_hp进行计算
 extra_hp_bonus = {
 }
+
+# 武器或队友带来的通用元素伤害加成
+extra_common_elem_bonus = {
+}
+
+# 武器或队友带来的战技增伤
+extra_e_bonus = {
+}
+
+# 武器或队友带来的元素爆发增伤
+extra_q_bonus = {
+}
+
+# 以下为自动计算区，无须手动更改
 
 if has_shuang_shui:
     extra_hp_bonus["双水"] = 0.25
 
-extra_common_elem_bonus = {
-    "万叶": 0.4,
-}
+if ming_zuo_num >= 1:
+    base_qi_fen_zhi = 150
+    max_qi_fen_zhi = 400
+else:
+    base_qi_fen_zhi = 0
+    max_qi_fen_zhi = 300
 
-extra_e_bonus = {
-}
+if ming_zuo_num >= 2:
+    qi_bei_lv = 3.5
+    ming_2_hp_bonus_max = 1.4
+else:
+    qi_bei_lv = 1
+    ming_2_hp_bonus_max = 0
 
-other_hp_bonus = {
-    "专武叠满两层": zhuan_wu_hp_bei_lv * 2,
-    "夜兰四命保底两个e": 0.2,
-}
+if ming_zuo_num >= 3:
+    q_bei_lv = 24.2
+    qi_bonus_bei_lv = 0.0031
+    qi_cure_bonus = 0.0013
+else:
+    q_bei_lv = 20.5
+    qi_bonus_bei_lv = 0.0025
+    qi_cure_bonus = 0.001
+
+if ming_zuo_num >= 4:
+    if has_shuang_shui:
+        required_energy_recharge = 110
+    else:
+        required_energy_recharge = 160
+else:
+    if has_shuang_shui:
+        required_energy_recharge = 170
+    else:
+        required_energy_recharge = 220
+
+if ming_zuo_num >= 5:
+    e_damage_bei_lv = 16.7
+    e_cure_bei_lv = 10.2
+    e_cure_base = 1271
+
+    FU_REN_BEI_LV = 6.87
+    XUN_JUE_BEI_LV = 12.67
+    PANG_XIE_BEI_LV = 17.61
+else:
+    e_bei_lv = 14.2
+    e_cure_bei_lv = 8.64
+    e_cure_base = 1017
+
+    FU_REN_BEI_LV = 5.82
+    XUN_JUE_BEI_LV = 10.73
+    PANG_XIE_BEI_LV = 14.92
+
+if ming_zuo_num >= 6:
+    only_e = False
+else:
+    only_e = True
+
+e_extra_damage_bonus = 1.4  # 队友大于50%血量，e技能伤害为原来的1.4倍
+HEI_FU_BEI_LV = 18
+BAI_FU_BEI_LV = 18 + 25
+
+fu_ning_na_base_hp = 15307.0
+
+zhuan_wu_hp_bei_lv = 0.14
+zhuan_wu_e_bonus_bei_lv = 0.08
+
+if has_zhuan_wu:
+    extra_crit_damage["专武"] = 0.882
+
+
+def gu_you_tian_fu_2_bonus(hp):
+    return min(hp / 1000 * 0.007, 0.28)
 
 
 def match_sha_callback(syw: ShengYiWu):
@@ -166,167 +218,64 @@ def find_combine_callback():
     return all_combins
 
 
-def gu_you_tian_fu_2_bonus(hp):
-    return min(hp / 1000 * 0.007, 0.28)
-
-
-class Qi_HP_Bonus:
-    def __init__(self, fixed_hp, fixed_e_bonus, fixed_common_bonus,
-                 qi_fen_level, zhuan_wu_hp_level, zhuan_wu_e_bonus_level,
-                 ye_lan_e_num=0, ye_lan_q_bonus=0):
-        self.fixed_hp = fixed_hp
-        self.fixed_e_bonus = fixed_e_bonus
-        self.fixed_common_bonus = fixed_common_bonus
-
-        self.qi_fen_level = qi_fen_level
-        self.zhuan_wu_hp_level = zhuan_wu_hp_level
-        self.zhuan_wu_e_bonus_level = zhuan_wu_e_bonus_level
-        self.ye_lan_e_num = ye_lan_e_num
-        self.ye_lan_q_bonus = ye_lan_q_bonus
-
-        self.__hp = None
-        self.__common_bonus = None
-        self.__e_bonus = None
-
-    def hp(self):
-        if not self.__hp:
-            extra_hp_percent = self.ye_lan_e_num * 0.1
-            extra_hp_percent += self.zhuan_wu_hp_level * zhuan_wu_hp_bei_lv
-            if ming_zuo_num >= 2 and self.qi_fen_level > 400:
-                extra_hp_percent += min((self.qi_fen_level - 400)
-                                        * 0.0035, 1.4)
-
-            self.__hp = self.fixed_hp + \
-                int(fu_ning_na_Max_Hp * extra_hp_percent)
-
-        return self.__hp
-
-    def common_elem_bonus(self, has_extra_bonus=True, in_front=False):
-        if not self.__common_bonus:
-            bonus = self.fixed_common_bonus
-            bonus += min(400, self.qi_fen_level) * fu_ning_na_qi_bonus_bei_lv
-            if in_front:
-                bonus += self.ye_lan_q_bonus
-            if not has_extra_bonus:
-                bonus -= sum(extra_common_elem_bonus.values())
-
-            self.__common_bonus = bonus
-
-        return self.__common_bonus
-
-    def e_bonus(self, has_extra_bonus=True, in_front=False):
-        if not self.__e_bonus:
-            bonus = self.fixed_e_bonus
-            bonus += self.zhuan_wu_e_bonus_level * zhuan_wu_e_bonus_bei_lv
-            bonus += gu_you_tian_fu_2_bonus(self.hp())
-            bonus += min(400, self.qi_fen_level) * fu_ning_na_qi_bonus_bei_lv
-            if in_front:
-                bonus += self.ye_lan_q_bonus
-            if not has_extra_bonus:
-                bonus -= sum(extra_e_bonus.values())
-
-            self.__e_bonus = bonus
-
-        return self.__e_bonus
-
-
-class Damage:
-    def __init__(self, bei_lv, has_feng_tao=True, is_extra=False, has_extra_bonus=True, in_front=False):
-        self.bei_lv = bei_lv
-        self.has_feng_tao = has_feng_tao
-        self.is_extra = is_extra
-        self.has_extra_bonus = has_extra_bonus
-        self.in_front = in_front
-
-    def set_qi_hp_bonus(self, qi_hp_bonus: Qi_HP_Bonus):
-        self.qi_hp_bonus = qi_hp_bonus
-
-    def damage(self):
-        return 0
-
-
-class E_Damage(Damage):
-    def damage(self):
-        elem_bonus = self.qi_hp_bonus.e_bonus(
-            self.has_extra_bonus, self.in_front)
-        d = self.qi_hp_bonus.hp() * self.bei_lv / 100 * e_extra_damage * elem_bonus
-        if not self.has_feng_tao:
-            d /= 1.2777  # 风套增伤27.77%
-        return d
-
-
-class Fu_Ren_E_Damage(E_Damage):
-    def __init__(self, has_feng_tao=True, is_extra=False, has_extra_bonus=True, in_front=False):
-        super().__init__(FU_REN_BEI_LV, has_feng_tao, is_extra, has_extra_bonus, in_front)
-
-
-class Xun_Jue_E_Damage(E_Damage):
-    def __init__(self, has_feng_tao=True, is_extra=False, has_extra_bonus=True, in_front=False):
-        super().__init__(XUN_JUE_BEI_LV,  has_feng_tao, is_extra, has_extra_bonus, in_front)
-
-
-class Pang_Xie_E_Damage(E_Damage):
-    def __init__(self, has_feng_tao=True, is_extra=False, has_extra_bonus=True, in_front=False):
-        super().__init__(PANG_XIE_BEI_LV, has_feng_tao, is_extra, has_extra_bonus, in_front)
-
-
-class Ming_6_Damage(Damage):
-    def __init__(self, bei_lv):
-        super().__init__(bei_lv, has_feng_tao=True,
-                         is_extra=False, has_extra_bonus=True, in_front=True)
-
-    def damage(self):
-        elem_bonus = self.qi_hp_bonus.common_elem_bonus(
-            self.has_extra_bonus, in_front=True)
-        d = self.qi_hp_bonus.hp() * self.bei_lv / 100 * elem_bonus
-        if not self.has_feng_tao:
-            d /= 1.2777
-        return d
-
-
-class Bai_Fu_Damage(Ming_6_Damage):
+class Action:
     def __init__(self):
-        super().__init__(BAI_FU_BEI_LV)
+        # timestamp是动态计算出来的，这里只是放一个占位符
+        self.timestamp = 0
+
+    def do(self, fufu, index=-1):
+        """
+        * fufu: 此Action所在的FuFu的实例
+        * index: 在FuFu.action_list中的位置，某些action可能需要知道自已所有位置以方便”往前看“或”往后看“
+                 index小于0表示不在action_list中
+        """
+        pass
+
+class FuFu:
+    def __init__(self, hp, e_bonus, q_bonus, six_bonus, crit_rate, crit_damage):
+        self.hp = hp
+        self.e_bonus = e_bonus
+        self.q_bonus = q_bonus
+        self.six_bonus = six_bonus
+
+        self.effective_qi_fen_zhi = 0
+        self.qi_fen_zhi = 0
+
+        self.crit_rate = crit_rate
+        self.crit_damage = crit_damage
+
+        self.total_damage = 0
+
+        self.action_list: list[Action] = []
+
+        self.callback_dict: dict[str, Action] = {}
+    
+    def set_hp(self, hp, effective_time):
+        pass
+
+    def add_callback(self, event: str, action: Action):
+        if event in self.callback_dict:
+            self.callback_dict[event].append(action)
+        else:
+            self.callback_dict[event] = [action]
+
+    def do_callback(self, event: str):
+        if event in self.callback_dict:
+            for action in self.callback_dict[event]:
+                action.do(self)
 
 
-class Hei_Fu_Damage(Ming_6_Damage):
-    def __init__(self):
-        super().__init__(HEI_FU_BEI_LV)
-
-
-def calc_score(fixed_hp, fixed_e_bonus, fixed_common_bonus, crit_rate, crit_damage):
-    print("fixed_hp:" + str(fixed_hp))
-    print("fixed_e_bonus:" + str(fixed_e_bonus))
-    print("fixed_full_bonus:" + str(fixed_common_bonus))
-
-    # 注：这个列表里不需要包含三个宠物的第一次攻击以及满命六刀，因为：
-    # 
-    # * 三个宠物的第一次攻击是默认包含的
-    # * 满命六刀会自动添加
-    damage_list = [
-        Fu_Ren_E_Damage(),
-        Fu_Ren_E_Damage(),
-        Xun_Jue_E_Damage(),
-        Fu_Ren_E_Damage(),
-        Pang_Xie_E_Damage(),
-
-        Fu_Ren_E_Damage(),
-        Xun_Jue_E_Damage(),
-        Fu_Ren_E_Damage(),
-        Fu_Ren_E_Damage(),
-        Xun_Jue_E_Damage(),
-        Pang_Xie_E_Damage(),
-
-        Fu_Ren_E_Damage(),
-        Fu_Ren_E_Damage(),
-        Xun_Jue_E_Damage(),
-    ]
+def calc_score(fixed_hp, fixed_e_bonus, fixed_q_bonus, fixed_common_bonus, crit_rate, crit_damage):
+    print("fixed_hp:", fixed_hp)
+    print("fixed_e_bonus:", fixed_e_bonus)
+    print("fixed_q_bonus: ", fixed_q_bonus)
+    print("fixed_common_bonus:", fixed_common_bonus)
 
 
 def calculate_score_callback(combine: list[ShengYiWu]):
     crit_rate = 0.242  # 突破加成
     crit_damage = 1 + 0.5 + sum(extra_crit_damage.values())
-    hp = 4780
+    hp = 4780   # 花的固定hp
     hp_per = 0
     common_bonus = 1 + sum(extra_common_elem_bonus.values())
     energe_recharge = 1
@@ -345,7 +294,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
 
     energe_recharge *= 100
     energe_recharge = round(energe_recharge, 1)
-    if energe_recharge < 110:
+    if energe_recharge < required_energy_recharge:
         return None
 
     syw_e_bonus = 0
@@ -372,29 +321,43 @@ def calculate_score_callback(combine: list[ShengYiWu]):
             if name_count[n] >= 4:
                 syw_e_bonus += 0.25 + 0.25
 
-    all_hp = int(fu_ning_na_Max_Hp * (1
-                                      + hp_per
-                                      + sum(extra_hp_bonus.values())
-                                      )) + hp
+    all_hp = int(fu_ning_na_base_hp * (1
+                                       + hp_per
+                                       + sum(extra_hp_bonus.values())
+                                       )) + hp
     e_bonus = common_bonus + sum(extra_e_bonus.values()) + syw_e_bonus
+    q_bonus = common_bonus + sum(extra_q_bonus.values())
 
     crit_score, expect_score, full_six_zhan_bi = calc_score(
-        all_hp, e_bonus, common_bonus, crit_rate, crit_damage)
+        all_hp, e_bonus, q_bonus, common_bonus, crit_rate, crit_damage)
 
-    max_hp_per = hp_per + sum(extra_hp_bonus.values()) + sum(
-        other_hp_bonus.values()) + ming_2_hp_bonus_max
-    max_hp = int(fu_ning_na_Max_Hp * (1 + max_hp_per)) + hp
-    panel_hp = fu_ning_na_Max_Hp * (1 + hp_per) + hp
+    max_hp_per = hp_per + sum(extra_hp_bonus.values()) + ming_2_hp_bonus_max
+    if has_zhuan_wu:
+        max_hp_per += zhuan_wu_hp_bei_lv * 2
+    if has_4_ming_ye_lan:
+        # 至少在单个怪上两次e
+        max_hp_per += 0.2
 
-    max_e_bonus = e_bonus + zhuan_wu_e_bonus_bei_lv * \
-        3 + fu_ning_na_q_max_bonus + 0.28  # 固有天赋2吃满
-    max_common_bonus = common_bonus + fu_ning_na_q_max_bonus
+    max_hp = int(fu_ning_na_base_hp * (1 + max_hp_per)) + hp
+    panel_hp = fu_ning_na_base_hp * (1 + hp_per) + hp
 
-    return [expect_score, crit_score, full_six_zhan_bi, int(max_hp), int(panel_hp), round(max_e_bonus, 3), round(max_common_bonus, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]
+    max_e_bonus = e_bonus
+    if has_zhuan_wu:
+        max_e_bonus += zhuan_wu_e_bonus_bei_lv * 3
+    max_e_bonus += 0.28  # 按固有天赋2吃满计算
+    # 大招满气氛值增伤
+    qi_max_elem_bonus = qi_bonus_bei_lv * max_qi_fen_zhi
+    max_e_bonus += qi_max_elem_bonus
+
+    max_common_bonus = common_bonus + qi_max_elem_bonus
+
+    return [expect_score, crit_score, full_six_zhan_bi, int(max_hp), int(panel_hp), round(max_e_bonus, 3), round(max_common_bonus, 3),
+            round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]
 
 
 result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "满命六刀伤害占比", "实战最大生命值上限",
-                      "面板最大生命值", "战技最高元素伤害加成(不包含夜兰的)", "满命六刀最高元素伤害加成（不包含夜兰的）", "暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
+                      "面板最大生命值", "战技最高元素伤害加成(不包含夜兰的)", "满命六刀最高元素伤害加成（不包含夜兰的）",
+                      "暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
 
 
 def find_syw_for_fu_ning_na():
