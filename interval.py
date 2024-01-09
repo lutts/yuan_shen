@@ -68,8 +68,7 @@ def kou_xue_chu_shang():
 
 def avg_min_max():
     l2 = [
-0.066, 0.134, 0.035, 0.1, 0.1, 0.118, 0.116, 0.116, 0.1, 0.101, 0.083, 0.1, 0.067, 0.1, 0.084, 0.083, 0.084, 0.1, 0.066, 0.066, 0.117, 0.067
-]
+0.035, 0.066, 0.066, 0.066, 0.067, 0.067, 0.083, 0.083, 0.084, 0.084, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.101, 0.116, 0.116, 0.117, 0.118, 0.134, 0.134, 0.1, 0.1,  0.117,  0.1, 0.181,0.066, 0.15, 0.1, 0.1,0.15]
     l2.sort()
 
     l2_avg = round(sum(l2) / len(l2), 3)
@@ -155,6 +154,21 @@ def test():
             print(d)
         elif d > valid_max:
             print(d)
+
+
+class Test:
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+
+t = Test(1, 3)
+import copy
+t2 = copy.deepcopy(t)
+t2.a = 2
+print(t.a)
+print(t.b)
+print(t2.a)
+print(t2.b)
 
 # Main body
 if __name__ == '__main__':

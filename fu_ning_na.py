@@ -7,6 +7,7 @@ Module documentation.
 import sys
 import os
 import logging
+import copy
 import itertools
 from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_score
 from ye_lan import YeLanQBonus
@@ -100,9 +101,9 @@ else:
 
 if ming_zuo_num >= 4:
     if has_shuang_shui:
-        required_energy_recharge = 110
+        required_energy_recharge = 120
     else:
-        required_energy_recharge = 160
+        required_energy_recharge = 170
 else:
     if has_shuang_shui:
         required_energy_recharge = 170
@@ -149,7 +150,7 @@ def gu_you_tian_fu_2_bonus(hp):
 
 
 def match_sha_callback(syw: ShengYiWu):
-    return syw.hp_percent == 0.466 or syw.energe_recharge == ShengYiWu.ENERGE_RECHARGE_MAX
+    return syw.hp_percent == 0.466 or syw.energy_recharge == ShengYiWu.energy_recharge_MAX
 
 
 def match_bei_callback(syw: ShengYiWu):
@@ -179,11 +180,11 @@ def find_combine_callback():
     # fixed_e_bonus = 1 + 万叶0.4 + 固有天赋0.28 + 2水仙 = 1.83
     return [
         (ShengYiWu(ShengYiWu.ZHUI_YI, ShengYiWu.PART_HUA,
-                   crit_rate=0.152, crit_damage=0.132, energe_recharge=0.097, def_per=0.073),
+                   crit_rate=0.152, crit_damage=0.132, energy_recharge=0.097, def_per=0.073),
          ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_YU,
                    crit_rate=0.117, crit_damage=0.194, def_v=23, elem_mastery=23),
          ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_SHA,
-                   crit_rate=0.074, crit_damage=0.218, energe_recharge=0.091, atk=18, hp_percent=0.466),
+                   crit_rate=0.074, crit_damage=0.218, energy_recharge=0.091, atk=18, hp_percent=0.466),
          ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_BEI,
                    crit_rate=0.093, crit_damage=0.21, def_per=0.131, def_v=23, hp_percent=0.466)
          )
@@ -220,10 +221,17 @@ def find_combine_callback():
 
 class Action:
     def __init__(self):
+        self.done = False
         # timestamp是动态计算出来的，这里只是放一个占位符
         self.timestamp = 0
 
     def do(self, fufu, index=-1):
+        if self.done:
+            return None
+
+        return self.do_impl(fufu, index)
+
+    def do_impl(self, fufu, index):
         """
         * fufu: 此Action所在的FuFu的实例
         * index: 在FuFu.action_list中的位置，某些action可能需要知道自已所有位置以方便”往前看“或”往后看“
@@ -231,27 +239,158 @@ class Action:
         """
         pass
 
-class FuFu:
-    def __init__(self, hp, e_bonus, q_bonus, six_bonus, crit_rate, crit_damage):
+
+class FuFuState:
+    def __init__(self, hp, e_bonus, q_bonus, common_bonus, crit_rate, crit_damage, energy_recharge):
         self.hp = hp
         self.e_bonus = e_bonus
         self.q_bonus = q_bonus
-        self.six_bonus = six_bonus
-
-        self.effective_qi_fen_zhi = 0
+        self.common_bonus = common_bonus
         self.qi_fen_zhi = 0
+        self.feng_tao_in_effect = False
 
         self.crit_rate = crit_rate
         self.crit_damage = crit_damage
 
+        self.energy_recharge = energy_recharge
+
+        self.in_foreground = True
+
+        self.timestamp = None
+
+    def add_hp_per(self, hp_per):
+        self.hp += round(fu_ning_na_base_hp * hp_per)
+
+    def get_qi_bonus(self):
+        qi_fen_zhi = self.qi_fen_zhi
+        if qi_fen_zhi > max_qi_fen_zhi:
+            qi_fen_zhi = max_qi_fen_zhi
+
+        return qi_fen_zhi * qi_bonus_bei_lv
+
+    def get_e_bonus(self):
+        return self.e_bonus + self.get_qi_bonus() + gu_you_tian_fu_2_bonus(self.hp)
+
+    def get_q_bonus(self):
+        return self.q_bonus + self.get_qi_bonus()
+
+    def get_common_bonus(self):
+        return self.common_bonus + self.get_qi_bonus()
+
+    def add_common_bonus(self, bonus):
+        self.common_bonus += bonus
+        self.e_bonus += bonus
+        self.q_bonus += bonus
+
+    def sub_common_bonus(self, bonus):
+        self.common_bonus -= bonus
+        self.e_bonus -= bonus
+        self.q_bonus -= bonus
+
+
+class FuFu:
+    # 专武叠层事件
+    TEAMMATE_HP_CHANGE = "teammate hp change"
+    FU_FU_HP_CHANGE = "fu fu hp change"
+
+    def __init__(self, state: FuFuState):
+        self.state = state
+
+        self.effective_state = state
+        self.snapshot_list: list[FuFuState] = []
+
         self.total_damage = 0
 
         self.action_list: list[Action] = []
-
         self.callback_dict: dict[str, Action] = {}
-    
-    def set_hp(self, hp, effective_time):
-        pass
+
+    def add_hp(self, hp):
+        self.state.hp += hp
+
+    def add_hp_per(self, hp_per):
+        self.state.add_hp_per(hp_per)
+
+    def add_e_bonus(self, e_bonus):
+        self.state.e_bonus += e_bonus
+
+    def sub_e_bonus(self, e_bonus):
+        self.state.e_bonus -= e_bonus
+
+    def add_q_bonus(self, q_bonus):
+        self.state.q_bonus += q_bonus
+
+    def sub_q_bonus(self, q_bonus):
+        self.state.q_bonus -= q_bonus
+
+    def add_common_bonus(self, bonus):
+        self.state.add_common_bonus(bonus)
+
+    def sub_common_bonus(self, bonus):
+        self.state.sub_common_bonus(bonus)
+
+    def add_qi_fen_zhi(self, qi_fen_zhi):
+        self.state.qi_fen_zhi += qi_fen_zhi
+
+    def set_feng_tao_in_effect(self, in_effect):
+        self.state.feng_tao_in_effect = in_effect
+
+    def add_crit_rate(self, crit_rate):
+        self.state.crit_rate += crit_rate
+
+    def add_crit_damage(self, crit_damage):
+        self.state.crit_damage += crit_damage
+
+    def add_energy_recharge(self, er):
+        self.state.energy_recharge += er
+
+    def set_in_foreground(self, in_foreground):
+        self.state.in_foreground = in_foreground
+
+    ###########################################
+
+    def get_hp(self):
+        return self.effective_state.hp
+
+    def get_e_bonus(self):
+        return self.effective_state.get_e_bonus()
+
+    def get_q_bonus(self):
+        return self.effective_state.get_q_bonus()
+
+    def get_common_bonus(self):
+        return self.effective_state.get_common_bonus()
+
+    def get_qi_fen_zhi(self):
+        return self.effective_state.qi_fen_zhi
+
+    def is_feng_tao_in_effect(self):
+        return self.effective_state.feng_tao_in_effect
+
+    def get_crit_rate(self):
+        return self.effective_state.crit_rate
+
+    def get_crit_damage(self):
+        return self.effective_state.crit_damage
+
+    def energy_recharge(self):
+        return self.effective_state.energy_recharge
+
+    ##################################################
+
+    def take_snapshot(self, effective_time=0):
+        snapshot = copy.deepcopy(self.state)
+        snapshot.timestamp = effective_time
+
+        self.snapshot_list.append(snapshot)
+
+    def update_effective_state(self, cur_time):
+        while self.snapshot_list:
+            snapshot = self.snapshot_list[0]
+            if cur_time > snapshot.timestamp:
+                self.effective_state = snapshot
+                self.snapshot_list.pop(0)
+            else:
+                break
 
     def add_callback(self, event: str, action: Action):
         if event in self.callback_dict:
@@ -263,6 +402,101 @@ class FuFu:
         if event in self.callback_dict:
             for action in self.callback_dict[event]:
                 action.do(self)
+
+    def do_action(self):
+        index = 0
+        for action in self.action_list:
+            self.update_effective_state(action.timestamp)
+            action.do(self, index)
+            index += 1
+
+
+class TeammateHpChangeAction(Action):
+    """
+    不考虑掉层的问题，每层有6秒的时效，只要操作得当，则：
+
+    * 三小只在场是不可能掉层的，因为三小只会同时扣芙芙和队友的血，所以是能维持满层的
+    * 三小只不在场，那就只可能是切成白芙了，白芙满命刀是会扣1%血的，所以是能维持满层的
+
+    唯一的掉层条件：在白芙状态维持太长时间，并且 队友和/或芙芙 是满血的，芙芙自身满血太长时间会掉战技叠层，队友满血太长时间会掉生命叠层
+    """
+
+    def __init__(self):
+        super().__init__()
+
+        self.cur_level = 0
+
+    def do_impl(self, fufu, index):
+        if self.cur_level >= 2:
+            return
+
+        fufu.add_hp_per(zhuan_wu_hp_bei_lv)
+        self.cur_level += 1
+
+
+class FuFuHpChangeAction(Action):
+    def __init__(self):
+        super().__init__()
+
+        self.cur_level = 0
+
+    def do_impl(self, fufu, index):
+        if self.cur_level >= 3:
+            return
+
+        self.add_e_bonus(zhuan_wu_e_bonus_bei_lv)
+        self.cur_level += 1
+
+
+class WanYe:
+    def __init__(self, elem_mastery, xi_fu_si_jing_lian_num=0):
+        """
+        * elem_mastery: 万叶精通
+        * xi_fu_si_jing_lian_num: 西福斯精炼数
+        """
+        self.started = False
+        self.start_time = 0
+
+        self.elem_bonus = elem_mastery * 0.0004
+        if xi_fu_si_jing_lian_num <= 0:
+            self.energy_recharge = 0
+        else:
+            if xi_fu_si_jing_lian_num > 5:
+                xi_fu_si_jing_lian_num = 5
+            self.energy_recharge = elem_mastery * \
+                (0.036 + 0.09 * (xi_fu_si_jing_lian_num - 1)) * 0.3
+            self.energy_recharge = round(self.energy_recharge, 1)
+
+
+class WanYeStartAction(Action):
+    def __init__(self, wan_ye: WanYe):
+        super().__init__()
+        self.wan_ye = wan_ye
+
+    def do_impl(self, fufu: FuFu, index=-1):
+        fufu.add_common_bonus(self.wan_ye.elem_bonus)
+        fufu.add_energy_recharge(self.wan_ye.energy_recharge)
+        fufu.set_feng_tao_in_effect(True)
+
+        fufu.take_snapshot()
+
+
+class WanYeBonusStopAction(Action):
+    def __init__(self, wan_ye: WanYe):
+        super().__init__()
+        self.wan_ye = wan_ye
+
+    def do_impl(self, fufu: FuFu, index=-1):
+        fufu.sub_common_bonus(self.wan_ye.elem_bonus)
+
+        fufu.take_snapshot()
+
+
+class FengTaoInvalidAction(Action):
+    def do_impl(self, fufu: FuFu, index=-1):
+        fufu.state.feng_tao_in_effect = False
+
+        fufu.take_snapshot()
 
 
 def calc_score(fixed_hp, fixed_e_bonus, fixed_q_bonus, fixed_common_bonus, crit_rate, crit_damage):
@@ -278,7 +512,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     hp = 4780   # 花的固定hp
     hp_per = 0
     common_bonus = 1 + sum(extra_common_elem_bonus.values())
-    energe_recharge = 1
+    energy_recharge = 1
 
     for p in combine:
         crit_rate += p.crit_rate
@@ -286,16 +520,16 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         hp += p.hp
         hp_per += p.hp_percent
         common_bonus += p.elem_bonus
-        energe_recharge += p.energe_recharge
+        energy_recharge += p.energy_recharge
 
     crit_rate = round(crit_rate, 3)
     if crit_rate < 0.70:
         return None
 
-    energe_recharge *= 100
-    energe_recharge = round(energe_recharge, 1)
-    if energe_recharge < required_energy_recharge:
-        return None
+    energy_recharge *= 100
+    energy_recharge = round(energy_recharge, 1)
+    # if energy_recharge < required_energy_recharge:
+    #     return None
 
     syw_e_bonus = 0
 
@@ -328,8 +562,12 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     e_bonus = common_bonus + sum(extra_e_bonus.values()) + syw_e_bonus
     q_bonus = common_bonus + sum(extra_q_bonus.values())
 
-    crit_score, expect_score, full_six_zhan_bi = calc_score(
-        all_hp, e_bonus, q_bonus, common_bonus, crit_rate, crit_damage)
+    fufu_state = FuFuState(all_hp, e_bonus, q_bonus,
+                           common_bonus, crit_rate, crit_damage, energy_recharge)
+    fufu = FuFu(fufu_state)
+    crit_score, expect_score, full_six_zhan_bi = calc_score(fufu)
+    if not crit_score:
+        return None
 
     max_hp_per = hp_per + sum(extra_hp_bonus.values()) + ming_2_hp_bonus_max
     if has_zhuan_wu:
@@ -352,7 +590,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     max_common_bonus = common_bonus + qi_max_elem_bonus
 
     return [expect_score, crit_score, full_six_zhan_bi, int(max_hp), int(panel_hp), round(max_e_bonus, 3), round(max_common_bonus, 3),
-            round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]
+            round(crit_rate, 3), round(crit_damage - 1, 3), round(energy_recharge, 1), combine]
 
 
 result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "满命六刀伤害占比", "实战最大生命值上限",
