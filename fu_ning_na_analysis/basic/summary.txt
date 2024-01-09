@@ -1410,7 +1410,7 @@ q: 芙芙q出伤
 			
 关于生效延迟：我们收入快照snapshot，因为是fufu主动action.do()，因此fufu是知道当前正在do的action时间的
 
-				---> 如果用snapshot方式，如处理相邻极近的两个事件？
+				---> 如果用snapshot方式，如处理相邻极近的两个事件？ ---> 增加一个done字段？ 或者我们完全不考虑合并处理？
 
 for a in action_list:
 	# 根据a的timestamp，将to_be_effective_list里timestamp在此之前的使之 “真实生效”

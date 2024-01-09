@@ -7,9 +7,11 @@ Module documentation.
 import sys
 import os
 import logging
+import typing
 import copy
 import itertools
 from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_score
+from health_point import HealthPoint
 from ye_lan import YeLanQBonus
 
 
@@ -25,19 +27,18 @@ include_extra = False    # 某些配队，在芙芙大招结束后还继续输�
 
 class Teammate_HP:
     def __init__(self, base_hp, max_hp, elem_type=None):
-        self.base_hp = base_hp
-        self.max_hp = max_hp
+        self.hp = HealthPoint(base_hp, max_hp)
         self.elem_type = elem_type
 
 
-teammate_hp = {
+teammate_hp = [
     # 夜兰
     Teammate_HP(14450, 46461, elem_type=ShengYiWu.ELEM_TYPE_SHUI),
     # 钟离
     Teammate_HP(14695, 58661),
     # 万叶
     Teammate_HP(13348, 23505),  # 万叶
-}
+]
 
 # 是否有四命夜兰，仅用于最终生命值上限的展示，不影响最终伤害的计算
 has_4_ming_ye_lan = True
@@ -219,11 +220,26 @@ def find_combine_callback():
     return all_combins
 
 
+FuFu = typing.NewType("FuFu", None)
+
+
+class ActionTimestampException(Exception):
+    """ Action time already setted """
+
 class Action:
     def __init__(self):
         self.done = False
         # timestamp是动态计算出来的，这里只是放一个占位符
-        self.timestamp = 0
+        self.__timestamp = 0
+
+    def set_timestamp(self, t):
+        if self.__timestamp:
+            raise ActionTimestampException("Action timestamp already setted, can not change")
+        
+        self.__timestamp = t
+
+    def get_timestamp(self):
+        return self.__timestamp
 
     def do(self, fufu, index=-1):
         if self.done:
@@ -231,7 +247,7 @@ class Action:
 
         return self.do_impl(fufu, index)
 
-    def do_impl(self, fufu, index):
+    def do_impl(self, fufu: FuFu, index):
         """
         * fufu: 此Action所在的FuFu的实例
         * index: 在FuFu.action_list中的位置，某些action可能需要知道自已所有位置以方便”往前看“或”往后看“
@@ -239,53 +255,73 @@ class Action:
         """
         pass
 
-
 class FuFuState:
     def __init__(self, hp, e_bonus, q_bonus, common_bonus, crit_rate, crit_damage, energy_recharge):
-        self.hp = hp
-        self.e_bonus = e_bonus
-        self.q_bonus = q_bonus
-        self.common_bonus = common_bonus
-        self.qi_fen_zhi = 0
-        self.feng_tao_in_effect = False
+        self.__hp = HealthPoint(fu_ning_na_base_hp, hp)
+        self.__e_bonus = e_bonus
+        self.__q_bonus = q_bonus
+        self.__common_bonus = common_bonus
+        self.__qi_fen_zhi = 0
+        self.__feng_tao_in_effect = False
 
-        self.crit_rate = crit_rate
-        self.crit_damage = crit_damage
+        self.__crit_rate = crit_rate
+        self.__crit_damage = crit_damage
 
-        self.energy_recharge = energy_recharge
+        self.__energy_recharge = energy_recharge
 
-        self.in_foreground = True
+        self.__in_foreground = True
 
-        self.timestamp = None
+        self.__timestamp = None
 
-    def add_hp_per(self, hp_per):
-        self.hp += round(fu_ning_na_base_hp * hp_per)
+    def get_max_hp(self):
+        return self.__hp.get_max_hp()
+    
+    def get_cur_hp(self):
+        return self.__hp.get_cur_hp()
 
     def get_qi_bonus(self):
-        qi_fen_zhi = self.qi_fen_zhi
+        qi_fen_zhi = self.__qi_fen_zhi
         if qi_fen_zhi > max_qi_fen_zhi:
             qi_fen_zhi = max_qi_fen_zhi
 
         return qi_fen_zhi * qi_bonus_bei_lv
-
+    
     def get_e_bonus(self):
-        return self.e_bonus + self.get_qi_bonus() + gu_you_tian_fu_2_bonus(self.hp)
+        return self.__e_bonus + self.get_qi_bonus() + gu_you_tian_fu_2_bonus(self.get_max_hp())
 
     def get_q_bonus(self):
-        return self.q_bonus + self.get_qi_bonus()
+        return self.__q_bonus + self.get_qi_bonus()
 
     def get_common_bonus(self):
-        return self.common_bonus + self.get_qi_bonus()
+        return self.__common_bonus + self.get_qi_bonus()
+    
+    def is_feng_tao_in_effect(self):
+        return self.__feng_tao_in_effect
+    
+    def get_crit_rate(self):
+        return self.__crit_rate
+    
+    def get_crit_damage(self):
+        return self.__crit_damage
+    
+    def get_energy_recharge(self):
+        return self.__energy_recharge
+    
+    def is_in_foreground(self):
+        return self.__in_foreground
+    
+    def get_timestamp(self):
+        return self.__timestamp
 
     def add_common_bonus(self, bonus):
-        self.common_bonus += bonus
-        self.e_bonus += bonus
-        self.q_bonus += bonus
+        self.__common_bonus += bonus
+        self.__e_bonus += bonus
+        self.__q_bonus += bonus
 
     def sub_common_bonus(self, bonus):
-        self.common_bonus -= bonus
-        self.e_bonus -= bonus
-        self.q_bonus -= bonus
+        self.__common_bonus -= bonus
+        self.__e_bonus -= bonus
+        self.__q_bonus -= bonus
 
 
 class FuFu:
@@ -304,8 +340,8 @@ class FuFu:
         self.action_list: list[Action] = []
         self.callback_dict: dict[str, Action] = {}
 
-    def add_hp(self, hp):
-        self.state.hp += hp
+        self.hei_fu_cure_action: Action = None
+        self.bai_fu_cure_action: Action = None
 
     def add_hp_per(self, hp_per):
         self.state.add_hp_per(hp_per)
@@ -403,13 +439,22 @@ class FuFu:
             for action in self.callback_dict[event]:
                 action.do(self)
 
-    def do_action(self):
-        index = 0
-        for action in self.action_list:
-            self.update_effective_state(action.timestamp)
-            action.do(self, index)
-            index += 1
+    def add_action(self, action):
+        self.action_list.append(action)
 
+    def sort_action(self):
+        self.action_list.sort(key=lambda a: a.timestamp)
+
+    def do_action(self):
+        self.sort_action()
+
+        index = 0
+        while index <= len(self.action_list):
+            action = self.action_list[index]
+            self.update_effective_state(action.get_timestamp())
+            action.do(self, index)
+
+            index += 1
 
 class TeammateHpChangeAction(Action):
     """
@@ -426,7 +471,7 @@ class TeammateHpChangeAction(Action):
 
         self.cur_level = 0
 
-    def do_impl(self, fufu, index):
+    def do_impl(self, fufu: FuFu, index):
         if self.cur_level >= 2:
             return
 
@@ -440,7 +485,7 @@ class FuFuHpChangeAction(Action):
 
         self.cur_level = 0
 
-    def do_impl(self, fufu, index):
+    def do_impl(self, fufu: FuFu, index):
         if self.cur_level >= 3:
             return
 
@@ -499,11 +544,43 @@ class FengTaoInvalidAction(Action):
         fufu.take_snapshot()
 
 
-def calc_score(fixed_hp, fixed_e_bonus, fixed_q_bonus, fixed_common_bonus, crit_rate, crit_damage):
-    print("fixed_hp:", fixed_hp)
-    print("fixed_e_bonus:", fixed_e_bonus)
-    print("fixed_q_bonus: ", fixed_q_bonus)
-    print("fixed_common_bonus:", fixed_common_bonus)
+class Q_Action(Action):
+    def do_impl(self, fufu: FuFu, index):
+        hp = fufu.get_hp()
+        q_bonus = fufu.get_q_bonus()
+
+        q_damage = hp * q_bei_lv / 100 * q_bonus
+
+        fufu.total_damage += q_damage
+
+
+class E_Action(Action):
+    def do_impl(self, fufu: FuFu, index):
+        hp = fufu.get_hp()
+        e_bonus = fufu.get_e_bonus()
+
+        e_damage = hp * e_bei_lv / 100 * e_bonus
+
+        fufu.total_damage += e_damage
+
+class Hei_Fu_Cure_Action(Action):
+    def do_impl(self, fufu: FuFu, index):
+        return super().do_impl(fufu, index)
+
+class Hei_Fu_Ming_6_Damage_Action(Action):
+    def do_impl(self, fufu: FuFu, index):
+        hp = fufu.get_hp()
+        common_bonus = fufu.get_common_bonus()
+
+        damage = hp * HEI_FU_BEI_LV / 100 * common_bonus
+
+        fufu.total_damage += damage
+        
+
+
+
+def calc_score(fufu: FuFu):
+    pass
 
 
 def calculate_score_callback(combine: list[ShengYiWu]):
@@ -562,6 +639,10 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     e_bonus = common_bonus + sum(extra_e_bonus.values()) + syw_e_bonus
     q_bonus = common_bonus + sum(extra_q_bonus.values())
 
+    print("fixed_hp:", all_hp)
+    print("fixed_e_bonus:", e_bonus)
+    print("fixed_q_bonus: ", q_bonus)
+    print("fixed_common_bonus:", common_bonus)
     fufu_state = FuFuState(all_hp, e_bonus, q_bonus,
                            common_bonus, crit_rate, crit_damage, energy_recharge)
     fufu = FuFu(fufu_state)

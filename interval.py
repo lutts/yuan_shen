@@ -155,21 +155,47 @@ def test():
         elif d > valid_max:
             print(d)
 
-
-class Test:
-    def __init__(self, a, b):
-        self.a = a
-        self.b = b
-
-t = Test(1, 3)
+from health_point import HealthPoint
 import copy
-t2 = copy.deepcopy(t)
-t2.a = 2
-print(t.a)
-print(t.b)
-print(t2.a)
-print(t2.b)
+
+class Teammate_HP:
+    def __init__(self, base_hp, max_hp, elem_type=None):
+        self.hp = HealthPoint(base_hp, max_hp)
+        self.elem_type = elem_type
+
+    def __str__(self):
+        return str(self.hp)
+
+
+teammate_hp = [
+    # 夜兰
+    Teammate_HP(14450, 46461, elem_type = "test"),
+    # 钟离
+    Teammate_HP(14695, 58661),
+    # 万叶
+    Teammate_HP(13348, 23505),  # 万叶
+]
+
+class All_Hp:
+    def __init__(self, base_hp, max_hp):
+        self.hp = HealthPoint(base_hp, max_hp)
+        self.teammates = teammate_hp
+
+
+    def __str__(self):
+        hps = [self.hp] + self.teammates
+        return  ",".join([str(i) for i in hps])
+
+hp1 = All_Hp(10000, 30000)
+hp2 = copy.deepcopy(hp1)
+
+hp2.hp.decrease_hp(1000)
+hp2.teammates[0].hp.decrease_hp(2000)
+hp2.teammates[1].hp.decrease_hp(3000)
+hp2.teammates[2].hp.decrease_hp(4000)
+print("hp1: ", str(hp1))
+print("hp2: ", str(hp2))
 
 # Main body
-if __name__ == '__main__':
-    avg_min_max()
+#if __name__ == '__main__':
+#    avg_min_max()
