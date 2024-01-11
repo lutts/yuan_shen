@@ -89,7 +89,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     
     energy_recharge *= 100
     energy_recharge = round(energy_recharge, 1)
-    if energy_recharge < 220:
+    if energy_recharge < 230:
         return None
     
     elem_bonus += min(energy_recharge / 4 / 100, 0.75)

@@ -167,32 +167,36 @@ class Teammate_HP:
         return str(self.hp)
 
 
-teammate_hp = [
+teammates = {
     # 夜兰
-    Teammate_HP(14450, 46461, elem_type = "test"),
+    "tp1": Teammate_HP(14450, 46461, elem_type = "test"),
     # 钟离
-    Teammate_HP(14695, 58661),
+    "tp2": Teammate_HP(14695, 58661),
     # 万叶
-    Teammate_HP(13348, 23505),  # 万叶
-]
+    "tp3": Teammate_HP(13348, 23505),
+}
 
 class All_Hp:
     def __init__(self, base_hp, max_hp):
         self.hp = HealthPoint(base_hp, max_hp)
-        self.teammates = teammate_hp
-
+        self.teammate_hps = {}
+        for k, v in teammates.items():
+            print(k)
+            self.teammate_hps[k] = v.hp
 
     def __str__(self):
-        hps = [self.hp] + self.teammates
+        hps = [self.hp]
+        for hp in self.teammate_hps.values():
+            hps.append(hp)
         return  ",".join([str(i) for i in hps])
 
 hp1 = All_Hp(10000, 30000)
 hp2 = copy.deepcopy(hp1)
 
 hp2.hp.decrease_hp(1000)
-hp2.teammates[0].hp.decrease_hp(2000)
-hp2.teammates[1].hp.decrease_hp(3000)
-hp2.teammates[2].hp.decrease_hp(4000)
+hp2.teammate_hps["tp1"].decrease_hp(2000)
+hp2.teammate_hps["tp2"].decrease_hp(3000)
+hp2.teammate_hps["tp3"].decrease_hp(4000)
 print("hp1: ", str(hp1))
 print("hp2: ", str(hp2))
 
