@@ -49,42 +49,50 @@ class Character:
     def get_base_atk(self):
         return self.__base_atk
 
-    def get_all_atk(self):
+    def get_atk(self):
         return round(self.__all_atk)
+    
+    def modify_atk(self, atk):
+        self.__all_atk += atk
+
+    def modify_atk_per(self, atk_per):
+        self.modify_atk(self.__base_atk * atk_per)
 
     def add_atk(self, atk):
-        self.__all_atk += atk
-        return self.get_all_atk()
+        self.modify_atk(atk)
 
     def sub_atk(self, atk):
-        self.__all_atk -= atk
-        return self.get_all_atk()
+        self.modify_atk(0 - atk)
 
     def add_atk_per(self, atk_per):
-        return self.add_atk(self.__base_atk * atk_per)
+        self.modify_atk_per(atk_per)
 
     def sub_atk_per(self, atk_per):
-        return self.sub_atk(self.__base_atk * atk_per)
+        self.modify_atk_per(0 - atk_per)
 
     def get_base_defence(self):
         return self.__base_defence
 
-    def get_all_defence(self):
+    def get_defence(self):
         return round(self.__all_defence)
+    
+    def modify_defence(self, defence):
+        self.__all_defence += defence
+
+    def modify_defence_per(self, def_per):
+        self.modify_defence(self.__base_defence * def_per)
 
     def add_defence(self, defence):
-        self.__all_defence += defence
-        return self.get_all_defence()
+        self.modify_defence(defence)
 
     def sub_defence(self, defence):
-        self.__all_defence -= defence
-        return self.get_all_defence()
+        self.modify_defence(0 - defence)
 
     def add_defence_per(self, def_per):
-        return self.add_defence(self.__base_defence * def_per)
+        self.modify_defence_per(def_per)
 
     def sub_defence_per(self, def_per):
-        return self.sub_defence(self.__base_defence * def_per)
+        self.modify_defence_per(0 - def_per)
 
     def get_elem_mastery(self):
         return self.__elem_mastery
@@ -92,13 +100,14 @@ class Character:
     def set_elem_mastery(self, em):
         self.__elem_mastery = em
 
-    def add_elem_mastery(self, em):
+    def modify_elem_mastery(self, em):
         self.__elem_mastery += em
-        return self.__elem_mastery
+
+    def add_elem_mastery(self, em):
+        self.modify_elem_mastery(em)
 
     def sub_elem_mastery(self, em):
-        self.__elem_mastery -= em
-        return self.__elem_mastery
+        self.modify_elem_mastery(0 - em)
 
     def get_crit_rate(self):
         return self.__crit_rate
@@ -106,13 +115,14 @@ class Character:
     def set_crit_rate(self, crit_rate):
         self.__crit_rate = crit_rate
 
+    def modify_crit_rate(self, cr):
+        self.__crit_rate += cr
+
     def add_crit_rate(self, crit_rate):
-        self.__crit_rate += crit_rate
-        return self.__crit_rate
+        self.modify_crit_rate(crit_rate)
 
     def sub_crit_rate(self, crit_rate):
-        self.__crit_rate -= crit_rate
-        return self.__crit_rate
+        self.modify_crit_rate(0 - crit_rate)
 
     def get_crit_damage(self):
         return self.__crit_damage
@@ -120,13 +130,14 @@ class Character:
     def set_crit_damage(self, crit_damage):
         self.__crit_damage = crit_damage
 
-    def add_crit_damage(self, cd):
+    def modify_crit_damage(self, cd):
         self.__crit_damage += cd
-        return self.__crit_damage
+
+    def add_crit_damage(self, cd):
+        self.modify_crit_damage(cd)
 
     def sub_crit_damage(self, cd):
-        self.__crit_damage -= cd
-        return self.__crit_damage
+        self.modify_crit_damage(0 - cd)
 
     def get_healing_bonus(self):
         return self.__healing_bonus
@@ -134,13 +145,14 @@ class Character:
     def set_healing_bonus(self, bonus):
         self.__healing_bonus = bonus
 
-    def add_healing_bonus(self, bonus):
+    def modify_healing_bonus(self, bonus):
         self.__healing_bonus += bonus
-        return self.__healing_bonus
+
+    def add_healing_bonus(self, bonus):
+        self.modify_healing_bonus(bonus)
 
     def sub_healing_bonus(self, bonus):
-        self.__healing_bonus -= bonus
-        return self.__healing_bonus
+        self.modify_healing_bonus(0 - bonus)
 
     def get_incoming_healing_bonus(self):
         return self.__incomming_healing_bonus
@@ -148,66 +160,35 @@ class Character:
     def set_incoming_headling_bonus(self, bonus):
         self.__incomming_healing_bonus = bonus
 
-    def add_incoming_healing_bonus(self, bonus):
+    def modify_incoming_healing_bonus(self, bonus):
         self.__incomming_healing_bonus += bonus
-        return self.__incomming_healing_bonus
+
+    def add_incoming_healing_bonus(self, bonus):
+        self.modify_incoming_healing_bonus(bonus)
 
     def sub_incoming_healing_bonus(self, bonus):
-        self.__incomming_healing_bonus -= bonus
-        return self.__incomming_healing_bonus
+        self.modify_incoming_healing_bonus(0 - bonus)
 
     def get_energy_recharge(self):
-        return self.__energy_recharge
+        return round(self.__energy_recharge, 1)
 
     def set_energy_recharge(self, er):
         self.__energy_recharge = er * 100
 
-    def add_energy_recharge(self, er):
+    def modify_energy_recharge(self, er):
         self.__energy_recharge += er * 100
-        return self.__energy_recharge
+
+    def add_energy_recharge(self, er):
+        self.modify_energy_recharge(er)
 
     def sub_energy_recharge(self, er):
-        self.__energy_recharge -= er * 100
-        return self.__energy_recharge
+        self.modify_energy_recharge(0 - er)
     
-    def set_hp(self, hp):
+    def set_hp(self, hp: HealthPoint):
         self.__hp = hp
 
-    def get_max_hp(self):
-        return self.__hp.get_max_hp()
-
-    def set_max_hp(self, max_hp):
-        self.__hp.set_max_hp(max_hp)
-
-    def add_max_hp_per(self, hp_per):
-        self.__hp.add_max_hp_per(hp_per)
-
-    def sub_max_hp_per(self, hp_per):
-        self.__hp.sub_max_hp_per(hp_per)
-
-    def add_max_hp(self, hp):
-        self.__hp.add_max_hp(hp)
-
-    def sub_max_hp(self, hp):
-        self.__hp.sub_max_hp(hp)
-
-    def set_in_q_animation(self, in_anim):
-        self.__hp.set_in_q_animation(in_anim)
-
-    def get_cur_hp(self, hp):
-        self.__hp.get_cur_hp()
-
-    def regenerate_hp(self, hp):
-        return self.__hp.regenerate_hp(hp)
-
-    def decrease_hp(self, hp):
-        return self.__hp.decrease_hp(hp)
-
-    def regenerate_hp_per(self, hp_per):
-        return self.__hp.regenerate_hp_per(hp_per)
-
-    def decrease_hp_per(self, hp_per):
-        return self.__hp.decrease_hp_per(hp_per)
+    def get_hp(self) -> HealthPoint:
+        return self.__hp
 
     def get_normal_a_bonus(self):
         return self.__normal_a_bonus
@@ -215,17 +196,23 @@ class Character:
     def set_normal_a_bonus(self, bonus):
         self.__normal_a_bonus = bonus
 
-    def add_normal_a_bonus(self, bonus):
+    def modify_normal_a_bonus(self, bonus):
         self.__normal_a_bonus += bonus
 
+    def add_normal_a_bonus(self, bonus):
+        self.modify_normal_a_bonus(bonus)
+
     def sub_normal_a_bonus(self, bonus):
-        self.__normal_a_bonus -= bonus
+        self.modify_normal_a_bonus(0 - bonus)
 
     def get_charged_a_bonus(self):
         return self.__charged_a_bonus
 
     def set_charged_a_bonus(self, bonus):
         self.__charged_a_bonus = bonus
+
+    def modify_charged_a_bonus(self, bonus):
+        self.__charged_a_bonus += bonus
 
     def add_charged_a_bonus(self, bonus):
         self.__charged_a_bonus += bonus
@@ -239,32 +226,46 @@ class Character:
     def set_plunging_bonus(self, bonus):
         self.__plunging_bonus = bonus
 
+    def modify_plunging_bonus(self, bonus):
+        self.__plunging_bonus += bonus
+
     def add_plunging_bonus(self, bonus):
         self.__plunging_bonus += bonus
 
     def sub_plunging_bonus(self, bonus):
         self.__plunging_bonus -= bonus
 
+    def get_a_bonus(self):
+        return self.__normal_a_bonus
+
     def set_a_bonus(self, bonus):
-        self.__normal_a_bonus = bonus
-        self.__charged_a_bonus = bonus
-        self.__plunging_bonus = bonus
+        self.set_normal_a_bonus(bonus)
+        self.set_charged_a_bonus(bonus)
+        self.set_plunging_bonus(bonus)
+
+    def modify_a_bonus(self, bonus):
+        self.modify_normal_a_bonus(bonus)
+        self.modify_charged_a_bonus(bonus)
+        self.modify_plunging_bonus(bonus)
 
     def add_a_bonus(self, bonus):
-        self.__normal_a_bonus += bonus
-        self.__charged_a_bonus += bonus
-        self.__plunging_bonus += bonus
+        self.add_normal_a_bonus(bonus)
+        self.add_charged_a_bonus(bonus)
+        self.add_plunging_bonus(bonus)
 
     def sub_a_bonus(self, bonus):
-        self.__normal_a_bonus -= bonus
-        self.__charged_a_bonus -= bonus
-        self.__plunging_bonus -= bonus
+        self.sub_normal_a_bonus(bonus)
+        self.sub_charged_a_bonus(bonus)
+        self.sub_plunging_bonus(bonus)
 
     def get_e_bonus(self):
         return self.__e_bonus
 
     def set_e_bonus(self, bonus):
         self.__e_bonus = bonus
+
+    def modify_e_bonus(self, bonus):
+        self.__e_bonus += bonus
 
     def add_e_bonus(self, bonus):
         self.__e_bonus += bonus
@@ -278,11 +279,19 @@ class Character:
     def set_q_bonus(self, bonus):
         self.__q_bonus = bonus
 
+    def modify_q_bonus(self, bonus):
+        self.__q_bonus += bonus
+
     def add_q_bonus(self, bonus):
         self.__q_bonus += bonus
 
     def sub_q_bonus(self, bonus):
         self.__q_bonus -= bonus
+
+    def modify_all_elem_bonus(self, bonus):
+        self.modify_a_bonus(bonus)
+        self.modify_e_bonus(bonus)
+        self.modify_q_bonus(bonus)
 
     def add_all_bonus(self, bonus):
         self.add_a_bonus(bonus)

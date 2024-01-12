@@ -33,3 +33,6 @@ class Monster:
             return 1 - cur_kang_xin
         else:
             return 1 - cur_kang_xin / 2
+        
+    def attacked(self, damage_before_jian_kang):
+        return damage_before_jian_kang * self.get_jian_kang_bonus()
