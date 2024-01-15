@@ -4,10 +4,12 @@
 Module documentation.
 """
 
+import logging
 from health_point import HealthPoint
 
 class Character:
-    def __init__(self, base_atk=0, base_hp=0, base_defence=0):
+    def __init__(self, name, base_atk=0, base_hp=0, base_defence=0):
+        self.name = name
         # 基础攻击力：角色基础攻击力 + 武器基础攻击力
         self.__base_atk = base_atk
         # 总攻击力
@@ -189,6 +191,13 @@ class Character:
 
     def get_hp(self) -> HealthPoint:
         return self.__hp
+    
+    def regenerate_hp(self, cure_hp):
+        actual_cure_hp = round(cure_hp * (1 + self.get_incoming_healing_bonus()))
+        return self.__hp.modify_cur_hp(actual_cure_hp)
+    
+    def regenerate_hp_per(self, hp_per):
+        return self.regenerate_hp(self.__hp.get_max_hp() * hp_per)
 
     def get_normal_a_bonus(self):
         return self.__normal_a_bonus
@@ -280,25 +289,31 @@ class Character:
         self.__q_bonus = bonus
 
     def modify_q_bonus(self, bonus):
+        logging.debug("modify q bonus: %s", round(bonus, 3))
         self.__q_bonus += bonus
 
     def add_q_bonus(self, bonus):
+        logging.debug("add q bonus, %s", round(bonus, 3))
         self.__q_bonus += bonus
 
     def sub_q_bonus(self, bonus):
+        logging.debug("sub q bonus, %s", round(bonus, 3))
         self.__q_bonus -= bonus
 
     def modify_all_elem_bonus(self, bonus):
+        logging.debug("modify all elem bonus: %s", round(bonus, 3))
         self.modify_a_bonus(bonus)
         self.modify_e_bonus(bonus)
         self.modify_q_bonus(bonus)
 
     def add_all_bonus(self, bonus):
+        logging.debug("add all elem bonus: %s", round(bonus, 3))
         self.add_a_bonus(bonus)
         self.add_e_bonus(bonus)
         self.add_q_bonus(bonus)
 
     def sub_all_bonus(self, bonus):
+        logging.debug("sub all elem bonus: %s", round(bonus, 3))
         self.sub_a_bonus(bonus)
         self.sub_e_bonus(bonus)
         self.sub_q_bonus(bonus)
@@ -306,7 +321,7 @@ class Character:
     def is_in_foreground(self):
         return self.__in_foreground
 
-    def bring_to_foreground(self):
+    def switch_to_foreground(self):
         self.__in_foreground = True
 
     def switch_to_background(self):
