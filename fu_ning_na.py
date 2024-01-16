@@ -40,11 +40,11 @@ TP1_NAME = "ye lan"
 TP2_NAME = "zhong li"
 TP3_NAME = "wan ye"
 
-teammates = {
+g_teammates = {
     # 夜兰
     TP1_NAME: Teammate(14450, 46461, elem_type=ShengYiWu.ELEM_TYPE_SHUI),
     # 钟离
-    TP2_NAME: Teammate(14695, 58661),
+    TP2_NAME: Teammate(14695, 50567),
     # 万叶
     TP3_NAME: Teammate(13348, 23505),
 }
@@ -53,7 +53,7 @@ teammates = {
 has_4_ming_ye_lan = True
 
 has_shuang_shui = False
-for t in teammates.values():
+for t in g_teammates.values():
     if t.elem_type == ShengYiWu.ELEM_TYPE_SHUI:
         has_shuang_shui = True
         break
@@ -269,8 +269,9 @@ class Action:
         return self.__timestamp
     
     def debug(self, fmt_str, *args, **kwargs):
-        fmt_str = str(round(self.__timestamp, 3)) + ": " + fmt_str
-        logging.debug(fmt_str, *args, **kwargs)
+        pass
+        #fmt_str = str(round(self.__timestamp, 3)) + ": " + fmt_str
+        #logging.debug(fmt_str, *args, **kwargs)
 
     def do(self, plan: ActionPlan, data=None, index=-1):
         if self.done:
@@ -293,12 +294,12 @@ class ActionPlan:
     ZHONG_LI_NAME = TP2_NAME
     WAN_YE_NAME = TP3_NAME
 
-    def __init__(self, fufu: Character):
-        self.__fufu: Character = fufu
+    def __init__(self, fufu_initial_state: Character):
+        self.__fufu: Character = copy.deepcopy(fufu_initial_state)
         self.__teammates: list[Character] = []
-        for name, t in teammates.items():
+        for name, t in g_teammates.items():
             c = Character(name)
-            c.set_hp(t.hp)
+            c.set_hp(copy.deepcopy(t.hp))
             self.__teammates.append(c)
 
         self.__forground_character: Character = None
@@ -376,8 +377,9 @@ class ActionPlan:
     ##################################################
 
     def debug(self, fmt_str, *args, **kwargs):
-        fmt_str = str(round(self.get_current_action_time(), 3)) + ": " + fmt_str
-        logging.debug(fmt_str, *args, **kwargs)
+        pass
+        #fmt_str = str(round(self.get_current_action_time(), 3)) + ": " + fmt_str
+        #logging.debug(fmt_str, *args, **kwargs)
 
     def switch_to_forground(self, character_name):
         if self.__forground_character:
@@ -433,7 +435,7 @@ class ActionPlan:
             return
 
         self.__qi_fen_zhi = qi
-        logging.debug("气氛值直接设置为%s", qi)
+        self.debug("气氛值直接设置为%s", qi)
         self.apply_qi_fen_zhi()
 
     def apply_qi_fen_zhi(self):
@@ -658,8 +660,8 @@ class WanYe:
             bei_lv = (0.036 + 0.09 * (xi_fu_si_jing_lian_num - 1)) / 100
             self.energy_recharge = elem_mastery * bei_lv * 0.3
 
-        logging.debug("wan ye: elem_bonus: %s, 2 ming bonus: %s, energy_recharge: %s", 
-                      round(self.elem_bonus, 3), round(self.ming_2_bonus, 3), round(self.energy_recharge, 1))
+        #logging.debug("wan ye: elem_bonus: %s, 2 ming bonus: %s, energy_recharge: %s", 
+        #              round(self.elem_bonus, 3), round(self.ming_2_bonus, 3), round(self.energy_recharge, 1))
 
 
 class WanYeQAction(Action):
@@ -966,6 +968,13 @@ class Ye_Lan_4_Ming_Action(Action):
     def do_impl(self, plan: ActionPlan, data, index):
         self.debug("夜兰四命生效一层")
         plan.get_fufu().get_hp().modify_max_hp_per(0.1)
+        for t in plan.get_teammates():
+            t.get_hp().modify_max_hp_per(0.1)
+
+        # hps_str = "fufu:" + str(plan.get_fufu().get_hp().get_max_hp()) + ", "
+        # for t in plan.get_teammates():
+        #     hps_str += t.name + ":" + str(t.get_hp().get_max_hp()) + ", "
+        # self.debug("夜兰e后各角色生命值上限: %s", hps_str)
 
 
 class Ye_Lan_Q_Animation_Start(Action):
@@ -1076,9 +1085,7 @@ def schedule_little_three(plan: ActionPlan, start_time, end_time,
         kou_xue_time += kou_xue_interval_func()
 
 def calc_score_worker(fufu_initial_state: Character):
-    fufu = copy.deepcopy(fufu_initial_state)
-
-    plan = ActionPlan(fufu)
+    plan = ActionPlan(fufu_initial_state)
 
     wan_ye = WanYe(elem_mastery=994, xi_fu_si_jing_lian_num=2)
 
@@ -1098,11 +1105,12 @@ def calc_score_worker(fufu_initial_state: Character):
 
     plan.add_action("切夜兰出来", Switch_To_Ye_Lan_Action,
                     0.333, 0.549, base_action="第二刀")
-    plan.add_action("夜兰第一个e引爆", Action, 0.667, 0.7, base_action="切夜兰出来")
+    ye_lan_first_e = "夜兰第一个e引爆"
+    plan.add_action(ye_lan_first_e, Action, 0.667, 0.7, base_action="切夜兰出来")
     plan.add_action("夜兰四命生效1", Ye_Lan_4_Ming_Action,
-                    0.016, 0.083, base_action="夜兰第一个e引爆")
+                    0.016, 0.083, base_action=ye_lan_first_e)
     plan.add_action("夜兰q动画开始", Ye_Lan_Q_Animation_Start,
-                    0.133, 0.333, base_action="夜兰第一个e引爆")
+                    0.133, 0.333, base_action=ye_lan_first_e)
     plan.add_action("夜兰q增伤开始", Ye_Lan_Q_Bonus_Start,
                     1.3, 1.352, base_action="夜兰q动画开始")
     plan.add_action("夜兰四命生效2", Ye_Lan_4_Ming_Action,
@@ -1134,6 +1142,8 @@ def calc_score_worker(fufu_initial_state: Character):
     three_little_2nd_action = "三小只再次切出来后第一次扣血"
     plan.add_action(three_little_2nd_action, Action,
                     0.916, 1.067, base_action="第六刀重击")
+    
+    plan.add_action("夜兰第三个e", Ye_Lan_4_Ming_Action, 10.5, 11, base_action=ye_lan_first_e)
 
     plan.add_action("芙芙大招效果消失", Fu_Fu_Q_Bonus_Stop_Action,
                     18.253, 18.737, "芙芙q出伤")
@@ -1231,45 +1241,13 @@ def calc_score_worker(fufu_initial_state: Character):
     return plan.get_score()
 
 
-executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
-
-def calc_score_multi_thread(fufu_initial_state: Character):
+def calc_score(fufu_initial_state: Character):
     expect_score = 0
     crit_score = 0
     full_six_zhan_bi = 0
     completed_num = 0
 
-    try:
-        futures = [executor.submit(calc_score_worker, fufu_initial_state) for i in range(0, 10)]
-        for future in concurrent.futures.as_completed(futures):
-            try:
-                r = future.result()
-                # print(r)
-                expect_score += r[0]
-                crit_score += r[1]
-                full_six_zhan_bi += r[2]
-                completed_num += 1
-            except:
-                print("failed got a result")
-    except:
-        print("failed using executor")
-
-    if completed_num:
-        expect_score /= completed_num
-        crit_score /= completed_num
-        full_six_zhan_bi /= completed_num
-
-        # print("avg:", (expect_score, crit_score, full_six_zhan_bi))
-
-    return (round(expect_score), round(crit_score), round(full_six_zhan_bi, 3))
-
-def calc_score_serial(fufu_initial_state: Character):
-    expect_score = 0
-    crit_score = 0
-    full_six_zhan_bi = 0
-    completed_num = 0
-
-    for _ in range(0, 10):
+    for _ in range(0, 3):
         r = calc_score_worker(fufu_initial_state)
         expect_score += r[0]
         crit_score += r[1]
@@ -1281,11 +1259,6 @@ def calc_score_serial(fufu_initial_state: Character):
     full_six_zhan_bi /= completed_num
 
     return (round(expect_score), round(crit_score), round(full_six_zhan_bi, 3))
-
-
-def calc_score(fufu_initial_state: Character):
-    return calc_score_serial(fufu_initial_state)
-    # return calc_score_multi_thread(fufu_initial_state)
 
 
 def calculate_score_callback(combine: list[ShengYiWu]):
@@ -1337,7 +1310,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
                 # FIXME: 暂时不考虑芙芙在前台会吃不到 0.25 增伤的问题，后续需要补充
                 fufu.add_e_bonus(0.25 + 0.25)
 
-    logging.debug(str(fufu))
+    #logging.debug(str(fufu))
     expect_score, crit_score, full_six_zhan_bi = calc_score(fufu)
     if not crit_score:
         return None
@@ -1384,10 +1357,5 @@ def find_syw_for_fu_ning_na():
 if __name__ == '__main__':
     #logging.basicConfig(filename='D:\\logs\\fufu.log', encoding='utf-8', filemode='w', level=logging.DEBUG)
     #logging.basicConfig(level=logging.DEBUG)
-
+    print("默认算法复杂，圣遗物多的话需要执行几个小时")
     find_syw_for_fu_ning_na()
-
-    try:
-        executor.shutdown()
-    except:
-        pass

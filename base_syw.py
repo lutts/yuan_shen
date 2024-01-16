@@ -12,6 +12,7 @@ import uuid
 import concurrent.futures
 from math import ceil
 
+
 def chunk_into_n(lst, n):
     size = ceil(len(lst) / n)
     return list(
@@ -147,7 +148,7 @@ all_syw = {
         ShengYiWu(ShengYiWu.LIE_REN, ShengYiWu.PART_HUA, def_per=0.066,
                   crit_damage=0.148, crit_rate=0.105, energe_recharge=0.104),
 
-        ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_HUA, 
+        ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_HUA,
                   energe_recharge=0.045, hp_percent=0.053, crit_damage=0.326, atk_per=0.099),
         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_HUA,
                   crit_damage=0.218, crit_rate=0.035, hp_percent=0.157, atk=31),
@@ -168,9 +169,9 @@ all_syw = {
                   atk=35, def_v=42, crit_rate=0.039, crit_damage=0.303),
         ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_HUA,
                   elem_mastery=42, crit_rate=0.105, atk=14, hp_percent=0.134),
-        ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_HUA, 
-                   def_per=0.073, hp_percent=0.152, crit_rate=0.027, crit_damage=0.202),
-        ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_HUA, 
+        ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_HUA,
+                  def_per=0.073, hp_percent=0.152, crit_rate=0.027, crit_damage=0.202),
+        ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_HUA,
                   def_per=0.139, crit_rate=0.101, energe_recharge=0.058, crit_damage=0.124),
         ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_HUA,
                   energe_recharge=0.123, atk=37, crit_rate=0.039, crit_damage=0.233),
@@ -263,7 +264,7 @@ all_syw = {
                   elem_mastery=19, crit_rate=0.132, energe_recharge=0.11),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_HUA, crit_rate=0.086,
                   crit_damage=0.202, elem_mastery=40, energe_recharge=0.052),
-        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_HUA, 
+        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_HUA,
                   atk_per=0.099, atk=14, crit_damage=0.187, energe_recharge=0.11),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_HUA, elem_mastery=16,
                   atk_per=0.134, crit_damage=0.132, crit_rate=0.089),
@@ -618,7 +619,7 @@ all_syw = {
                   crit_rate=0.062, atk=14, energe_recharge=0.162, def_v=37),
 
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, hp_percent=ShengYiWu.BONUS_MAX,
-                   atk=27, crit_damage=0.225, crit_rate=0.058, def_v=46),
+                  atk=27, crit_damage=0.225, crit_rate=0.058, def_v=46),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, elem_bonus=ShengYiWu.BONUS_MAX, elem_type=ShengYiWu.ELEM_TYPE_BING,
                   crit_damage=0.21, hp_percent=0.058, energe_recharge=0.155, atk_per=0.047),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_BEI, elem_bonus=ShengYiWu.BONUS_MAX, elem_type=ShengYiWu.ELEM_TYPE_SHUI,
@@ -744,19 +745,22 @@ def find_syw(match_syw_callback):
 
 score_threshold = 1.8
 
+
 def set_score_threshold(new_threashold):
     global score_threshold
     score_threshold = new_threashold
+
 
 def calc_expect_score(non_crit_score, crit_rate, crit_damage):
     c = min(crit_rate, 1)
     return non_crit_score * (1 + c * (crit_damage - 1))
 
+
 def calc_score_1st_phrase(swy_combines, calculate_score_callbak):
     score_data_list = []
     max_expect_score = 0
     max_crit_score = 0
-    
+
     for c in swy_combines:
         score_data = calculate_score_callbak(c)
         if not score_data:
@@ -774,6 +778,7 @@ def calc_score_1st_phrase(swy_combines, calculate_score_callbak):
 
     return (max_expect_score, max_crit_score, score_data_list)
 
+
 def calc_score_2nd_phrase(score_data_list, max_expect_score, max_crit_score):
     above_threshold_num = 0
     for score_data in score_data_list:
@@ -790,6 +795,55 @@ def calc_score_2nd_phrase(score_data_list, max_expect_score, max_crit_score):
             above_threshold_num += 1
 
     return (above_threshold_num, score_data_list)
+
+
+def calc_score_multi_proc(all_combines_5_list, calculate_score_callbak):
+    all_combines_chunks = chunk_into_n(all_combines_5_list, 5)
+
+    all_score_data = []
+    above_threshold_num = 0
+    max_expect_score = 0
+    max_crit_score = 0
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        futures = [executor.submit(
+            calc_score_1st_phrase, lst, calculate_score_callbak) for lst in all_combines_chunks]
+
+        chunks_with_score = []
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                max_expect, max_crit, lst = future.result()
+                if max_expect > max_expect_score:
+                    max_expect_score = max_expect
+
+                if max_crit > max_crit_score:
+                    max_crit_score = max_crit
+
+                chunks_with_score.append(lst)
+            except Exception as exc:
+                print('1st generated an exception: %s' % (exc))
+
+        futures = [executor.submit(
+            calc_score_2nd_phrase, lst, max_expect_score, max_crit_score) for lst in chunks_with_score]
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                above_num, lst = future.result()
+                above_threshold_num += above_num
+                all_score_data.extend(lst)
+            except Exception as exc:
+                print('1st generated an exception: %s' % (exc))
+
+    return (all_score_data, above_threshold_num, max_expect_score, max_crit_score)
+
+
+def calc_score_inline(all_combines_5_list, calculate_score_callbak):
+    max_expect_score, max_crit_score, lst = calc_score_1st_phrase(
+        all_combines_5_list, calculate_score_callbak)
+    above_threshold_num, all_score_data = calc_score_2nd_phrase(
+        lst, max_expect_score, max_crit_score)
+
+    return (all_score_data, above_threshold_num, max_expect_score, max_crit_score)
+
 
 def calculate_score(find_combine_callback, match_sha_callback, match_bei_callback, calculate_score_callbak, result_txt_file, result_description):
     # all_syw = {}
@@ -838,45 +892,20 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
             if scid not in all_combins_5:
                 all_combins_5[scid] = sorted_combine
 
-    print(len(all_combins_5))
     all_combines_5_list = list(all_combins_5.values())
-    all_combines_chunks = chunk_into_n(all_combines_5_list, 5)
-
-    all_score_data = []
-    above_threshold_num = 0
-
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        futures = [executor.submit(calc_score_1st_phrase, lst, calculate_score_callbak) for lst in all_combines_chunks]
-        max_expect_score = 0
-        max_crit_score = 0
-        
-        chunks_with_score = []
-        for future in concurrent.futures.as_completed(futures):
-            try:
-                max_expect, max_crit, lst = future.result()
-                if max_expect > max_expect_score:
-                    max_expect_score = max_expect
-
-                if max_crit > max_crit_score:
-                    max_crit_score = max_crit
-
-                chunks_with_score.append(lst)
-            except Exception as exc:
-                print('1st generated an exception: %s' % (exc))
-
-        futures = [executor.submit(calc_score_2nd_phrase, lst, max_expect_score, max_crit_score) for lst in chunks_with_score]
-        for future in concurrent.futures.as_completed(futures):
-            try:
-                above_num, lst = future.result()
-                above_threshold_num += above_num
-                all_score_data.extend(lst)
-            except Exception as exc:
-                print('1st generated an exception: %s' % (exc))
+    lst_len = len(all_combines_5_list)
+    print(lst_len)
+    if lst_len > 10000:
+        all_score_data, above_threshold_num, max_expect_score, max_crit_score = calc_score_multi_proc(
+            all_combines_5_list, calculate_score_callbak)
+    else:
+        all_score_data, above_threshold_num, max_expect_score, max_crit_score = calc_score_inline(
+            all_combines_5_list, calculate_score_callbak)
 
     if all_score_data:
         print(len(all_score_data))
-        #print("above_threshold_num: ", above_threshold_num)
-        all_score_data.sort(key=lambda x:x[0])
+        # print("above_threshold_num: ", above_threshold_num)
+        all_score_data.sort(key=lambda x: x[0])
 
         min_write_num = max(30, above_threshold_num)
         print("min_write_num:" + str(min_write_num))
@@ -885,7 +914,7 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
         with open(result_txt_file, 'w', encoding='utf-8') as f:
             for c in all_score_data:
                 # print((i, c))
-                #f.write(str((round(score, 4), c, )))
+                # f.write(str((round(score, 4), c, )))
                 f.write(str(c))
                 f.write('\n\n')
 

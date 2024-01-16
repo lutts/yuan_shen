@@ -289,31 +289,31 @@ class Character:
         self.__q_bonus = bonus
 
     def modify_q_bonus(self, bonus):
-        logging.debug("modify q bonus: %s", round(bonus, 3))
+        #logging.debug("modify q bonus: %s", round(bonus, 3))
         self.__q_bonus += bonus
 
     def add_q_bonus(self, bonus):
-        logging.debug("add q bonus, %s", round(bonus, 3))
+        #logging.debug("add q bonus, %s", round(bonus, 3))
         self.__q_bonus += bonus
 
     def sub_q_bonus(self, bonus):
-        logging.debug("sub q bonus, %s", round(bonus, 3))
+        #logging.debug("sub q bonus, %s", round(bonus, 3))
         self.__q_bonus -= bonus
 
     def modify_all_elem_bonus(self, bonus):
-        logging.debug("modify all elem bonus: %s", round(bonus, 3))
+        #logging.debug("modify all elem bonus: %s", round(bonus, 3))
         self.modify_a_bonus(bonus)
         self.modify_e_bonus(bonus)
         self.modify_q_bonus(bonus)
 
     def add_all_bonus(self, bonus):
-        logging.debug("add all elem bonus: %s", round(bonus, 3))
+        #logging.debug("add all elem bonus: %s", round(bonus, 3))
         self.add_a_bonus(bonus)
         self.add_e_bonus(bonus)
         self.add_q_bonus(bonus)
 
     def sub_all_bonus(self, bonus):
-        logging.debug("sub all elem bonus: %s", round(bonus, 3))
+        #logging.debug("sub all elem bonus: %s", round(bonus, 3))
         self.sub_a_bonus(bonus)
         self.sub_e_bonus(bonus)
         self.sub_q_bonus(bonus)
