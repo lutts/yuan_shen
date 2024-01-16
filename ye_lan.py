@@ -102,6 +102,7 @@ class YeLanQBonus:
     def __init__(self):
         self.__invalid = False
         self.__stopped = True
+        self.__start_time = 0
 
     def invalidate(self):
         self.__invalid = True
@@ -111,6 +112,8 @@ class YeLanQBonus:
         self.__start_time = start_time
 
     def bonus(self, checkpoint_time):
+        #logging.debug("YeLanQBonus.bonus, checkpoint_time: %s, stopped:%s, invalid:%s, start_time:%s",
+        #              round(checkpoint_time, 3), self.__stopped, self.__invalid, round(self.__start_time, 3))
         if self.__stopped or self.__invalid:
             return 0
 

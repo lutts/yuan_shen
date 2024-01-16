@@ -68,7 +68,8 @@ def kou_xue_chu_shang():
 
 def avg_min_max():
     l2 = [
-0.104, 0.269, 0.272, 0.135, 0.219, 0.152
+0.217, 0.2, 0.2, 0.184, 0.216, 0.167, 0.2
+
 ]
     l2.sort()
 
@@ -185,6 +186,9 @@ class All_Hp:
             print(k)
             self.teammate_hps[k] = v.hp
 
+    def is_self(self, object):
+        return object is self
+
     def __str__(self):
         hps = [self.hp]
         for hp in self.teammate_hps.values():
@@ -194,10 +198,10 @@ class All_Hp:
 hp1 = All_Hp(10000, 30000)
 hp2 = copy.deepcopy(hp1)
 
-hp2.hp.decrease_hp(1000)
-hp2.teammate_hps["tp1"].decrease_hp(2000)
-hp2.teammate_hps["tp2"].decrease_hp(3000)
-hp2.teammate_hps["tp3"].decrease_hp(4000)
+hp2.hp.modify_cur_hp(-1000)
+hp2.teammate_hps["tp1"].modify_cur_hp(-2000)
+hp2.teammate_hps["tp2"].modify_cur_hp(-3000)
+hp2.teammate_hps["tp3"].modify_cur_hp(-4000)
 print("hp1: ", str(hp1))
 print("hp2: ", str(hp2))
 
@@ -209,6 +213,38 @@ all_hps.remove(hp2.hp)
 print('-----')
 for hp in all_hps:
     print(hp)
+
+hp3 = hp1
+
+def f():
+    return All_Hp(10000, 30000)
+
+print(hp1.is_self(hp3))
+hp3 = f()
+print(hp1.is_self(hp3))
+print(hp1.is_self(hp2))
+
+tl = [hp1, hp2]
+
+print([str(t) for t in tl if t is not hp2])
+
+def add_action(name="haha", **kwargs):
+    print(name)
+    print(kwargs)
+
+def add_action2(name="heihei", **kwargs):
+    add_action(name, **kwargs)
+
+
+add_action2(name="hoho", k1="v1", k2="v2")
+add_action2(name="....")
+
+def pint(func):
+    for i in range(0, 10):
+        print(func())
+
+import random
+pint(func=lambda: random.randint(0, 100))
 
 # Main body
 if __name__ == '__main__':
