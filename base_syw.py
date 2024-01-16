@@ -63,6 +63,7 @@ class ShengYiWu:
     JUE_DOU_SHI = 'jue_dou_shi'
     SHA_SHANG = 'sha_shang'
     QI_SHI_DAO = 'qi_shi_dao'
+    HUI_SHENG = "hui_sheng"
 
     def __init__(self, name, part, crit_rate=0.0, crit_damage=0.0, hp_percent=0.0, hp=0, energe_recharge=0.0,
                  atk_per=0.0, atk=0, def_per=0.0, def_v=0, elem_mastery=0, elem_bonus=0.0, elem_type=None):
@@ -414,6 +415,9 @@ all_syw = {
                   energe_recharge=0.097, def_per=0.058, atk_per=0.041),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_YU,
                   crit_rate=0.066, crit_damage=0.21, hp=299, atk_per=0.099),
+
+        ShengYiWu(ShengYiWu.HUI_SHENG, ShengYiWu.PART_YU,
+                  energe_recharge=0.097, elem_mastery=40, hp=299, crit_damage=0.218)
 
     ],
     ShengYiWu.PART_SHA: [
