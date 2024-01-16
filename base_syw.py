@@ -840,7 +840,7 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
 
     print(len(all_combins_5))
     all_combines_5_list = list(all_combins_5.values())
-    all_combines_chunks = chunk_into_n(all_combines_5_list, 6)
+    all_combines_chunks = chunk_into_n(all_combines_5_list, 5)
 
     all_score_data = []
     above_threshold_num = 0
