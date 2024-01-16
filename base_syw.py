@@ -9,6 +9,15 @@ import os
 import logging
 import itertools
 import uuid
+import concurrent.futures
+from math import ceil
+
+def chunk_into_n(lst, n):
+    size = ceil(len(lst) / n)
+    return list(
+        map(lambda x: lst[x * size:x * size + size],
+            list(range(n)))
+    )
 
 
 class ShengYiWu:
@@ -743,6 +752,45 @@ def calc_expect_score(non_crit_score, crit_rate, crit_damage):
     c = min(crit_rate, 1)
     return non_crit_score * (1 + c * (crit_damage - 1))
 
+def calc_score_1st_phrase(swy_combines, calculate_score_callbak):
+    score_data_list = []
+    max_expect_score = 0
+    max_crit_score = 0
+    
+    for c in swy_combines:
+        score_data = calculate_score_callbak(c)
+        if not score_data:
+            continue
+
+        expect_score = score_data[0]
+        if expect_score > max_expect_score:
+            max_expect_score = expect_score
+
+        crit_score = score_data[1]
+        if crit_score > max_crit_score:
+            max_crit_score = crit_score
+
+        score_data_list.append(score_data)
+
+    return (max_expect_score, max_crit_score, score_data_list)
+
+def calc_score_2nd_phrase(score_data_list, max_expect_score, max_crit_score):
+    above_threshold_num = 0
+    for score_data in score_data_list:
+        expect_score = score_data[0]
+        crit_score = score_data[1]
+        score_data[0] = str(
+            expect_score) + '(' + str(round(expect_score / max_expect_score, 4)) + ')'
+        score_data[1] = str(
+            crit_score) + '(' + str(round(crit_score / max_crit_score, 4)) + ')'
+
+        score = expect_score / max_expect_score + crit_score / max_crit_score
+        score_data.insert(0, round(score, 4))
+        if score >= score_threshold:
+            above_threshold_num += 1
+
+    return (above_threshold_num, score_data_list)
+
 def calculate_score(find_combine_callback, match_sha_callback, match_bei_callback, calculate_score_callbak, result_txt_file, result_description):
     # all_syw = {}
     # all_syw.update(all_syw_exclude_s_b)
@@ -750,10 +798,6 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
 
     all_combins_4 = find_combine_callback()
     print(len(all_combins_4))
-
-    all_score_data = []
-    max_crit_score = 0
-    max_expect_score = 0
 
     all_combins_5 = {}
     for c in all_combins_4:
@@ -795,56 +839,51 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
                 all_combins_5[scid] = sorted_combine
 
     print(len(all_combins_5))
-    for c in all_combins_5.values():
-        score_data = calculate_score_callbak(c)
-        if not score_data:
-            continue
+    all_combines_5_list = list(all_combins_5.values())
+    all_combines_chunks = chunk_into_n(all_combines_5_list, 6)
 
-        expect_score = score_data[0]
-        if expect_score > max_expect_score:
-            max_expect_score = expect_score
+    all_score_data = []
+    above_threshold_num = 0
 
-        crit_score = score_data[1]
-        if crit_score > max_crit_score:
-            max_crit_score = crit_score
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        futures = [executor.submit(calc_score_1st_phrase, lst, calculate_score_callbak) for lst in all_combines_chunks]
+        max_expect_score = 0
+        max_crit_score = 0
+        
+        chunks_with_score = []
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                max_expect, max_crit, lst = future.result()
+                if max_expect > max_expect_score:
+                    max_expect_score = max_expect
 
-        all_score_data.append(score_data)
+                if max_crit > max_crit_score:
+                    max_crit_score = max_crit
 
-    score_dict = {}
+                chunks_with_score.append(lst)
+            except Exception as exc:
+                print('1st generated an exception: %s' % (exc))
+
+        futures = [executor.submit(calc_score_2nd_phrase, lst, max_expect_score, max_crit_score) for lst in chunks_with_score]
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                above_num, lst = future.result()
+                above_threshold_num += above_num
+                all_score_data.extend(lst)
+            except Exception as exc:
+                print('1st generated an exception: %s' % (exc))
+
     if all_score_data:
-        # print(len(all_score_data))
-        for score_data in all_score_data:
-            expect_score = score_data[0]
-            crit_score = score_data[1]
-            score_data[0] = str(
-                expect_score) + '(' + str(round(expect_score / max_expect_score, 4)) + ')'
-            score_data[1] = str(
-                crit_score) + '(' + str(round(crit_score / max_crit_score, 4)) + ')'
-
-            score = expect_score / max_expect_score + crit_score / max_crit_score
-            score_data.insert(0, round(score, 4))
-            #if score < score_threshold: #0.85 * 2:
-            #    continue
-
-            if score in score_dict:
-                score_dict[score].append(score_data)
-            else:
-                score_dict[score] = [score_data]
-
-        sorted_score_data = []
-        above_threshold_num = 0
-        for score in sorted(score_dict):
-            score_data = score_dict[score]
-            if score >= score_threshold:
-                above_threshold_num += len(score_data)
-            sorted_score_data += score_data
+        print(len(all_score_data))
+        #print("above_threshold_num: ", above_threshold_num)
+        all_score_data.sort(key=lambda x:x[0])
 
         min_write_num = max(30, above_threshold_num)
         print("min_write_num:" + str(min_write_num))
-        sorted_score_data = sorted_score_data[-min_write_num:]
+        all_score_data = all_score_data[-min_write_num:]
 
         with open(result_txt_file, 'w', encoding='utf-8') as f:
-            for c in sorted_score_data:
+            for c in all_score_data:
                 # print((i, c))
                 #f.write(str((round(score, 4), c, )))
                 f.write(str(c))
@@ -857,6 +896,6 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
             f.write("crit_max: " + str(max_crit_score))
             f.write('\n')
 
-        return sorted_score_data
+        return all_score_data
     else:
         return []

@@ -1075,7 +1075,6 @@ def schedule_little_three(plan: ActionPlan, start_time, end_time,
 
         kou_xue_time += kou_xue_interval_func()
 
-# 8个线程同时计算
 def calc_score_worker(fufu_initial_state: Character):
     fufu = copy.deepcopy(fufu_initial_state)
 
@@ -1262,11 +1261,31 @@ def calc_score_multi_thread(fufu_initial_state: Character):
 
         # print("avg:", (expect_score, crit_score, full_six_zhan_bi))
 
-    return (expect_score, crit_score, full_six_zhan_bi)
+    return (round(expect_score), round(crit_score), round(full_six_zhan_bi, 3))
+
+def calc_score_serial(fufu_initial_state: Character):
+    expect_score = 0
+    crit_score = 0
+    full_six_zhan_bi = 0
+    completed_num = 0
+
+    for _ in range(0, 10):
+        r = calc_score_worker(fufu_initial_state)
+        expect_score += r[0]
+        crit_score += r[1]
+        full_six_zhan_bi += r[2]
+        completed_num += 1
+
+    expect_score /= completed_num
+    crit_score /= completed_num
+    full_six_zhan_bi /= completed_num
+
+    return (round(expect_score), round(crit_score), round(full_six_zhan_bi, 3))
+
 
 def calc_score(fufu_initial_state: Character):
-    # return calc_score_worker(fufu_initial_state)
-    return calc_score_multi_thread(fufu_initial_state)
+    return calc_score_serial(fufu_initial_state)
+    # return calc_score_multi_thread(fufu_initial_state)
 
 
 def calculate_score_callback(combine: list[ShengYiWu]):
