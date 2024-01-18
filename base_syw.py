@@ -11,6 +11,7 @@ import itertools
 import copy
 import uuid
 import concurrent.futures
+import traceback
 from math import ceil
 
 
@@ -755,6 +756,7 @@ def find_syw(match_syw_callback):
     return matched_syw
 
 
+qualifier_threshold = 1.5
 score_threshold = 1.8
 
 
@@ -762,6 +764,9 @@ def set_score_threshold(new_threashold):
     global score_threshold
     score_threshold = new_threashold
 
+def set_qualifier_threshold(new_threashold):
+    global qualifier_threshold
+    qualifier_threshold = new_threashold
 
 def calc_expect_score(non_crit_score, crit_rate, crit_damage):
     c = min(crit_rate, 1)
@@ -791,29 +796,34 @@ def calc_score_1st_phrase(swy_combines, calculate_score_callbak):
     return (max_expect_score, max_crit_score, score_data_list)
 
 
-def calc_score_2nd_phrase(score_data_list, max_expect_score, max_crit_score):
-    above_threshold_num = 0
+def calc_score_2nd_phrase(score_data_list, max_expect_score, max_crit_score, threshold, is_qualifier_phrase):
+    above_threshold_data_list = []
+    below_threshold_data_list = []
+
     for score_data in score_data_list:
         expect_score = score_data[0]
         crit_score = score_data[1]
-        score_data[0] = str(
-            expect_score) + '(' + str(round(expect_score / max_expect_score, 4)) + ')'
-        score_data[1] = str(
-            crit_score) + '(' + str(round(crit_score / max_crit_score, 4)) + ')'
 
         score = expect_score / max_expect_score + crit_score / max_crit_score
+
+        if not is_qualifier_phrase:
+            score_data[0] = str(expect_score) + '(' + str(round(expect_score / max_expect_score, 4)) + ')'
+            score_data[1] = str(crit_score) + '(' + str(round(crit_score / max_crit_score, 4)) + ')'
+
         score_data.insert(0, round(score, 4))
-        if score >= score_threshold:
-            above_threshold_num += 1
+        if score >= threshold:
+            above_threshold_data_list.append(score_data)
+        else:
+            below_threshold_data_list.append(score_data)
 
-    return (above_threshold_num, score_data_list)
+    return (above_threshold_data_list, below_threshold_data_list)
 
 
-def calc_score_multi_proc(all_combines_5_list, calculate_score_callbak):
+def calc_score_multi_proc(all_combines_5_list, calculate_score_callbak, threshold, is_qualifier_phrase):
     all_combines_chunks = chunk_into_n(all_combines_5_list, 5)
 
-    all_score_data = []
-    above_threshold_num = 0
+    above_threshold_data_list = []
+    below_threshold_data_list = []
     max_expect_score = 0
     max_crit_score = 0
 
@@ -834,30 +844,36 @@ def calc_score_multi_proc(all_combines_5_list, calculate_score_callbak):
                 chunks_with_score.append(lst)
             except Exception as exc:
                 print('1st generated an exception: %s' % (exc))
+                traceback.print_exc()
 
         futures = [executor.submit(
-            calc_score_2nd_phrase, lst, max_expect_score, max_crit_score) for lst in chunks_with_score]
+            calc_score_2nd_phrase, lst, max_expect_score, max_crit_score, threshold, is_qualifier_phrase) for lst in chunks_with_score]
         for future in concurrent.futures.as_completed(futures):
             try:
-                above_num, lst = future.result()
-                above_threshold_num += above_num
-                all_score_data.extend(lst)
+                above_list, below_list = future.result()
+                above_threshold_data_list.extend(above_list)
+                below_threshold_data_list.extend(below_list)
             except Exception as exc:
                 print('1st generated an exception: %s' % (exc))
+                traceback.print_exc()
 
-    return (all_score_data, above_threshold_num, max_expect_score, max_crit_score)
+    return (above_threshold_data_list, below_threshold_data_list, max_expect_score, max_crit_score)
 
 
-def calc_score_inline(all_combines_5_list, calculate_score_callbak):
+def calc_score_inline(all_combines_5_list, calculate_score_callbak, threshold, is_qualifier_phrase):
     max_expect_score, max_crit_score, lst = calc_score_1st_phrase(
         all_combines_5_list, calculate_score_callbak)
-    above_threshold_num, all_score_data = calc_score_2nd_phrase(
-        lst, max_expect_score, max_crit_score)
+    above_threshold_data_list, below_threshold_data_list = calc_score_2nd_phrase(
+        lst, max_expect_score, max_crit_score, threshold, is_qualifier_phrase)
 
-    return (all_score_data, above_threshold_num, max_expect_score, max_crit_score)
+    return (above_threshold_data_list, below_threshold_data_list, max_expect_score, max_crit_score)
 
 
-def calculate_score(find_combine_callback, match_sha_callback, match_bei_callback, calculate_score_callbak, result_txt_file, result_description):
+def calculate_score(find_combine_callback, 
+                    match_sha_callback, match_bei_callback, 
+                    calculate_score_callbak, 
+                    result_txt_file, result_description,
+                    calculate_score_qualifier = None):
     # all_syw = {}
     # all_syw.update(all_syw_exclude_s_b)
     # all_syw.update(syw_s_b)
@@ -903,24 +919,48 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
     all_combines_5_list = list(all_combins_5.values())
     lst_len = len(all_combines_5_list)
     print(lst_len)
+
+    if calculate_score_qualifier:
+        if lst_len > 10000:
+            above_list, below_list, _, _ = calc_score_multi_proc(
+                all_combines_5_list, calculate_score_qualifier, qualifier_threshold, True)
+        else:
+            above_list, below_list, _, _ = calc_score_inline(
+                all_combines_5_list, calculate_score_qualifier, qualifier_threshold, True)
+            
+        if above_list or below_list:
+            num_above = len(above_list)
+            print("qualified remain:", num_above + len(below_list))
+            if num_above < 30:
+                below_list.sort(key=lambda x: x[0])
+                extra_num = 30 - num_above
+                above_list.extend(below_list[-extra_num:])
+            
+            all_combines_5_list = above_list
+            #all_combines_5_list =  [i[-1] for i in all_score_data]
+            lst_len = len(all_combines_5_list)
+    
     if lst_len > 10000:
-        all_score_data, above_threshold_num, max_expect_score, max_crit_score = calc_score_multi_proc(
-            all_combines_5_list, calculate_score_callbak)
+        above_list, below_list, max_expect_score, max_crit_score = calc_score_multi_proc(
+            all_combines_5_list, calculate_score_callbak, score_threshold, False)
     else:
-        all_score_data, above_threshold_num, max_expect_score, max_crit_score = calc_score_inline(
-            all_combines_5_list, calculate_score_callbak)
+        above_list, below_list, max_expect_score, max_crit_score = calc_score_inline(
+            all_combines_5_list, calculate_score_callbak, score_threshold, False)
 
-    if all_score_data:
-        print(len(all_score_data))
-        # print("above_threshold_num: ", above_threshold_num)
-        all_score_data.sort(key=lambda x: x[0])
+    if above_list or below_list:
+        num_above = len(above_list)
+        print("num above: ", num_above)
+        if num_above < 30:
+            below_list.sort(key=lambda x: x[0])
+            extra_num = 30 - num_above
+            above_list.extend(below_list[-extra_num:])
 
-        min_write_num = max(30, above_threshold_num)
-        print("min_write_num:" + str(min_write_num))
-        all_score_data = all_score_data[-min_write_num:]
+        above_list.sort(key=lambda x: x[0])
+
+        print("write num:", len(above_list))
 
         with open(result_txt_file, 'w', encoding='utf-8') as f:
-            for c in all_score_data:
+            for c in above_list:
                 # print((i, c))
                 # f.write(str((round(score, 4), c, )))
                 f.write(str(c))
@@ -933,6 +973,6 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
             f.write("crit_max: " + str(max_crit_score))
             f.write('\n')
 
-        return all_score_data
+        return above_list
     else:
         return []

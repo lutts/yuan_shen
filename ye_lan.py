@@ -351,7 +351,7 @@ def calc_score_with_lei_shen(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_
     return (expect_score, crit_score)
 
 
-def calculate_score_callback(combine: list[ShengYiWu], has_fu_fu=True, has_lei_shen=False):
+def scan_syw_combine(combine: list[ShengYiWu], has_fu_fu=True, has_lei_shen=False):
     extra_hp_bonus = {
         "专武": 0.16,
     }
@@ -430,6 +430,38 @@ def calculate_score_callback(combine: list[ShengYiWu], has_fu_fu=True, has_lei_s
     q_elem_bonus = elem_bonus + sum(extra_q_bonus.values())
     e_po_ju_shi_elem_bonus = elem_bonus
 
+    return (all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energe_recharge)
+
+def calculate_score_qualifier(combine: list[ShengYiWu], has_fu_fu=True, has_lei_shen=False):
+    scan_result = scan_syw_combine(combine, has_fu_fu, has_lei_shen)
+    if not scan_result:
+        return None
+    
+    all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energe_recharge = scan_result
+    # 以第8秒的破局矢伤害为初步判断依据
+    po_ju_shi_bonus = e_po_ju_shi_elem_bonus + (1 + 3.5 * 8)
+    # 两次在单怪上e
+    hp = all_hp + 0.1 * 2 * ye_lan_base_hp
+    damage = hp * 20.84 / 100 * 1.56 * po_ju_shi_bonus
+
+    expect_score = calc_expect_score(damage, crit_rate, crit_damage)
+    crit_score = damage * crit_damage
+
+    return [expect_score, crit_score, scan_result, combine]
+
+
+def calculate_score_callback(combine, has_fu_fu=True, has_lei_shen=False):
+    if isinstance(combine[-1], list):
+        scan_result = combine[3]
+        combine = combine[-1]
+    else:
+        scan_result = scan_syw_combine(combine, has_fu_fu, has_lei_shen)
+
+    if not scan_result:
+        return None
+    
+    all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energe_recharge = scan_result
+
     if has_fu_fu:
         expect_score, crit_score = calc_score_with_fu_fu(
             all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage)
@@ -437,17 +469,22 @@ def calculate_score_callback(combine: list[ShengYiWu], has_fu_fu=True, has_lei_s
         expect_score, crit_score = calc_score_with_lei_shen(
             all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage)
 
-    panel_hp = int(ye_lan_base_hp * (1 + hp_per)) + hp
-    return [expect_score, crit_score, int(panel_hp), round(elem_bonus, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energe_recharge, 1), combine]
+    #panel_hp = int(ye_lan_base_hp * (1 + hp_per)) + hp
+    return [expect_score, crit_score, int(all_hp), round(e_po_ju_shi_elem_bonus, 3), round(crit_rate, 3), round(crit_damage - 1, 3), 
+            round(energe_recharge, 1), combine]
 
 
 result_description = ["总评分", "期望伤害评分", "暴击伤害评分",
                       "出战生命值上限", "实战元素伤害加成", "暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
 
+def calculate_score_qualifier_only_fu_fu(combine):
+    return calculate_score_qualifier(combine)
 
 def calculate_score_callback_only_fufu(combine):
     return calculate_score_callback(combine)
 
+def calculate_score_qualifier_only_lei_shen(combine):
+    return calculate_score_qualifier(combine, False, True)
 
 def calculate_score_callback_only_lei_shen(combine):
     return calculate_score_callback(combine, False, True)
@@ -459,7 +496,9 @@ def find_syw_for_ye_lan_with_fu_fu():
                            match_bei_callback=match_bei_callback,
                            calculate_score_callbak=calculate_score_callback_only_fufu,
                            result_txt_file="ye_lan_syw_with_fu_fu.txt",
-                           result_description=result_description)
+                           result_description=result_description,
+                           calculate_score_qualifier=calculate_score_qualifier_only_fu_fu
+                           )
 
 
 def find_syw_for_ye_lan_with_lei_shen():
@@ -468,7 +507,9 @@ def find_syw_for_ye_lan_with_lei_shen():
                            match_bei_callback=match_bei_callback,
                            calculate_score_callbak=calculate_score_callback_only_lei_shen,
                            result_txt_file="ye_lan_syw_with_lei_shen.txt",
-                           result_description=result_description)
+                           result_description=result_description,
+                           calculate_score_qualifier=calculate_score_qualifier_only_lei_shen
+                           )
 
 
 # Main body
