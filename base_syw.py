@@ -8,6 +8,7 @@ import sys
 import os
 import logging
 import itertools
+import copy
 import uuid
 import concurrent.futures
 from math import ceil
@@ -22,12 +23,20 @@ def chunk_into_n(lst, n):
 
 
 class ShengYiWu:
-    ALL_PARTS = {'h', 'y', 's', 'b', 't'}
+    ALL_PARTS = ['h', 'y', 's', 'b', 't']
     PART_HUA = 'h'
     PART_YU = 'y'
     PART_SHA = 's'
     PART_BEI = 'b'
     PART_TOU = 't'
+
+    PART_TO_POSITION = {
+        PART_HUA: 0,
+        PART_YU: 1,
+        PART_SHA: 2,
+        PART_BEI: 3,
+        PART_TOU: 4
+    }
 
     ENERGE_RECHARGE_MAX = 0.518
     BONUS_MAX = 0.466
@@ -70,6 +79,7 @@ class ShengYiWu:
         self.id = str(uuid.uuid4())
         self.name = name
         self.part = part
+        self.position = ShengYiWu.PART_TO_POSITION[part]
         self.crit_rate = crit_rate
         self.crit_damage = crit_damage
         self.hp_percent = hp_percent
@@ -449,8 +459,6 @@ all_syw = {
 
         ShengYiWu(ShengYiWu.SHI_JIN, ShengYiWu.PART_SHA, elem_mastery=ShengYiWu.ELEM_MASTERY_MAIN,
                   crit_rate=0.027, energe_recharge=0.11, def_per=0.204, crit_damage=0.21),
-        ShengYiWu(ShengYiWu.SHI_JIN, ShengYiWu.PART_SHA, hp_percent=ShengYiWu.BONUS_MAX,
-                  def_v=21, crit_damage=0.187, crit_rate=0.089, atk_per=0.041),
         ShengYiWu(ShengYiWu.SHI_JIN, ShengYiWu.PART_SHA, elem_mastery=ShengYiWu.ELEM_MASTERY_MAIN,
                   atk_per=0.14, def_v=35, crit_rate=0.062, atk=19),
         ShengYiWu(ShengYiWu.SHI_JIN, ShengYiWu.PART_SHA, energe_recharge=ShengYiWu.ENERGE_RECHARGE_MAX,
@@ -854,47 +862,43 @@ def calculate_score(find_combine_callback, match_sha_callback, match_bei_callbac
     # all_syw.update(all_syw_exclude_s_b)
     # all_syw.update(syw_s_b)
 
-    all_combins_4 = find_combine_callback()
+    all_combins_4: list[list[ShengYiWu]] = find_combine_callback()
     print(len(all_combins_4))
 
     all_combins_5 = {}
     for c in all_combins_4:
-        parts = [p.part for p in c]
-        parts_set = set(parts)
-        if len(parts) != len(parts_set):
+        sorted_combine = [None, None, None, None, None]
+        miss_idx = 0 + 1 + 2 + 3 + 4
+        syw_duplicated = False
+        for p in c:
+            idx = p.position
+            if not sorted_combine[idx]:
+                sorted_combine[idx] = p
+            else:
+                syw_duplicated = True
+                break
+            miss_idx -= idx
+
+        if syw_duplicated:
             continue
 
-        miss_part = list(ShengYiWu.ALL_PARTS - parts_set)
-
-        for s in all_syw[miss_part[0]]:
+        for s in all_syw[ShengYiWu.ALL_PARTS[miss_idx]]:
             if s.part == ShengYiWu.PART_SHA:
                 if not match_sha_callback(s):
                     continue
             elif s.part == ShengYiWu.PART_BEI:
                 if not match_bei_callback(s):
                     continue
-
-            combine = c + (s, )
-            sorted_combine = [None, None, None, None, None]
-
-            for p in combine:
-                if p.part == ShengYiWu.PART_HUA:
-                    sorted_combine[0] = p
-                elif p.part == ShengYiWu.PART_YU:
-                    sorted_combine[1] = p
-                elif p.part == ShengYiWu.PART_SHA:
-                    sorted_combine[2] = p
-                elif p.part == ShengYiWu.PART_BEI:
-                    sorted_combine[3] = p
-                else:
-                    sorted_combine[4] = p
-
+            
+            # shallow copy
+            combine_5 = copy.copy(sorted_combine)
+            combine_5[miss_idx] = s
             scid = ""
-            for sc in sorted_combine:
+            for sc in combine_5:
                 scid += sc.id
 
             if scid not in all_combins_5:
-                all_combins_5[scid] = sorted_combine
+                all_combins_5[scid] = combine_5
 
     all_combines_5_list = list(all_combins_5.values())
     lst_len = len(all_combines_5_list)
