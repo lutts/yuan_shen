@@ -497,7 +497,7 @@ def find_syw_for_ye_lan_with_fu_fu():
                            calculate_score_callbak=calculate_score_callback_only_fufu,
                            result_txt_file="ye_lan_syw_with_fu_fu.txt",
                            result_description=result_description,
-                           calculate_score_qualifier=calculate_score_qualifier_only_fu_fu
+                           #calculate_score_qualifier=calculate_score_qualifier_only_fu_fu
                            )
 
 
@@ -508,7 +508,7 @@ def find_syw_for_ye_lan_with_lei_shen():
                            calculate_score_callbak=calculate_score_callback_only_lei_shen,
                            result_txt_file="ye_lan_syw_with_lei_shen.txt",
                            result_description=result_description,
-                           calculate_score_qualifier=calculate_score_qualifier_only_lei_shen
+                           #calculate_score_qualifier=calculate_score_qualifier_only_lei_shen
                            )
 
 

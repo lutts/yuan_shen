@@ -68,8 +68,7 @@ def kou_xue_chu_shang():
 
 def avg_min_max():
     l2 = [
-        550464, 555626, 559003, 559036, 561543, 562078
-        
+5.168, 5.168, 5.17, 5.185, 5.2, 5.2, 5.2, 5.201, 5.217, 5.218, 5.218, 5.268
         ]
     l2.sort()
 
@@ -157,95 +156,45 @@ def test():
         elif d > valid_max:
             print(d)
 
-from health_point import HealthPoint
-import copy
+def damage_sum():
+    damages  = [
+8722,
+8930,
+9625,
+10881,
+7245,
+11752,
+13361,
+18570,
+9224,
+10384,
+19698,
+17817,
+43088,
+44327,
+18555,
+45325,
+13093,
+25870,
+35956,
+14027,
+14027,
+26417,
+14324,
+36716,
+6359,
+11727,
+6359,
+5136,
+9472,
+11059,
+4314
+    ]
 
-class Teammate_HP:
-    def __init__(self, base_hp, max_hp, elem_type=None):
-        self.hp = HealthPoint(base_hp, max_hp)
-        self.elem_type = elem_type
-
-    def __str__(self):
-        return str(self.hp)
-
-
-teammates = {
-    # 夜兰
-    "tp1": Teammate_HP(14450, 46461, elem_type = "test"),
-    # 钟离
-    "tp2": Teammate_HP(14695, 58661),
-    # 万叶
-    "tp3": Teammate_HP(13348, 23505),
-}
-
-class All_Hp:
-    def __init__(self, base_hp, max_hp):
-        self.hp = HealthPoint(base_hp, max_hp)
-        self.teammate_hps = {}
-        for k, v in teammates.items():
-            print(k)
-            self.teammate_hps[k] = v.hp
-
-    def is_self(self, object):
-        return object is self
-
-    def __str__(self):
-        hps = [self.hp]
-        for hp in self.teammate_hps.values():
-            hps.append(hp)
-        return  ",".join([str(i) for i in hps])
-
-hp1 = All_Hp(10000, 30000)
-hp2 = copy.deepcopy(hp1)
-
-hp2.hp.modify_cur_hp(-1000)
-hp2.teammate_hps["tp1"].modify_cur_hp(-2000)
-hp2.teammate_hps["tp2"].modify_cur_hp(-3000)
-hp2.teammate_hps["tp3"].modify_cur_hp(-4000)
-print("hp1: ", str(hp1))
-print("hp2: ", str(hp2))
-
-all_hps = [hp2.hp, hp2.teammate_hps["tp1"], hp2.teammate_hps["tp2"], hp2.teammate_hps["tp3"]]
-for hp in all_hps:
-    print(hp)
-
-all_hps.remove(hp2.hp)
-print('-----')
-for hp in all_hps:
-    print(hp)
-
-hp3 = hp1
-
-def f():
-    return All_Hp(10000, 30000)
-
-print(hp1.is_self(hp3))
-hp3 = f()
-print(hp1.is_self(hp3))
-print(hp1.is_self(hp2))
-
-tl = [hp1, hp2]
-
-print([str(t) for t in tl if t is not hp2])
-
-def add_action(name="haha", **kwargs):
-    print(name)
-    print(kwargs)
-
-def add_action2(name="heihei", **kwargs):
-    add_action(name, **kwargs)
-
-
-add_action2(name="hoho", k1="v1", k2="v2")
-add_action2(name="....")
-
-def pint(func):
-    for i in range(0, 10):
-        print(func())
-
-import random
-pint(func=lambda: random.randint(0, 100))
+    for i in range(0, len(damages)):
+        print(str(damages[i]) + ", " + str(sum(damages[0:i+1])))
 
 # Main body
 if __name__ == '__main__':
-    avg_min_max()
+    #avg_min_max()
+    damage_sum()

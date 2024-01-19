@@ -747,6 +747,10 @@ all_syw = {
 }
 
 
+def debug_set_syw(part, syw_lst):
+    all_syw[part] = syw_lst
+
+
 def find_syw(match_syw_callback):
     matched_syw = []
     for sl in all_syw.values():
