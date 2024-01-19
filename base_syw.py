@@ -751,6 +751,10 @@ def debug_set_syw(part, syw_lst):
     all_syw[part] = syw_lst
 
 
+def debug_add_syw(syw: ShengYiWu):
+    all_syw[syw.part].append(syw)
+
+
 def find_syw(match_syw_callback):
     matched_syw = []
     for sl in all_syw.values():
@@ -772,9 +776,9 @@ def set_qualifier_threshold(new_threashold):
     global qualifier_threshold
     qualifier_threshold = new_threashold
 
-def calc_expect_score(non_crit_score, crit_rate, crit_damage):
+def calc_expect_damage(non_crit_damage, crit_rate, crit_damage):
     c = min(crit_rate, 1)
-    return non_crit_score * (1 + c * (crit_damage - 1))
+    return non_crit_damage * (1 + c * (crit_damage - 1))
 
 
 def calc_score_1st_phrase(swy_combines, calculate_score_callbak):

@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, find_syw, calculate_score, calc_expect_score
+from base_syw import ShengYiWu, find_syw, calculate_score, calc_expect_damage
 
 ming_zuo_num = 6
 
@@ -230,7 +230,7 @@ def calc_score_with_fu_fu_2(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_r
                                                po_ju_shi_timestamps, ye_lan_q_bonus, e3_timestamp)
 
     crit_score = all_damage * crit_damage
-    expect_score = calc_expect_score(all_damage, crit_rate, crit_damage)
+    expect_score = calc_expect_damage(all_damage, crit_rate, crit_damage)
 
     return (expect_score, crit_score)
     
@@ -297,7 +297,7 @@ def calc_score_with_fu_fu(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rat
                                                po_ju_shi_timestamps, ye_lan_q_bonus, e3_timestamp)
 
     crit_score = all_damage * crit_damage
-    expect_score = calc_expect_score(all_damage, crit_rate, crit_damage)
+    expect_score = calc_expect_damage(all_damage, crit_rate, crit_damage)
 
     return (expect_score, crit_score)
 
@@ -346,7 +346,7 @@ def calc_score_with_lei_shen(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_
                                                po_ju_shi_timestamps, ye_lan_q_bonus, 0)
 
     crit_score = all_damage * crit_damage
-    expect_score = calc_expect_score(all_damage, crit_rate, crit_damage)
+    expect_score = calc_expect_damage(all_damage, crit_rate, crit_damage)
 
     return (expect_score, crit_score)
 
@@ -444,7 +444,7 @@ def calculate_score_qualifier(combine: list[ShengYiWu], has_fu_fu=True, has_lei_
     hp = all_hp + 0.1 * 2 * ye_lan_base_hp
     damage = hp * 20.84 / 100 * 1.56 * po_ju_shi_bonus
 
-    expect_score = calc_expect_score(damage, crit_rate, crit_damage)
+    expect_score = calc_expect_damage(damage, crit_rate, crit_damage)
     crit_score = damage * crit_damage
 
     return [expect_score, crit_score, scan_result, combine]

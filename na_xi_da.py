@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_score
+from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_damage
 
 ming_zuo_num = 6
 qian_tai_damage = True
@@ -166,7 +166,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
 
     non_crit_score = (all_atk * atk_bei_lv + real_elem_mastery * elem_mastery_bei_lv) * elem_bonus
     crit_score = non_crit_score * crit_damage
-    expect_score = calc_expect_score(non_crit_score, crit_rate, crit_damage)
+    expect_score = calc_expect_damage(non_crit_score, crit_rate, crit_damage)
     return [expect_score, crit_score, elem_mastery, background_elem_mastery, int(all_atk), round(panel_crit_rate, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energy_recharge, 3), combine]
 
 

@@ -13,7 +13,7 @@ import itertools
 import random
 import concurrent.futures
 
-from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_score, debug_set_syw
+from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_damage, debug_set_syw
 from health_point import HealthPoint
 from character import Character
 from monster import Monster
@@ -630,7 +630,7 @@ class ActionPlan:
         crit_rate = self.get_fufu().get_crit_rate()
         crit_damage = 1 + self.get_fufu().get_crit_damage()
         
-        expect_score = calc_expect_score(self.total_damage, crit_rate, crit_damage)
+        expect_score = calc_expect_damage(self.total_damage, crit_rate, crit_damage)
         crit_score = self.total_damage * crit_damage
 
         self.damage_debug("get_score: total_damage: %d, full_six_damage: %d, expect_score:%s, crit_score:%s, crit_rate: %s, crit_damage: %s",
@@ -1497,7 +1497,7 @@ def calculate_score_qualifier(combine: list[ShengYiWu]):
         damage += cur_hp * FU_REN_BEI_LV / 100 * 1.67 * 1.05 * 0.487
 
         crit_damage = 1 + fufu.get_crit_damage()
-        expect_score = calc_expect_score(damage, fufu.get_crit_rate(), crit_damage)
+        expect_score = calc_expect_damage(damage, fufu.get_crit_rate(), crit_damage)
         crit_score = damage * crit_damage
 
         return [expect_score, crit_score, fufu, combine]

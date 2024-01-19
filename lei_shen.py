@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_score
+from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_damage
 from ye_lan import YeLanQBonus
 
 
@@ -215,7 +215,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
                 all_damage += all_atk * bei_lv / 100 * bonus_with_ye_lan
     
     crit_score = all_damage * crit_damage
-    expect_score = calc_expect_score(all_damage, crit_rate, crit_damage)
+    expect_score = calc_expect_damage(all_damage, crit_rate, crit_damage)
 
     panel_crit_damage = crit_damage - sum(extra_crit_damage.values())
     panel_crit_damage = round(panel_crit_damage - 1, 3)
