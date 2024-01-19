@@ -772,9 +772,11 @@ def set_score_threshold(new_threashold):
     global score_threshold
     score_threshold = new_threashold
 
+
 def set_qualifier_threshold(new_threashold):
     global qualifier_threshold
     qualifier_threshold = new_threashold
+
 
 def calc_expect_damage(non_crit_damage, crit_rate, crit_damage):
     c = min(crit_rate, 1)
@@ -815,8 +817,10 @@ def calc_score_2nd_phrase(score_data_list, max_expect_score, max_crit_score, thr
         score = expect_score / max_expect_score + crit_score / max_crit_score
 
         if not is_qualifier_phrase:
-            score_data[0] = str(expect_score) + '(' + str(round(expect_score / max_expect_score, 4)) + ')'
-            score_data[1] = str(crit_score) + '(' + str(round(crit_score / max_crit_score, 4)) + ')'
+            score_data[0] = str(
+                expect_score) + '(' + str(round(expect_score / max_expect_score, 4)) + ')'
+            score_data[1] = str(
+                crit_score) + '(' + str(round(crit_score / max_crit_score, 4)) + ')'
 
         score_data.insert(0, round(score, 4))
         if score >= threshold:
@@ -877,11 +881,11 @@ def calc_score_inline(all_combines_5_list, calculate_score_callbak, threshold, i
     return (above_threshold_data_list, below_threshold_data_list, max_expect_score, max_crit_score)
 
 
-def calculate_score(find_combine_callback, 
-                    match_sha_callback, match_bei_callback, 
-                    calculate_score_callbak, 
+def calculate_score(find_combine_callback,
+                    match_sha_callback, match_bei_callback,
+                    calculate_score_callbak,
                     result_txt_file, result_description,
-                    calculate_score_qualifier = None):
+                    calculate_score_qualifier=None):
     # all_syw = {}
     # all_syw.update(all_syw_exclude_s_b)
     # all_syw.update(syw_s_b)
@@ -913,7 +917,7 @@ def calculate_score(find_combine_callback,
             elif s.part == ShengYiWu.PART_BEI:
                 if not match_bei_callback(s):
                     continue
-            
+
             # shallow copy
             combine_5 = copy.copy(sorted_combine)
             combine_5[miss_idx] = s
@@ -935,7 +939,7 @@ def calculate_score(find_combine_callback,
         else:
             above_list, below_list, _, _ = calc_score_inline(
                 all_combines_5_list, calculate_score_qualifier, qualifier_threshold, True)
-            
+
         if above_list or below_list:
             num_above = len(above_list)
             print("qualified remain:", num_above + len(below_list))
@@ -943,11 +947,11 @@ def calculate_score(find_combine_callback,
                 below_list.sort(key=lambda x: x[0])
                 extra_num = 30 - num_above
                 above_list.extend(below_list[-extra_num:])
-            
+
             all_combines_5_list = above_list
-            #all_combines_5_list =  [i[-1] for i in all_score_data]
+            # all_combines_5_list =  [i[-1] for i in all_score_data]
             lst_len = len(all_combines_5_list)
-    
+
     if lst_len > 10000:
         above_list, below_list, max_expect_score, max_crit_score = calc_score_multi_proc(
             all_combines_5_list, calculate_score_callbak, score_threshold, False)
