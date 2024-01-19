@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, find_syw, calc_expect_damage
 
 ming_zuo_num = 1
 
@@ -40,7 +40,7 @@ def find_combine_callback():
     
     return list(itertools.combinations(yue_tuan, 4)) + list(itertools.combinations(lie_ren, 4))
 
-def calculate_score_callback(combine: list[ShengYiWu]):
+def calculate_score_callback(score_data: ShengYiWu_Score):
     base_hp = 14695
 
     extra_elem_bonus = {
@@ -67,6 +67,8 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     hp_per = sum(extra_hp_bonus.values())
     elem_bonus = 1 + sum(extra_elem_bonus.values())
     energy_recharge = 1
+
+    combine = score_data.syw_combine
 
     for p in combine:
         crit_rate += p.crit_rate
@@ -103,13 +105,15 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     all_hp = int(base_hp * (1 + hp_per)) + hp + 4780
 
     non_crit_score = all_hp * 14.47 / 100 * elem_bonus
-    crit_score = non_crit_score * crit_damage
-    expect_score = calc_expect_damage(non_crit_score, crit_rate, crit_damage)
 
-    return [expect_score, crit_score, all_hp, panel_crit_rate, crit_rate, round(crit_damage - 1, 3), energy_recharge, combine]
+    score_data.damage_to_score(non_crit_score, crit_rate, crit_damage)
+
+    score_data.custom_data = [all_hp, panel_crit_rate, crit_rate, round(crit_damage - 1, 3), energy_recharge]
+
+    return True
 
 
-result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "生命值", "面板暴击率", "实战暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
+result_description = ["生命值", "面板暴击率", "实战暴击率", "暴击伤害", "充能效率"]
 
 
 def find_syw_for_na_wei_lai_te():

@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, calculate_score, find_syw, set_score_threshold, calc_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, find_syw, set_score_threshold, calc_expect_damage
 
 
 def match_sha_callback(syw: ShengYiWu):
@@ -36,7 +36,7 @@ def find_combins_callback():
     return list(itertools.combinations(jue_yuan, 4))
 
 
-def calculate_score_callback(combine: list[ShengYiWu]):
+def calculate_score_callback(score_data: ShengYiWu_Score):
     base_atk = 184  # 81级
     wu_qi_atk = 674
     bai_zhi_atk = base_atk + wu_qi_atk
@@ -69,6 +69,8 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     elem_bonus = 0
     energy_recharge = 1 + sum(extra_energy_recharge.values())
 
+    combine = score_data.syw_combine
+
     for p in combine:
         crit_rate += p.crit_rate
         crit_damage += p.crit_damage
@@ -93,15 +95,16 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     q_damage = all_atk * (778.2 + 64.8 * 6) / 100 * elem_bonus
 
     all_damage = e_damage + q_damage
-    crit_score = all_damage * crit_damage
-    expect_score = calc_expect_damage(all_damage, crit_rate, crit_damage)
+    score_data.damage_to_score(all_damage, crit_rate, crit_damage)
 
     panel_atk = all_atk - sum(extra_atk.values())
     panel_crit_damage = crit_damage - 1 - sum(extra_crit_damage.values()) + extra_crit_damage["天空之翼"]
-    return [expect_score, crit_score, int(panel_atk), crit_rate, round(panel_crit_damage, 3), energy_recharge, combine]
+    score_data.custom_data = [int(panel_atk), crit_rate, round(panel_crit_damage, 3), energy_recharge]
+
+    return True
     
 
-result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "攻击力", "暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
+result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "攻击力", "暴击率", "暴击伤害", "充能效率"]
 
 
 def find_syw_for_jiu_tiao_sha_luo():

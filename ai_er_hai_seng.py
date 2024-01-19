@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, find_syw, calc_expect_damage
 
 
 def match_sha_callback(syw: ShengYiWu):
@@ -51,7 +51,7 @@ def find_combins_callback():
             for l in list(itertools.combinations(all_combines_2, 2))] + shi_jin_4
 
 
-def calculate_score_callback(combine: list[ShengYiWu]):
+def calculate_score_callback(score_data: ShengYiWu_Score):
     base_atk = 314
     wu_qi_atk = 608  # 波波刀/苍古
     #wu_qi_atk = 542  # 专武
@@ -90,6 +90,8 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     atk_per = cang_gu_atk_per
     elem_bonus = base_elem_bonus + bo_bo_dao_bonus + cang_gu_elem_bonus
 
+    combine = score_data.syw_combine
+
     for p in combine:
         crit_rate += p.crit_rate
         crit_damage += p.crit_damage
@@ -101,7 +103,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
 
     crit_rate = round(crit_rate, 3)
     if crit_rate < 0.65:
-        return None
+        return False
 
     panel_atk_per = atk_per
 
@@ -162,13 +164,14 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     non_crit_score = q_damage + a_without_extra_bonus_num * aaa_damage * elem_bonus + \
         e_damage + z_damage + a_with_extra_bonus_num * \
         aaa_damage * a_elem_bonus + guang_mu_damage
-    crit_score = non_crit_score * crit_damage
-    expect_score = calc_expect_damage(non_crit_score, crit_rate, crit_damage)
+    
+    score_data.damage_to_score(non_crit_score, crit_rate, crit_damage)
+    score_data.custom_data = [elem_mastery, panel_elem_mastery, int(panel_atk), round(crit_rate, 3), round(crit_damage - 1, 3)]
 
-    return [expect_score, crit_score, elem_mastery, panel_elem_mastery, int(panel_atk), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
+    return True
 
 
-result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "实战精通", "面板精通", "面板攻击力", "暴击率", "暴伤", "圣遗物组合"]
+result_description = ["实战精通", "面板精通", "面板攻击力", "暴击率", "暴伤"]
 
 def find_syw_for_ai_er_hai_seng():
     return calculate_score(find_combine_callback=find_combins_callback,

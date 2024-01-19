@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, find_syw, calc_expect_damage
 
 
 def match_sha_callback(syw: ShengYiWu):
@@ -35,7 +35,7 @@ def find_combins_callback():
     return list(itertools.combinations(jue_yuan, 4))
 
 
-def calculate_score_callback(combine: list[ShengYiWu]):
+def calculate_score_callback(score_data: ShengYiWu_Score):
     base_atk = 225
     wu_qi_atk = 510
     bai_zhi_atk = base_atk + wu_qi_atk
@@ -70,6 +70,8 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     atk_per = 0
     energy_recharge = 1 + sum(extra_energy_recharge.values())
 
+    combine = score_data.syw_combine
+
     for p in combine:
         crit_rate += p.crit_rate
         crit_damage += p.crit_damage
@@ -99,15 +101,18 @@ def calculate_score_callback(combine: list[ShengYiWu]):
 
     base_atk = bai_zhi_atk + 311 + sum(extra_atk.values())
     non_crit_score = all_atk / base_atk * elem_bonus / base_elem_bonus
-    crit_score = non_crit_score * crit_damage / base_crit_damage
-    expect_score = calc_expect_damage(non_crit_score, crit_rate, crit_damage)
+
+    score_data.crit_score = non_crit_score * crit_damage / base_crit_damage
+    score_data.expect_score = calc_expect_damage(non_crit_score, crit_rate, crit_damage)
 
     panel_crit_rate = crit_rate - sum(extra_crit_rate.values())
-    return [expect_score, crit_score, elem_mastery, int(all_atk), int(panel_atk), 
-            round(panel_crit_rate, 3), round(crit_damage - 1, 3), round(energy_recharge, 1), combine]
+    score_data.custom_data = [elem_mastery, int(all_atk), int(panel_atk), 
+            round(panel_crit_rate, 3), round(crit_damage - 1, 3), round(energy_recharge, 1)]
+    
+    return True
 
 
-result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "元素精通", "实战攻击力", "双火面板攻击力", "面板暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
+result_description = ["元素精通", "实战攻击力", "双火面板攻击力", "面板暴击率", "暴击伤害", "充能效率"]
 
 
 def find_syw_for_xiang_ling():

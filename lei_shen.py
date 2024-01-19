@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, find_syw, calc_expect_damage
 from ye_lan import YeLanQBonus
 
 
@@ -36,7 +36,7 @@ def find_combins_callback():
     jue_yuan = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.JUE_YUAN))
     return list(itertools.combinations(jue_yuan, 4))
 
-def calculate_score_callback(combine: list[ShengYiWu]):
+def calculate_score_callback(score_data: ShengYiWu_Score):
     base_atk = 337
     wu_qi_atk = 608
     bai_zhi_atk = base_atk + wu_qi_atk
@@ -74,6 +74,8 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     atk_per = 0
     energy_recharge = 1.32 + sum(extra_energy_recharge.values())
     elem_bonus = 1 + sum(extra_elem_bonus.values())
+
+    combine = score_data.syw_combine
 
     for p in combine:
         crit_rate += p.crit_rate
@@ -214,15 +216,17 @@ def calculate_score_callback(combine: list[ShengYiWu]):
                 bonus_with_ye_lan = elem_bonus + ye_lan_bonus.bonus(t)
                 all_damage += all_atk * bei_lv / 100 * bonus_with_ye_lan
     
-    crit_score = all_damage * crit_damage
-    expect_score = calc_expect_damage(all_damage, crit_rate, crit_damage)
+    score_data.damage_to_score(all_damage, crit_rate, crit_damage)
 
     panel_crit_damage = crit_damage - sum(extra_crit_damage.values())
     panel_crit_damage = round(panel_crit_damage - 1, 3)
-    return [expect_score, crit_score, int(all_atk), int(panel_atk), round(elem_bonus, 3), round(crit_rate, 3), panel_crit_damage, round(panel_energy_recharge, 1), combine]
+    score_data.custom_data = [int(all_atk), int(panel_atk), round(elem_bonus, 3), 
+                              round(crit_rate, 3), panel_crit_damage, round(panel_energy_recharge, 1)]
+    
+    return True
 
 
-result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "实战攻击力", "面板攻击力", "实战最大伤害加成", "暴击率", "暴击伤害", "面板充能效率", "圣遗物组合"]
+result_description = ["实战攻击力", "面板攻击力", "实战最大伤害加成", "暴击率", "暴击伤害", "面板充能效率"]
 
 
 def find_syw_for_lei_shen():

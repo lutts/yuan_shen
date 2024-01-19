@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, find_syw, calc_expect_damage
 
 ming_zuo_num = 6
 qian_tai_damage = True
@@ -65,7 +65,7 @@ def find_combins_callback():
     return list(itertools.combinations(shen_lin, 4))
 
 
-def calculate_score_callback(combine: list[ShengYiWu]):
+def calculate_score_callback(score_data: ShengYiWu_Score):
     wu_qi_atk = 542
     base_atk = 299
     bai_zhi_atk = wu_qi_atk + base_atk
@@ -111,6 +111,8 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     atk = 311
     atk_per = 0
     energy_recharge = 0
+
+    combine = score_data.syw_combine
 
     for p in combine:
         panel_crit_rate += p.crit_rate
@@ -165,12 +167,16 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         elem_mastery_bei_lv = 3.715
 
     non_crit_score = (all_atk * atk_bei_lv + real_elem_mastery * elem_mastery_bei_lv) * elem_bonus
-    crit_score = non_crit_score * crit_damage
-    expect_score = calc_expect_damage(non_crit_score, crit_rate, crit_damage)
-    return [expect_score, crit_score, elem_mastery, background_elem_mastery, int(all_atk), round(panel_crit_rate, 3), round(crit_rate, 3), round(crit_damage - 1, 3), round(energy_recharge, 3), combine]
+
+    score_data.damage_to_score(non_crit_score, crit_rate, crit_damage)
+    score_data.custom_data = [ elem_mastery, background_elem_mastery, int(all_atk), 
+                              round(panel_crit_rate, 3), round(crit_rate, 3), round(crit_damage - 1, 3), 
+                              round(energy_recharge, 3)]
+    return True
 
 
-result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "实战前台精通", "实战后台精通", "实战攻击力", "面板暴击率", "实战暴击率", "暴伤", "充能效率", "圣遗物组合"]
+result_description = ["实战前台精通", "实战后台精通", "实战攻击力", "面板暴击率", "实战暴击率", "暴伤", "充能效率"]
+
 def find_syw_for_na_xi_da_all():
     return calculate_score(find_combine_callback=find_combins_callback_all,
                            match_sha_callback=match_sha_callback,

@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, find_syw, calc_expect_damage
 
 
 def match_sha_callback(syw: ShengYiWu):
@@ -51,7 +51,7 @@ def find_combins_callback():
     return all_combins
 
 
-def calculate_score_callback(combine):
+def calculate_score_callback(score_data: ShengYiWu_Score):
     max_atk = 852 #绝弦754， 最初的大魔术852
     tu_po_atk_per = 0.24
     mo_shu_crit_damage = 0.662
@@ -60,6 +60,8 @@ def calculate_score_callback(combine):
     base_elem_mastery = 0 #165 # 绝弦
     wan_ye_bonus = 0.4
     base_elem_bonus = 1 + wan_ye_bonus
+
+    combine = score_data.syw_combine
 
     crit_rate = sum([p.crit_rate for p in combine]) + 0.05
     crit_rate = round(crit_rate, 3)
@@ -119,12 +121,14 @@ def calculate_score_callback(combine):
     duan_zui_lei_ying_damage = (all_atk * 80 / 100 + chao_ji_hua_bonus) * e_bonus * 9
 
     all_damage = zhao_huan_damage + ao_zi_damage + duan_zui_lei_ying_damage
-    all_damage_crit = all_damage * crit_damage
-    all_damage_expect = calc_expect_damage(all_damage, crit_rate, crit_damage)
-    return [all_damage_expect, all_damage_crit, elem_mastery, int(all_atk), round(crit_rate, 3), round(crit_damage - 1, 3), combine]
+    
+    score_data.damage_to_score(all_damage, crit_rate, crit_damage)
+    score_data.custom_data = [elem_mastery, int(all_atk), round(crit_rate, 3), round(crit_damage - 1, 3)]
+
+    return True
 
 
-result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "精通", "实战攻击力", "暴击率", "暴击伤害", "圣遗物组合"]
+result_description = ["精通", "实战攻击力", "暴击率", "暴击伤害"]
 
 def find_syw_for_fei_xie_er():
     return calculate_score(find_combine_callback=find_combins_callback,

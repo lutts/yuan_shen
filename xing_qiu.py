@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_damage, set_score_threshold
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, find_syw, calc_expect_damage, set_score_threshold
 
 
 def match_sha_callback(syw: ShengYiWu):
@@ -51,7 +51,7 @@ def find_combins_callback():
     return [(l[0] + l[1])
             for l in list(itertools.combinations(all_2, 2))] + list(itertools.combinations(jue_yuan, 4))
 
-def calculate_score_callback(combine: list[ShengYiWu]):
+def calculate_score_callback(score_data: ShengYiWu_Score):
     base_atk = 191  # 82级
     wu_qi_atk = 454
     bai_zhi_atk = base_atk + wu_qi_atk
@@ -74,6 +74,8 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     atk_per = sum(extra_atk_per.values())
     elem_bonus = sum(extra_elem_bonus.values())
     energy_recharge = 1 + sum(extra_energy_recharge.values())
+
+    combine = score_data.syw_combine
 
     for p in combine:
         crit_rate += p.crit_rate
@@ -129,14 +131,17 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     q_damage = all_atk * 115 / 100 * (elem_bonus + extra_q_bonus) * q_num
 
     all_damage = e_damage + q_damage
-    crit_score = all_damage * crit_damage
-    expect_score = calc_expect_damage(all_damage, crit_rate, crit_damage)
+
+    score_data.damage_to_score(all_damage, crit_rate, crit_damage)
 
     q_bonus = elem_bonus + extra_q_bonus
-    return [expect_score, crit_score, int(all_atk), round(elem_bonus, 3), round(q_bonus, 3), int(e_damage), int(q_damage), crit_rate, round(crit_damage - 1, 3), energy_recharge, combine]
+    score_data.custom_data = [int(all_atk), round(elem_bonus, 3), round(q_bonus, 3), int(e_damage), int(q_damage), 
+                              crit_rate, round(crit_damage - 1, 3), energy_recharge]
+    
+    return True
     
 
-result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "攻击力", "e增伤", "q增伤", "e伤害", "q伤害", "暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
+result_description = ["攻击力", "e增伤", "q增伤", "e伤害", "q伤害", "暴击率", "暴击伤害", "充能效率"]
 
 
 def find_syw_for_xing_qiu():

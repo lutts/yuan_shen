@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 
-from base_syw import find_syw, set_score_threshold
+from base_syw import find_syw, set_score_threshold, ShengYiWu_Score, Score_List
 from ye_lan import find_syw_for_ye_lan_with_fu_fu, find_syw_for_ye_lan_with_lei_shen
 from fu_ning_na import find_syw_for_fu_ning_na
 from lei_shen import find_syw_for_lei_shen
@@ -19,10 +19,10 @@ from fei_xie_er import find_syw_for_fei_xie_er
 from hu_tao import find_syw_for_hu_tao, find_syw_for_hu_tao_lie_ren
 from ai_er_hai_seng import find_syw_for_ai_er_hai_seng
 
-def syw_list_to_id_list(syw_list):
+def syw_list_to_id_list(score_list: Score_List):
     id_list = []
-    for sc in syw_list:
-        for s in sc[-1]:
+    for score in score_list.score_list:
+        for s in score.syw_combine:
             #print(s)
             id_list.append(s.id)
 
