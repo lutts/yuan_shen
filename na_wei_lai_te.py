@@ -13,7 +13,7 @@ from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_score
 ming_zuo_num = 1
 
 def match_sha_callback(syw: ShengYiWu):
-    return syw.hp_percent == 0.466 or syw.energe_recharge == ShengYiWu.ENERGE_RECHARGE_MAX
+    return syw.hp_percent == 0.466 or syw.energy_recharge == ShengYiWu.energy_recharge_MAX
 
 
 def match_bei_callback(syw: ShengYiWu):
@@ -66,7 +66,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     hp = 0
     hp_per = sum(extra_hp_bonus.values())
     elem_bonus = 1 + sum(extra_elem_bonus.values())
-    energe_recharge = 1
+    energy_recharge = 1
 
     for p in combine:
         crit_rate += p.crit_rate
@@ -74,11 +74,11 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         hp += p.hp
         hp_per += p.hp_percent
         elem_bonus += p.elem_bonus
-        energe_recharge += p.energe_recharge
+        energy_recharge += p.energy_recharge
 
-    energe_recharge *= 100
-    energe_recharge = round(energe_recharge, 1)
-    if energe_recharge < 110:
+    energy_recharge *= 100
+    energy_recharge = round(energy_recharge, 1)
+    if energy_recharge < 110:
         return None
     
     panel_crit_rate = round(crit_rate, 3)
@@ -106,7 +106,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     crit_score = non_crit_score * crit_damage
     expect_score = calc_expect_score(non_crit_score, crit_rate, crit_damage)
 
-    return [expect_score, crit_score, all_hp, panel_crit_rate, crit_rate, round(crit_damage - 1, 3), energe_recharge, combine]
+    return [expect_score, crit_score, all_hp, panel_crit_rate, crit_rate, round(crit_damage - 1, 3), energy_recharge, combine]
 
 
 result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "生命值", "面板暴击率", "实战暴击率", "暴击伤害", "充能效率", "圣遗物组合"]

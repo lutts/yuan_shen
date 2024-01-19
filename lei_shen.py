@@ -13,7 +13,7 @@ from ye_lan import YeLanQBonus
 
 
 def match_sha_callback(syw: ShengYiWu):
-    return syw.energe_recharge == ShengYiWu.ENERGE_RECHARGE_MAX
+    return syw.energy_recharge == ShengYiWu.energy_recharge_MAX
 
 
 def match_bei_callback(syw: ShengYiWu):
@@ -45,7 +45,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     ye_lan_ming_zuo_num = 6
     has_fu_fu = False
 
-    extra_energe_recharge = {
+    extra_energy_recharge = {
         "绝缘2件套": 0.2,
         "薙草之稻光": 0.551,
         "薙草之稻光开大加成": 0.3,
@@ -72,7 +72,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     crit_damage = 1 + 0.5 + sum(extra_crit_damage.values())
     atk = sum(extra_atk.values()) + 311
     atk_per = 0
-    energe_recharge = 1.32 + sum(extra_energe_recharge.values())
+    energy_recharge = 1.32 + sum(extra_energy_recharge.values())
     elem_bonus = 1 + sum(extra_elem_bonus.values())
 
     for p in combine:
@@ -80,26 +80,26 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         crit_damage += p.crit_damage
         atk += p.atk
         atk_per += p.atk_per
-        energe_recharge += p.energe_recharge
+        energy_recharge += p.energy_recharge
         elem_bonus += p.elem_bonus
 
     crit_rate = round(crit_rate, 3)
     if crit_rate < 0.65:
         return None
 
-    energe_recharge *= 100
-    panel_energe_recharge = energe_recharge - extra_energe_recharge["薙草之稻光开大加成"] * 100
+    energy_recharge *= 100
+    panel_energy_recharge = energy_recharge - extra_energy_recharge["薙草之稻光开大加成"] * 100
 
-    panel_energe_recharge = round(panel_energe_recharge, 1)
-    if panel_energe_recharge < 260:
+    panel_energy_recharge = round(panel_energy_recharge, 1)
+    if panel_energy_recharge < 260:
         return None
     
-    elem_bonus += (energe_recharge - 100) * 0.004  # 固有天赋2
+    elem_bonus += (energy_recharge - 100) * 0.004  # 固有天赋2
     #panel_elem_bonus = elem_bonus - sum(extra_elem_bonus.values())
-    elem_bonus += min(energe_recharge / 4 / 100, 0.75)
+    elem_bonus += min(energy_recharge / 4 / 100, 0.75)
 
     panel_atk = int(bai_zhi_atk * (1 + atk_per)) + atk - sum(extra_atk.values()) + extra_atk["双火"]
-    atk_per += min((energe_recharge - 100) * 0.0028, 0.8)
+    atk_per += min((energy_recharge - 100) * 0.0028, 0.8)
    
     all_atk = int(bai_zhi_atk * (1 + atk_per)) + atk
 
@@ -219,7 +219,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
 
     panel_crit_damage = crit_damage - sum(extra_crit_damage.values())
     panel_crit_damage = round(panel_crit_damage - 1, 3)
-    return [expect_score, crit_score, int(all_atk), int(panel_atk), round(elem_bonus, 3), round(crit_rate, 3), panel_crit_damage, round(panel_energe_recharge, 1), combine]
+    return [expect_score, crit_score, int(all_atk), int(panel_atk), round(elem_bonus, 3), round(crit_rate, 3), panel_crit_damage, round(panel_energy_recharge, 1), combine]
 
 
 result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "实战攻击力", "面板攻击力", "实战最大伤害加成", "暴击率", "暴击伤害", "面板充能效率", "圣遗物组合"]

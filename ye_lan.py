@@ -37,7 +37,7 @@ ye_lan_base_hp = 14450.0
 
 
 def match_sha_callback(syw: ShengYiWu):
-    return syw.hp_percent == 0.466 or syw.energe_recharge == ShengYiWu.ENERGE_RECHARGE_MAX
+    return syw.hp_percent == 0.466 or syw.energy_recharge == ShengYiWu.energy_recharge_MAX
 
 
 def match_bei_callback(syw: ShengYiWu):
@@ -67,11 +67,11 @@ def find_combine_callback():
     #         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_HUA,
     #                   crit_rate=0.035, crit_damage=0.218, hp_percent=0.157, atk=31),
     #         ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_YU,
-    #                   crit_rate=0.101, crit_damage=0.132, hp_percent=0.041, energe_recharge=0.175),
+    #                   crit_rate=0.101, crit_damage=0.132, hp_percent=0.041, energy_recharge=0.175),
     #         ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_SHA,
     #                   crit_rate=0.066, crit_damage=0.21, hp_percent=0.466, atk=33, elem_mastery=40),
     #         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_BEI, elem_bonus=0.466, elem_type=ShengYiWu.ELEM_TYPE_SHUI,
-    #                   crit_damage=0.14, hp_percent=0.163, energe_recharge=0.052, atk=27)
+    #                   crit_damage=0.14, hp_percent=0.163, energy_recharge=0.052, atk=27)
     #     )
     # ]
     hua_hai = find_syw(
@@ -383,7 +383,7 @@ def scan_syw_combine(combine: list[ShengYiWu], has_fu_fu=True, has_lei_shen=Fals
     hp = 4780
     hp_per = sum(extra_hp_bonus.values())
     elem_bonus = 1 + sum(common_elem_bonus.values())
-    energe_recharge = 1
+    energy_recharge = 1
 
     for p in combine:
         crit_rate += p.crit_rate
@@ -391,7 +391,7 @@ def scan_syw_combine(combine: list[ShengYiWu], has_fu_fu=True, has_lei_shen=Fals
         hp += p.hp
         hp_per += p.hp_percent
         elem_bonus += p.elem_bonus
-        energe_recharge += p.energe_recharge
+        energy_recharge += p.energy_recharge
 
     crit_rate = round(crit_rate, 3)
     if crit_rate < 0.70:
@@ -416,28 +416,28 @@ def scan_syw_combine(combine: list[ShengYiWu], has_fu_fu=True, has_lei_shen=Fals
             elem_bonus += 0.15
         elif n == ShengYiWu.JUE_YUAN:
             if name_count[n] >= 4:
-                energe_recharge += 0.2  # 绝缘2件套
+                energy_recharge += 0.2  # 绝缘2件套
 
-    energe_recharge *= 100
-    energe_recharge = round(energe_recharge, 1)
-    if energe_recharge < 120:
+    energy_recharge *= 100
+    energy_recharge = round(energy_recharge, 1)
+    if energy_recharge < 120:
         return None
 
     if ShengYiWu.JUE_YUAN in name_count and name_count[ShengYiWu.JUE_YUAN] >= 4:
-        extra_q_bonus["绝缘4件套"] = min(energe_recharge / 4 / 100, 0.75)
+        extra_q_bonus["绝缘4件套"] = min(energy_recharge / 4 / 100, 0.75)
 
     all_hp = int(ye_lan_base_hp * (1 + hp_per)) + hp
     q_elem_bonus = elem_bonus + sum(extra_q_bonus.values())
     e_po_ju_shi_elem_bonus = elem_bonus
 
-    return (all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energe_recharge)
+    return (all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energy_recharge)
 
 def calculate_score_qualifier(combine: list[ShengYiWu], has_fu_fu=True, has_lei_shen=False):
     scan_result = scan_syw_combine(combine, has_fu_fu, has_lei_shen)
     if not scan_result:
         return None
     
-    all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energe_recharge = scan_result
+    all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energy_recharge = scan_result
     # 以第8秒的破局矢伤害为初步判断依据
     po_ju_shi_bonus = e_po_ju_shi_elem_bonus + (1 + 3.5 * 8)
     # 两次在单怪上e
@@ -460,7 +460,7 @@ def calculate_score_callback(combine, has_fu_fu=True, has_lei_shen=False):
     if not scan_result:
         return None
     
-    all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energe_recharge = scan_result
+    all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energy_recharge = scan_result
 
     if has_fu_fu:
         expect_score, crit_score = calc_score_with_fu_fu(
@@ -471,7 +471,7 @@ def calculate_score_callback(combine, has_fu_fu=True, has_lei_shen=False):
 
     #panel_hp = int(ye_lan_base_hp * (1 + hp_per)) + hp
     return [expect_score, crit_score, int(all_hp), round(e_po_ju_shi_elem_bonus, 3), round(crit_rate, 3), round(crit_damage - 1, 3), 
-            round(energe_recharge, 1), combine]
+            round(energy_recharge, 1), combine]
 
 
 result_description = ["总评分", "期望伤害评分", "暴击伤害评分",

@@ -163,7 +163,7 @@ def gu_you_tian_fu_2_bonus(hp):
 
 
 def match_sha_callback(syw: ShengYiWu):
-    return syw.hp_percent == 0.466 or syw.energe_recharge == ShengYiWu.ENERGE_RECHARGE_MAX
+    return syw.hp_percent == 0.466 or syw.energy_recharge == ShengYiWu.energy_recharge_MAX
 
 
 def match_bei_callback(syw: ShengYiWu):
@@ -196,11 +196,11 @@ def find_combine_callback():
     #               def_per=0.058, hp=687, hp_percent=0.111, crit_rate=0.07)])
     # return [
     #     (ShengYiWu(ShengYiWu.ZHUI_YI, ShengYiWu.PART_HUA,
-    #                crit_rate=0.152, crit_damage=0.132, energe_recharge=0.097, def_per=0.073),
+    #                crit_rate=0.152, crit_damage=0.132, energy_recharge=0.097, def_per=0.073),
     #      ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_YU,
     #                crit_rate=0.117, crit_damage=0.194, def_v=23, elem_mastery=23),
     #      ShengYiWu(ShengYiWu.SHUI_XIAN, ShengYiWu.PART_SHA,
-    #                crit_rate=0.074, crit_damage=0.218, energe_recharge=0.091, atk=18, hp_percent=0.466),
+    #                crit_rate=0.074, crit_damage=0.218, energy_recharge=0.091, atk=18, hp_percent=0.466),
     #      ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_BEI,
     #                crit_rate=0.093, crit_damage=0.21, def_per=0.131, def_v=23, hp_percent=0.466)
     #      )
@@ -1397,7 +1397,7 @@ def scan_syw_combine(combine: list[ShengYiWu]) -> Character:
         fufu.get_hp().modify_max_hp(p.hp)
         fufu.get_hp().modify_max_hp_per(p.hp_percent)
         fufu.add_all_bonus(p.elem_bonus)
-        fufu.add_energy_recharge(p.energe_recharge)
+        fufu.add_energy_recharge(p.energy_recharge)
 
     crit_rate = round(fufu.get_crit_rate(), 3)
     if crit_rate < 0.70:

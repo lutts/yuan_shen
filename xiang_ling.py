@@ -12,7 +12,7 @@ from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_score
 
 
 def match_sha_callback(syw: ShengYiWu):
-    return syw.energe_recharge == ShengYiWu.ENERGE_RECHARGE_MAX
+    return syw.energy_recharge == ShengYiWu.energy_recharge_MAX
 
 
 def match_bei_callback(syw: ShengYiWu):
@@ -77,7 +77,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         elem_bonus += p.elem_bonus
         atk += p.atk
         atk_per += p.atk_per
-        energy_recharge += p.energe_recharge
+        energy_recharge += p.energy_recharge
 
     crit_rate = round(crit_rate, 3)
     if crit_rate < 0.6:

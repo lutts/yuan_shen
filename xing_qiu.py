@@ -56,7 +56,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     wu_qi_atk = 454
     bai_zhi_atk = base_atk + wu_qi_atk
 
-    extra_energe_recharge = {
+    extra_energy_recharge = {
         "祭礼剑": 0.613,
     }
 
@@ -73,7 +73,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     atk = 311
     atk_per = sum(extra_atk_per.values())
     elem_bonus = sum(extra_elem_bonus.values())
-    energe_recharge = 1 + sum(extra_energe_recharge.values())
+    energy_recharge = 1 + sum(extra_energy_recharge.values())
 
     for p in combine:
         crit_rate += p.crit_rate
@@ -81,7 +81,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         atk += p.atk
         atk_per += p.atk_per
         elem_bonus += p.elem_bonus
-        energe_recharge += p.energe_recharge
+        energy_recharge += p.energy_recharge
 
     crit_rate = round(crit_rate, 3)
     if crit_rate < 0.55:
@@ -108,18 +108,18 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         elif n == ShengYiWu.JUE_DOU_SHI:
             atk_per += 0.18
         elif n == ShengYiWu.JUE_YUAN:
-            energe_recharge += 0.2
+            energy_recharge += 0.2
             if name_count[n] >= 4:
                 is_4_jue_yuan = True
     
-    energe_recharge *= 100
-    energe_recharge = round(energe_recharge, 1)
-    if energe_recharge < 200:
+    energy_recharge *= 100
+    energy_recharge = round(energy_recharge, 1)
+    if energy_recharge < 200:
         return None
     
     all_atk = int(bai_zhi_atk * (1 + atk_per)) + atk
     if is_4_jue_yuan:
-        extra_q_bonus += min(energe_recharge / 4 / 100, 0.75)
+        extra_q_bonus += min(energy_recharge / 4 / 100, 0.75)
 
     e_damage_1 = all_atk * (336 + 382) / 100 * elem_bonus
     e_damage_2 = all_atk * (336 + 382) / 100 * (elem_bonus + 0.5)  # 四命
@@ -133,7 +133,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
     expect_score = calc_expect_score(all_damage, crit_rate, crit_damage)
 
     q_bonus = elem_bonus + extra_q_bonus
-    return [expect_score, crit_score, int(all_atk), round(elem_bonus, 3), round(q_bonus, 3), int(e_damage), int(q_damage), crit_rate, round(crit_damage - 1, 3), energe_recharge, combine]
+    return [expect_score, crit_score, int(all_atk), round(elem_bonus, 3), round(q_bonus, 3), int(e_damage), int(q_damage), crit_rate, round(crit_damage - 1, 3), energy_recharge, combine]
     
 
 result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "攻击力", "e增伤", "q增伤", "e伤害", "q伤害", "暴击率", "暴击伤害", "充能效率", "圣遗物组合"]

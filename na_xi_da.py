@@ -119,7 +119,7 @@ def calculate_score_callback(combine: list[ShengYiWu]):
         elem_bonus += p.elem_bonus
         atk += p.atk
         atk_per += p.atk_per
-        energy_recharge += p.energe_recharge
+        energy_recharge += p.energy_recharge
 
     syw_names = [p.name for p in combine]
     # print(syw_names)
