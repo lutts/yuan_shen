@@ -948,29 +948,6 @@ def calc_score_2nd_phrase(score_list: Score_List, threshold) -> Score_List:
     score_list.discard_below_threshold(threshold)
     return score_list
 
-    # above_threshold_data_list = []
-    # below_threshold_data_list = []
-
-    # for score_data in score_list.score_list:
-    #     expect_score = score_data[0]
-    #     crit_score = score_data[1]
-
-    #     score = expect_score / max_expect_score + crit_score / max_crit_score
-
-    #     if not is_qualifier_phrase:
-    #         score_data[0] = str(
-    #             expect_score) + '(' + str(round(expect_score / max_expect_score, 4)) + ')'
-    #         score_data[1] = str(
-    #             crit_score) + '(' + str(round(crit_score / max_crit_score, 4)) + ')'
-
-    #     score_data.insert(0, round(score, 4))
-    #     if score >= threshold:
-    #         above_threshold_data_list.append(score_data)
-    #     else:
-    #         below_threshold_data_list.append(score_data)
-
-    # return (above_threshold_data_list, below_threshold_data_list)
-
 
 def calc_score_multi_proc(raw_score_list, calculate_score_callbak, threshold) -> Score_List:
     all_combines_chunks = chunk_into_n(raw_score_list, 5)
