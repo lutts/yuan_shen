@@ -13,7 +13,7 @@ import itertools
 import random
 import concurrent.futures
 
-from base_syw import ShengYiWu, calculate_score, find_syw, calc_expect_damage, debug_set_syw
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, find_syw, calc_expect_damage, debug_set_syw
 from health_point import HealthPoint
 from character import Character
 from monster import Monster
@@ -626,19 +626,19 @@ class ActionPlan:
 
             index += 1
 
-    def get_score(self) -> tuple[float, float, float]:
-        crit_rate = self.get_fufu().get_crit_rate()
-        crit_damage = 1 + self.get_fufu().get_crit_damage()
+    # def get_score(self) -> tuple[float, float, float]:
+    #     crit_rate = self.get_fufu().get_crit_rate()
+    #     crit_damage = 1 + self.get_fufu().get_crit_damage()
         
-        expect_score = calc_expect_damage(self.total_damage, crit_rate, crit_damage)
-        crit_score = self.total_damage * crit_damage
+    #     expect_score = calc_expect_damage(self.total_damage, crit_rate, crit_damage)
+    #     crit_score = self.total_damage * crit_damage
 
-        self.damage_debug("get_score: total_damage: %d, full_six_damage: %d, expect_score:%s, crit_score:%s, crit_rate: %s, crit_damage: %s",
-                   round(self.total_damage), round(self.full_six_damage), 
-                   round(expect_score), round(crit_score),
-                   round(crit_rate, 3), round(crit_damage, 3))
+    #     self.damage_debug("get_score: total_damage: %d, full_six_damage: %d, expect_score:%s, crit_score:%s, crit_rate: %s, crit_damage: %s",
+    #                round(self.total_damage), round(self.full_six_damage), 
+    #                round(expect_score), round(crit_score),
+    #                round(crit_rate, 3), round(crit_damage, 3))
 
-        return (expect_score, crit_score, self.full_six_damage / self.total_damage)
+    #     return (expect_score, crit_score, self.full_six_damage / self.total_damage)
 
 
 class Apply_Qi_Fen_Zhi_Action(Action):
@@ -1359,27 +1359,24 @@ def calc_score_worker(fufu_initial_state: Character):
     #    self.debug(str(round(a.get_timestamp(), 3)) + ":" + a.name)
     
     plan.run()
-    return plan.get_score()
+    return (plan.total_damage, plan.full_six_damage)
 
 
 def calc_score(fufu_initial_state: Character):
-    expect_score = 0
-    crit_score = 0
+    all_damage  = 0
     full_six_zhan_bi = 0
     completed_num = 0
 
     for _ in range(0, 10):
-        r = calc_score_worker(fufu_initial_state)
-        expect_score += r[0]
-        crit_score += r[1]
-        full_six_zhan_bi += r[2]
+        total_damage,  full_six_damage = calc_score_worker(fufu_initial_state)
+        all_damage += total_damage
+        full_six_zhan_bi += full_six_damage / total_damage
         completed_num += 1
 
-    expect_score /= completed_num
-    crit_score /= completed_num
+    all_damage /= completed_num
     full_six_zhan_bi /= completed_num
 
-    return (round(expect_score), round(crit_score), round(full_six_zhan_bi, 3))
+    return (all_damage, round(full_six_zhan_bi, 3))
 
 def scan_syw_combine(combine: list[ShengYiWu]) -> Character:
     fufu = Character(name="fufu", base_hp=fu_ning_na_base_hp)
@@ -1432,10 +1429,10 @@ def scan_syw_combine(combine: list[ShengYiWu]) -> Character:
 
     return fufu
 
-def calculate_score_qualifier(combine: list[ShengYiWu]):
-    fufu = scan_syw_combine(combine)
+def calculate_score_qualifier(score_data: ShengYiWu_Score):
+    fufu = scan_syw_combine(score_data.syw_combine)
     if not fufu:
-        return None
+        return False
 
     if ming_zuo_num >= 2:
         hp = fufu.get_hp().get_max_hp()
@@ -1496,29 +1493,29 @@ def calculate_score_qualifier(combine: list[ShengYiWu]):
         damage += cur_hp * PANG_XIE_BEI_LV / 100 * 1.67 * 1.05 * 0.487
         damage += cur_hp * FU_REN_BEI_LV / 100 * 1.67 * 1.05 * 0.487
 
-        crit_damage = 1 + fufu.get_crit_damage()
-        expect_score = calc_expect_damage(damage, fufu.get_crit_rate(), crit_damage)
-        crit_score = damage * crit_damage
+        score_data.damage_to_score(damage, fufu.get_crit_rate(), 1 + fufu.get_crit_damage())
+        score_data.custom_data = fufu
 
-        return [expect_score, crit_score, fufu, combine]
+        return True
     else:
         # TODO: 暂时还不支持
-        return None
+        return False
 
-def calculate_score_callback(combine: list[ShengYiWu]):
-    if isinstance(combine[-1], list):
-        fufu = combine[3]
-        combine = combine[-1]
+def calculate_score_callback(score_data: ShengYiWu_Score):
+    if score_data.custom_data:
+        fufu = score_data.custom_data
     else:
-        fufu = scan_syw_combine(combine)
+        fufu = scan_syw_combine(score_data.syw_combine)
 
     if not fufu:
-        return None
+        return False
 
     #logging.debug(str(fufu))
-    expect_score, crit_score, full_six_zhan_bi = calc_score(fufu)
-    if not crit_score:
-        return None
+    damage, full_six_zhan_bi = calc_score(fufu)
+    if not damage:
+        return False
+    
+    score_data.damage_to_score(damage, fufu.get_crit_rate(), 1 + fufu.get_crit_damage())
 
     panel_hp = fufu.get_hp().get_max_hp()
     fufu.get_hp().modify_max_hp_per(ming_2_hp_bonus_max)
@@ -1540,13 +1537,15 @@ def calculate_score_callback(combine: list[ShengYiWu]):
 
     max_a_bonus = fufu.get_normal_a_bonus() + qi_max_elem_bonus
 
-    return [expect_score, crit_score, full_six_zhan_bi, int(max_hp), int(panel_hp), round(max_e_bonus, 3), round(max_a_bonus, 3),
-            round(fufu.get_crit_rate(), 3), round(fufu.get_crit_damage(), 3), round(fufu.get_energy_recharge(), 1), combine]
+    score_data.custom_data = [full_six_zhan_bi, int(max_hp), int(panel_hp), round(max_e_bonus, 3), round(max_a_bonus, 3),
+            round(fufu.get_crit_rate(), 3), round(fufu.get_crit_damage(), 3), round(fufu.get_energy_recharge(), 1)]
+    
+    return True
 
 
-result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "满命六刀伤害占比", "实战最大生命值上限",
+result_description = ", ".join(["满命六刀伤害占比", "实战最大生命值上限",
                       "面板最大生命值", "战技最高元素伤害加成(不包含夜兰的)", "满命六刀最高元素伤害加成（不包含夜兰的）",
-                      "暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
+                      "暴击率", "暴击伤害", "充能效率"])
 
 
 def find_syw_for_fu_ning_na():

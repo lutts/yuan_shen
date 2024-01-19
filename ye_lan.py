@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, find_syw, calculate_score, calc_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, find_syw, calculate_score, calc_expect_damage
 
 ming_zuo_num = 6
 
@@ -296,10 +296,7 @@ def calc_score_with_fu_fu(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rat
                                                qx_damage_timestamps, extra_qx_damage_timestamps, 
                                                po_ju_shi_timestamps, ye_lan_q_bonus, e3_timestamp)
 
-    crit_score = all_damage * crit_damage
-    expect_score = calc_expect_damage(all_damage, crit_rate, crit_damage)
-
-    return (expect_score, crit_score)
+    return all_damage
 
 
 def calc_score_with_lei_shen(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage):
@@ -345,10 +342,7 @@ def calc_score_with_lei_shen(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_
                                                qx_damage_timestamps, extra_qx_damage_timestamps, 
                                                po_ju_shi_timestamps, ye_lan_q_bonus, 0)
 
-    crit_score = all_damage * crit_damage
-    expect_score = calc_expect_damage(all_damage, crit_rate, crit_damage)
-
-    return (expect_score, crit_score)
+    return all_damage
 
 
 def scan_syw_combine(combine: list[ShengYiWu], has_fu_fu=True, has_lei_shen=False):
@@ -432,10 +426,10 @@ def scan_syw_combine(combine: list[ShengYiWu], has_fu_fu=True, has_lei_shen=Fals
 
     return (all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energy_recharge)
 
-def calculate_score_qualifier(combine: list[ShengYiWu], has_fu_fu=True, has_lei_shen=False):
-    scan_result = scan_syw_combine(combine, has_fu_fu, has_lei_shen)
+def calculate_score_qualifier(score_data: ShengYiWu_Score, has_fu_fu=True, has_lei_shen=False):
+    scan_result = scan_syw_combine(score_data.syw_combine, has_fu_fu, has_lei_shen)
     if not scan_result:
-        return None
+        return False
     
     all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energy_recharge = scan_result
     # 以第8秒的破局矢伤害为初步判断依据
@@ -444,50 +438,50 @@ def calculate_score_qualifier(combine: list[ShengYiWu], has_fu_fu=True, has_lei_
     hp = all_hp + 0.1 * 2 * ye_lan_base_hp
     damage = hp * 20.84 / 100 * 1.56 * po_ju_shi_bonus
 
-    expect_score = calc_expect_damage(damage, crit_rate, crit_damage)
-    crit_score = damage * crit_damage
+    score_data.damage_to_score(damage, crit_rate, crit_damage)
+    score_data.custom_data = scan_result
 
-    return [expect_score, crit_score, scan_result, combine]
+    return True
 
 
-def calculate_score_callback(combine, has_fu_fu=True, has_lei_shen=False):
-    if isinstance(combine[-1], list):
-        scan_result = combine[3]
-        combine = combine[-1]
+def calculate_score_callback(score_data: ShengYiWu_Score, has_fu_fu=True, has_lei_shen=False):
+    if score_data.custom_data:
+        scan_result = score_data.custom_data
     else:
-        scan_result = scan_syw_combine(combine, has_fu_fu, has_lei_shen)
+        scan_result = scan_syw_combine(score_data.syw_combine, has_fu_fu, has_lei_shen)
 
     if not scan_result:
-        return None
+        return False
     
     all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energy_recharge = scan_result
 
     if has_fu_fu:
-        expect_score, crit_score = calc_score_with_fu_fu(
+        damage = calc_score_with_fu_fu(
             all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage)
     else:
-        expect_score, crit_score = calc_score_with_lei_shen(
+        damage = calc_score_with_lei_shen(
             all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage)
 
-    #panel_hp = int(ye_lan_base_hp * (1 + hp_per)) + hp
-    return [expect_score, crit_score, int(all_hp), round(e_po_ju_shi_elem_bonus, 3), round(crit_rate, 3), round(crit_damage - 1, 3), 
-            round(energy_recharge, 1), combine]
+    score_data.damage_to_score(damage, crit_rate, crit_damage)
+    score_data.custom_data = [int(all_hp), round(e_po_ju_shi_elem_bonus, 3), 
+                              round(crit_rate, 3), round(crit_damage - 1, 3), 
+                              round(energy_recharge, 1)]
+    return True
 
 
-result_description = ["总评分", "期望伤害评分", "暴击伤害评分",
-                      "出战生命值上限", "实战元素伤害加成", "暴击率", "暴击伤害", "充能效率", "圣遗物组合"]
+result_description = ", ".join(["出战生命值上限", "实战元素伤害加成", "暴击率", "暴击伤害", "充能效率"])
 
-def calculate_score_qualifier_only_fu_fu(combine):
-    return calculate_score_qualifier(combine)
+def calculate_score_qualifier_only_fu_fu(score_data: ShengYiWu_Score):
+    return calculate_score_qualifier(score_data)
 
-def calculate_score_callback_only_fufu(combine):
-    return calculate_score_callback(combine)
+def calculate_score_callback_only_fufu(score_data: ShengYiWu_Score):
+    return calculate_score_callback(score_data)
 
-def calculate_score_qualifier_only_lei_shen(combine):
-    return calculate_score_qualifier(combine, False, True)
+def calculate_score_qualifier_only_lei_shen(score_data: ShengYiWu_Score):
+    return calculate_score_qualifier(score_data, False, True)
 
-def calculate_score_callback_only_lei_shen(combine):
-    return calculate_score_callback(combine, False, True)
+def calculate_score_callback_only_lei_shen(score_data: ShengYiWu_Score):
+    return calculate_score_callback(score_data, False, True)
 
 
 def find_syw_for_ye_lan_with_fu_fu():
