@@ -44,8 +44,12 @@ ZHONG_LI_NAME = "zhong li"
 WAN_YE_NAME = "wan ye"
 YING_BAO_NAME = "ying bao"
 QIN_NAME = "qing"
+NA_WEI_LAI_TE_NAME = "na wei lai te"
+BAI_ZHU_NAME = "bai zhu"
 
-g_teammates = {
+# 夜芙万钟：目前的满命芙宁娜算法采用的是这个配队，
+# 不修改算法的情况下，只允许改变各个角色的生命值上限
+ye_fu_wan_zhong_team = {
     # 夜兰
     YE_LAN_NAME: Teammate(14450, 46461, elem_type=ShengYiWu.ELEM_TYPE_SHUI),
     # 钟离
@@ -54,16 +58,43 @@ g_teammates = {
     WAN_YE_NAME: Teammate(13348, 23505),
 }
 
+# 影夜芙琴：目前的非满命芙宁娜算法采用的是这个配队
+ying_ye_fu_qing_team = {
+    # 影宝
+    YING_BAO_NAME: Teammate(12907, 21650),
+    # 夜兰
+    YE_LAN_NAME: Teammate(14450, 46461, elem_type=ShengYiWu.ELEM_TYPE_SHUI),
+    # 琴
+    QIN_NAME: Teammate(12965, 24224)
+}
+
+# 白万芙特：有用于这个配队的非满命算法，但我没有那维莱特，算法轴的安排可能不是很准确
+bai_wan_fu_te_team = {
+    # 白术
+    BAI_ZHU_NAME: Teammate(13348, 50000),
+    # 万叶
+    WAN_YE_NAME: Teammate(13348, 23505),
+    # 那维莱特
+    NA_WEI_LAI_TE_NAME: Teammate(14695, 40000, elem_type=ShengYiWu.ELEM_TYPE_SHUI)
+}
+
+# 将这个值设置你想要使用的配队
+if ming_zuo_num >= 6:
+    g_teammates = ye_fu_wan_zhong_team
+else:
+    g_teammates = ying_ye_fu_qing_team
+
 # 是否有四命夜兰，仅用于最终生命值上限的展示，不影响最终伤害的计算
 has_4_ming_ye_lan = True
 
+# 算法自动根据配队检索，不需要手动改
 has_shuang_shui = False
 for t in g_teammates.values():
     if t.elem_type == ShengYiWu.ELEM_TYPE_SHUI:
         has_shuang_shui = True
         break
 
-# 充能要求设置
+# 充能要求设置，如果队友有西福斯的月光或西风系列武器，或者队友有雷神等充能的话，可以适当下调
 if ming_zuo_num >= 4:
     if has_shuang_shui:
         required_energy_recharge = 110
@@ -1396,90 +1427,97 @@ def scan_syw_combine(combine: list[ShengYiWu]) -> Character:
 
     return fufu
 
+def ye_fu_wan_zhong_team_qualifier(hp):
+    damage = 0
+    cur_hp = hp
+    damage += cur_hp * Q_BEI_LV / 100 * 1.615 * 1.05 * 0.487
+    damage += cur_hp * E_BEI_LV / 100 * 2.013 * 1.25 * 0.487
+    damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.013 * 1.25 * 0.487
+
+    cur_hp = hp + (0.14 * 1) * FU_NING_NA_BASE_HP
+    damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.082 * 1.25 * 0.487
+    damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.082 * 1.25 * 0.487
+    damage += cur_hp * FU_REN_BEI_LV / 100 * 2.442 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * XUN_JUE_BEI_LV / 100 * 2.702 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * PANG_XIE_BEI_LV / 100 * 2.702 * 1.25 * 0.487 * 1.4
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 1) * FU_NING_NA_BASE_HP
+    damage += cur_hp * FU_REN_BEI_LV / 100 * 3.258 * 1.25 * 0.487 * 1.4
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (457.982 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+    damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.353 * 1.25 * 0.487 * 1.4
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (499.975 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+    damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.868 * 1.25 * 0.487
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (508.375 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+    damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.868 * 1.25 * 0.487
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (525.884 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+    damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
+    damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (550.395 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+    damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (698.806 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+    damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (799.884 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+    damage += cur_hp * PANG_XIE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (800 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+    damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 3 + (800 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+    damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * PANG_XIE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 3) * FU_NING_NA_BASE_HP
+    damage += cur_hp * FU_REN_BEI_LV / 100 * 2.068 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * XUN_JUE_BEI_LV / 100 * 2.068 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * FU_REN_BEI_LV / 100 * 2.068 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * FU_REN_BEI_LV / 100 * 1.67 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * XUN_JUE_BEI_LV / 100 * 1.67 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * PANG_XIE_BEI_LV / 100 * 1.67 * 1.05 * 0.487 * 1.4
+    damage += cur_hp * FU_REN_BEI_LV / 100 * 1.67 * 1.05 * 0.487 * 1.4
+
+    return damage
+
+def ying_ye_fu_qing_team_qualifier(hp):
+    return 0
+
 def calculate_score_qualifier(score_data: ShengYiWu_Score):
     fufu = scan_syw_combine(score_data.syw_combine)
     if not fufu:
         return False
+    
+    # ”录制“一次计算过程，作为快速筛选的依据
+    # 录制方法：
+    # 1. 找到本文件开头处的 enable_debug，置为 True
+    # 2. 将 Action 相关类中的 damage_record_hp 里的注释去掉
+    # 3. 在本文件最底部，去掉两行Logging相关的注释，你可能需要修改logging的输出文件
+    # 然后执行，在logging的输出文件里能找到录制好的计算过程，稍作处理去掉一些冗余即可，也可不处理
+    # 后面会打印出这个计算的结果(需要把后面的 logging.debug注释去掉)，记得运行一下确认伤害量是正常的
 
-    if ming_zuo_num >= 2:
-        hp = fufu.get_hp().get_max_hp()
-        damage = 0
-
-        # ”录制“了一次计算过程，作为快速筛选的依据
-        # 录制方法：
-        # 1. 找到本文件开头处的 enable_debug，置为 True
-        # 2. 将 Action 相关类中的 damage_record_hp 里的注释去掉
-        # 3. 在本文件最底部，去掉两行Logging相关的注释，你可能需要修改logging的输出文件
-        # 然后执行，在logging的输出文件里能找到录制好的计算过程，稍作处理去掉一些冗余即可，也可不处理
-        # 后面会打印出这个计算的结果(需要把后面的 logging.debug注释去掉)，记得运行一下确认伤害量是正常的
-
-        cur_hp = hp
-        damage += cur_hp * Q_BEI_LV / 100 * 1.615 * 1.05 * 0.487
-        damage += cur_hp * E_BEI_LV / 100 * 2.013 * 1.25 * 0.487
-        damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.013 * 1.25 * 0.487
-
-        cur_hp = hp + (0.14 * 1) * FU_NING_NA_BASE_HP
-        damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.082 * 1.25 * 0.487
-        damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.082 * 1.25 * 0.487
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 2.442 * 1.25 * 0.487 * 1.4
-        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 2.702 * 1.25 * 0.487 * 1.4
-        damage += cur_hp * PANG_XIE_BEI_LV / 100 * 2.702 * 1.25 * 0.487 * 1.4
-
-        cur_hp = hp + (0.14 * 2 + 0.1 * 1) * FU_NING_NA_BASE_HP
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.258 * 1.25 * 0.487 * 1.4
-
-        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (457.982 - 400) * 0.0035) * FU_NING_NA_BASE_HP
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.353 * 1.25 * 0.487 * 1.4
-
-        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (499.975 - 400) * 0.0035) * FU_NING_NA_BASE_HP
-        damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.868 * 1.25 * 0.487
-
-        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (508.375 - 400) * 0.0035) * FU_NING_NA_BASE_HP
-        damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.868 * 1.25 * 0.487
-
-        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (525.884 - 400) * 0.0035) * FU_NING_NA_BASE_HP
-        damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
-        damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
-
-        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (550.395 - 400) * 0.0035) * FU_NING_NA_BASE_HP
-        damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
-
-        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (698.806 - 400) * 0.0035) * FU_NING_NA_BASE_HP
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-
-        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (799.884 - 400) * 0.0035) * FU_NING_NA_BASE_HP
-        damage += cur_hp * PANG_XIE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-
-        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (800 - 400) * 0.0035) * FU_NING_NA_BASE_HP
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-
-        cur_hp = hp + (0.14 * 2 + 0.1 * 3 + (800 - 400) * 0.0035) * FU_NING_NA_BASE_HP
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-        damage += cur_hp * PANG_XIE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-
-        cur_hp = hp + (0.14 * 2 + 0.1 * 3) * FU_NING_NA_BASE_HP
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 2.068 * 1.25 * 0.487 * 1.4
-        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 2.068 * 1.25 * 0.487 * 1.4
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 2.068 * 1.25 * 0.487 * 1.4
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 1.67 * 1.25 * 0.487 * 1.4
-        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 1.67 * 1.25 * 0.487 * 1.4
-        damage += cur_hp * PANG_XIE_BEI_LV / 100 * 1.67 * 1.05 * 0.487 * 1.4
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 1.67 * 1.05 * 0.487 * 1.4
-
-        score_data.damage_to_score(damage, fufu.get_crit_rate(), 1 + fufu.get_crit_damage())
-        score_data.custom_data = fufu
-        
-        #logging.debug("damage:%s, expect_score:%s, crit_score:%s", 
-        #              damage, score_data.expect_score, score_data.crit_score)
-
-        return True
+    hp = fufu.get_hp().get_max_hp()
+    
+    if ming_zuo_num >= 6:
+        damage = ye_fu_wan_zhong_team_qualifier(hp)
     else:
-        # TODO: 暂时还不支持
-        return False
+        damage = ying_ye_fu_qing_team_qualifier(hp)
+    
+    score_data.damage_to_score(damage, fufu.get_crit_rate(), 1 + fufu.get_crit_damage())
+    score_data.custom_data = fufu
+    
+    #logging.debug("damage:%s, expect_score:%s, crit_score:%s", 
+    #              damage, score_data.expect_score, score_data.crit_score)
+
+    return True
 
 def calculate_score_callback(score_data: ShengYiWu_Score):
     if score_data.custom_data:
@@ -1546,7 +1584,7 @@ def find_syw_for_fu_ning_na():
 
 # Main body
 if __name__ == '__main__':
-    logging.basicConfig(filename='D:\\logs\\fufu.log', encoding='utf-8', filemode='w', level=logging.DEBUG)
-    logging.basicConfig(level=logging.DEBUG)
+    #logging.basicConfig(filename='D:\\logs\\fufu.log', encoding='utf-8', filemode='w', level=logging.DEBUG)
+    #logging.basicConfig(level=logging.DEBUG)
     print("默认算法复杂，圣遗物多的话需要执行0.5~1小时多")
     find_syw_for_fu_ning_na()
