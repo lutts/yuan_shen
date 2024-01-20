@@ -38,17 +38,17 @@ class Teammate:
         self.elem_type = elem_type
 
 
-TP1_NAME = "ye lan"
-TP2_NAME = "zhong li"
-TP3_NAME = "wan ye"
+YE_LAN_NAME = "ye lan"
+ZHONG_LI_NAME = "zhong li"
+WAN_YE_NAME = "wan ye"
 
 g_teammates = {
     # 夜兰
-    TP1_NAME: Teammate(14450, 46461, elem_type=ShengYiWu.ELEM_TYPE_SHUI),
+    YE_LAN_NAME: Teammate(14450, 46461, elem_type=ShengYiWu.ELEM_TYPE_SHUI),
     # 钟离
-    TP2_NAME: Teammate(14695, 50567),
+    ZHONG_LI_NAME: Teammate(14695, 50567),
     # 万叶
-    TP3_NAME: Teammate(13348, 23505),
+    WAN_YE_NAME: Teammate(13348, 23505),
 }
 
 # 是否有四命夜兰，仅用于最终生命值上限的展示，不影响最终伤害的计算
@@ -238,10 +238,6 @@ def randtime(t_min, t_max):
 
 
 class FuFuActionPlan(ActionPlan):
-    YE_LAN_NAME = TP1_NAME
-    ZHONG_LI_NAME = TP2_NAME
-    WAN_YE_NAME = TP3_NAME
-
     def __init__(self, fufu_initial_state: Character):
         super().__init__()
 
@@ -289,11 +285,6 @@ class FuFuActionPlan(ActionPlan):
     def get_fufu(self) -> Character:
         return self.__fufu
 
-    def get_ye_lan(self) -> Character:
-        for t in self.__teammates:
-            if t.name == FuFuActionPlan.YE_LAN_NAME:
-                return t
-
     def get_foreground_character(self) -> Character:
         return self.__forground_character
 
@@ -321,6 +312,11 @@ class FuFuActionPlan(ActionPlan):
 
     def get_teammates(self) -> list[Character]:
         return self.__teammates
+    
+    def get_teammate(self, name) -> Character:
+        for t in self.__teammates:
+            if t.name == name:
+                return t
 
     ##################################################
     
@@ -892,19 +888,19 @@ class Switch_to_Fu_Fu_Action(Action):
 class Switch_To_Ye_Lan_Action(Action):
     def do_impl(self, plan: FuFuActionPlan, data, index):
         self.debug("切换到夜兰")
-        plan.switch_to_forground(FuFuActionPlan.YE_LAN_NAME)
+        plan.switch_to_forground(YE_LAN_NAME)
 
 
 class Switch_To_ZhongLi_Action(Action):
     def do_impl(self, plan: FuFuActionPlan, data, index):
-        plan.switch_to_forground(FuFuActionPlan.ZHONG_LI_NAME)
+        plan.switch_to_forground(ZHONG_LI_NAME)
         self.debug("切换到钟离")
 
 
 class Switch_To_Wan_Ye_Action(Action):
     def do_impl(self, plan: FuFuActionPlan, data, index):
         self.debug("切换到万叶")
-        plan.switch_to_forground(FuFuActionPlan.WAN_YE_NAME)
+        plan.switch_to_forground(WAN_YE_NAME)
 
 
 class Ye_Lan_4_Ming_Action(Action):
@@ -925,13 +921,15 @@ class Ye_Lan_4_Ming_Action(Action):
 class Ye_Lan_Q_Animation_Start(Action):
     def do_impl(self, plan: FuFuActionPlan, data, index):
         self.debug("夜兰大招动画开始")
-        plan.get_ye_lan().get_hp().set_in_q_animation(True)
+        ye_lan = plan.get_teammate(YE_LAN_NAME)
+        ye_lan.get_hp().set_in_q_animation(True)
 
 
 class Ye_Lan_Q_Bonus_Start(Action):
     def do_impl(self, plan: FuFuActionPlan, data, index):
         self.debug("夜兰大招出伤")
-        plan.get_ye_lan().get_hp().set_in_q_animation(False)
+        ye_lan = plan.get_teammate(YE_LAN_NAME)
+        ye_lan.get_hp().set_in_q_animation(False)
         plan.ye_lan_q_bonus.start(self.get_timestamp())
 
 
