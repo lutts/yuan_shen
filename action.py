@@ -58,24 +58,22 @@ class Action:
         pass
         # self.damage_record("damage += cur_hp", bei_lv_str, bonus, monster, other_bonus)
 
-    def do(self, plan: ActionPlan, data=None, index=-1):
+    def do(self, plan: ActionPlan):
         if self.done:
             return None
 
-        return self.do_impl(plan, data, index)
+        return self.do_impl(plan)
 
-    def do_impl(self, plan: ActionPlan, data, index):
+    def do_impl(self, plan: ActionPlan):
         """
         * plan: 此Action所在的ActionPlan的实例
-        * data: 相关数据
-        * index: 在action_list中的位置，某些action可能需要知道自已所有位置以方便”往前看“或”往后看“
-                 index小于0表示不在action_list中
         """
         pass
 
 
 class ActionPlan:
     def __init__(self):
+        self.__current_index = 0
         self.__current_action_time = 0
         self.action_list: list[Action] = []
 
@@ -99,15 +97,11 @@ class ActionPlan:
         action = cls(name, **kwargs)
         base_time = 0
         if base_action:
-            base_action_found = False
-            for a in self.action_list:
-                if a.name == base_action:
-                    base_time = a.get_timestamp()
-                    base_action_found = True
-                    break
-
-            if not base_action_found:
+            ba = self.find_action(base_action)
+            if not ba:
                 raise Exception("base action " + base_action + " not found!")
+            
+            base_time = ba.get_timestamp()
 
         t = random.randint(round(min_t * 1000), round(max_t * 1000)) / 1000
         if negative:
@@ -118,30 +112,39 @@ class ActionPlan:
 
         self.action_list.append(action)
 
-    def find_first_action(self, action_name) -> Action:
-        for t in self.action_list:
-            if t.name == action_name:
-                return t
+    def find_action(self, action_name) -> Action:
+        for a in reversed(self.action_list):
+            if a.name == action_name:
+                return a
             
     def insert_action(self, action, re_sort=False):
         self.action_list.append(action)
         if re_sort:
             self.sort_action()
             
-    def insert_action_runtime(self, action, re_sort=True):
+    def insert_action_runtime(self, action):
         if action.get_timestamp() < self.__current_action_time:
             raise Exception("action timestamp small than current action time")
         
-        self.insert_action(action, re_sort)
+        idx = self.__current_index
+        lst_len = len(self.action_list)
         
+        while idx < lst_len:
+            if self.action_list[idx].get_timestamp() > action.get_timestamp():
+                self.action_list.insert(idx, action)
+                return
+            idx += 1
+            
+        self.action_list.append(action)
+
 
     def run(self):
         self.sort_action()
 
-        index = 0
-        while index < len(self.action_list):
-            action = self.action_list[index]
+        self.__current_index = 0
+        while self.__current_index < len(self.action_list):
+            action = self.action_list[self.__current_index]
             self.__current_action_time = action.get_timestamp()
-            action.do(self, index=index)
+            action.do(self)
 
-            index += 1
+            self.__current_index += 1

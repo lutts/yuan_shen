@@ -29,6 +29,7 @@ has_zhuan_wu = True
 include_extra = False    # 某些配队，在芙芙大招结束后还继续输出，不切芙芙出来续大，此时将include_extra置为True
 
 enable_debug = False
+MAX_RUN_NUM = 10
 
 # 队友生命值上限设置，影响到叠层速度
 
@@ -538,12 +539,12 @@ class FuFuActionPlan(ActionPlan):
                 # self.increase_zhuan_wu_e_bonus_level(cur_time)
                 action = Increase_ZhuanWu_E_Bonus_Level_Action()
                 action.set_timestamp(action_time)
-                self.insert_action_runtime(action, re_sort=True)
+                self.insert_action_runtime(action)
             
             if teammate_hp_changed:
                 action = Increase_ZhuanWu_Hp_Level_Action()
                 action.set_timestamp(action_time)
-                self.insert_action_runtime(action, re_sort=True)
+                self.insert_action_runtime(action)
                 
                 # self.increase_zhuan_wu_hp_level(cur_time)
 
@@ -567,7 +568,7 @@ class Increase_ZhuanWu_Hp_Level_Action(Action):
     def __init__(self):
         super().__init__("专武生命值叠层")
 
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         plan.increase_zhuan_wu_hp_level(self.get_timestamp())
 
 
@@ -575,7 +576,7 @@ class Increase_ZhuanWu_E_Bonus_Level_Action(Action):
     def __init__(self):
         super().__init__("专武战技增伤叠层")
 
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         plan.increase_zhuan_wu_e_bonus_level(self.get_timestamp())
 
 class Apply_Qi_Fen_Zhi_Action(Action):
@@ -583,7 +584,7 @@ class Apply_Qi_Fen_Zhi_Action(Action):
         super().__init__("气氛值生效线程")
         self.blocking = False
 
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         if not self.blocking:
             changed = plan.apply_qi_fen_zhi()
             if not changed:
@@ -600,7 +601,7 @@ class Apply_Qi_Fen_Zhi_Action(Action):
         else:
             next_time = self.get_timestamp() + random.randint(429, 587) / 1000
             action.set_timestamp(next_time)
-        plan.insert_action_runtime(action, re_sort=True)
+        plan.insert_action_runtime(action)
 
         plan.apply_qi_fen_zhi_action = action
 
@@ -609,7 +610,7 @@ class ZhongLiAction(Action):
     def __init__(self, name):
         super().__init__(name)
 
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         plan.monster.add_jian_kang(0.2)
 
 
@@ -641,7 +642,7 @@ class WanYeQAction(Action):
         super().__init__(name)
         self.wan_ye = wan_ye
 
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.debug("万叶q")
         fufu = plan.get_fufu()
         fufu.add_all_bonus(self.wan_ye.elem_bonus)
@@ -656,19 +657,19 @@ class WanYeBonusStopAction(Action):
         super().__init__(name)
         self.wan_ye = wan_ye
 
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.debug("万叶增伤消失")
         plan.get_fufu().sub_all_bonus(self.wan_ye.elem_bonus)
 
 
 class FengTaoInvalidAction(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.debug("风套减抗消失")
         plan.monster.sub_jian_kang(0.4)
 
 
 class FuFu_Q_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         plan.switch_to_forground(plan.get_fufu().name)
         self.start_qi_fen_zhi_thread(plan)
         self.do_damage(plan)
@@ -694,7 +695,7 @@ class FuFu_Q_Action(Action):
 
 
 class FuFu_E_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         plan.switch_to_forground(plan.get_fufu().name)
         monster = plan.monster
 
@@ -724,7 +725,7 @@ class Hei_Fu_Cure_Teammate_Action(Hei_Fu_Cure_Action):
     def __init__(self):
         super().__init__("治疗后台三人")
 
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         cure_num = self.get_cure_num(plan.get_fufu())
         self.debug("治疗后台三人, %s", cure_num)
         plan.change_cur_hp(cur_time=self.get_timestamp(),
@@ -739,7 +740,7 @@ class Hei_Fu_Cure_Teammate_Action(Hei_Fu_Cure_Action):
             action.actual_cure_time = next_time
             action.end_cure_time = self.end_cure_time
             action.set_timestamp(next_time + plan.get_effective_delay())
-            plan.insert_action_runtime(action, re_sort=True)
+            plan.insert_action_runtime(action)
 
             plan.hei_fu_cure_teammate_action = action
         else:
@@ -753,7 +754,7 @@ class Hei_Fu_Cure_FuFu_Action(Hei_Fu_Cure_Action):
         self.sync_with_cure_teammate = sync_with_cure_teammate
         self.blocking = False
 
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         # 有可能是从 blocking状态唤醒，需要检查时间
         if plan.get_current_action_time() <= self.end_cure_time:
             fufu = plan.get_fufu()
@@ -796,7 +797,7 @@ class Hei_Fu_Cure_FuFu_Action(Hei_Fu_Cure_Action):
             action.actual_cure_time = next_time
             action.end_cure_time = self.end_cure_time
             action.set_timestamp(next_time + plan.get_effective_delay())
-            plan.insert_action_runtime(action, re_sort=True)
+            plan.insert_action_runtime(action)
             plan.hei_fu_cure_fufu_action = action
         else:
             self.debug("治疗芙芙到时间，终止")
@@ -805,7 +806,7 @@ class Hei_Fu_Cure_FuFu_Action(Hei_Fu_Cure_Action):
 # 芒、荒的伤害刀似乎都是按黑芙计算的
 # 注意：芒荒刀出伤的时候，芙芙不一定在前台
 class Mang_Huang_Damage_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         monster = plan.monster
 
         hp = plan.get_max_hp()
@@ -822,7 +823,7 @@ class Mang_Huang_Damage_Action(Action):
 
 
 class Hei_Fu_Damage_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         plan.switch_to_forground(plan.get_fufu().name)
         self.do_damage(plan)
         self.do_cure(plan)
@@ -878,7 +879,7 @@ class Hei_Fu_Damage_Action(Action):
                 action.end_cure_time = plan.hei_fu_cure_teammate_action.end_cure_time
                 action.actual_cure_time = plan.hei_fu_cure_teammate_action.actual_cure_time + plan.get_hei_fu_cure_fufu_delay()
                 action.set_timestamp(action.actual_cure_time + plan.get_effective_delay())
-                plan.insert_action_runtime(action, re_sort=True)
+                plan.insert_action_runtime(action)
             else:
                 self.debug("启动奶刀治疗芙芙，独立模式")
                 action = self.start_new_cure(plan, Hei_Fu_Cure_FuFu_Action)
@@ -893,19 +894,19 @@ class Hei_Fu_Damage_Action(Action):
         action.end_cure_time = end_cure_time
         action.set_timestamp(actual_cure_time + plan.get_effective_delay())
 
-        plan.insert_action_runtime(action, re_sort=True)
+        plan.insert_action_runtime(action)
 
         return action
 
 
 class Bai_Dao_Kou_Xue_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         # 白刀扣血 1%
         self.debug("%s", self.name)
         plan.consume_hp(0.01)
 
 class Bai_Fu_Damage_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         plan.switch_to_forground(plan.get_fufu().name)
         monster = plan.monster
 
@@ -922,31 +923,31 @@ class Bai_Fu_Damage_Action(Action):
 
 
 class Switch_to_Fu_Fu_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.debug("切换到芙芙")
         plan.switch_to_forground(plan.get_fufu().name)
 
 
 class Switch_To_Ye_Lan_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.debug("切换到夜兰")
         plan.switch_to_forground(YE_LAN_NAME)
 
 
 class Switch_To_ZhongLi_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         plan.switch_to_forground(ZHONG_LI_NAME)
         self.debug("切换到钟离")
 
 
 class Switch_To_Wan_Ye_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.debug("切换到万叶")
         plan.switch_to_forground(WAN_YE_NAME)
 
 
 class Ye_Lan_4_Ming_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         plan.ye_lan_e_num += 1
         self.debug("夜兰四命生效一层")
         plan.damage_record_hp()
@@ -961,14 +962,14 @@ class Ye_Lan_4_Ming_Action(Action):
 
 
 class Ye_Lan_Q_Animation_Start(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.debug("夜兰大招动画开始")
         ye_lan = plan.get_teammate(YE_LAN_NAME)
         ye_lan.get_hp().set_in_q_animation(True)
 
 
 class Ye_Lan_Q_Bonus_Start(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.debug("夜兰大招出伤")
         ye_lan = plan.get_teammate(YE_LAN_NAME)
         ye_lan.get_hp().set_in_q_animation(False)
@@ -976,13 +977,13 @@ class Ye_Lan_Q_Bonus_Start(Action):
 
 
 class Fu_Fu_Q_Bonus_Stop_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.debug("芙芙大招效果消失")
         plan.fufu_q_stop()
         
 
 class Ye_Lan_Q_Bonus_Stop_Actioin(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.debug("夜兰大招效果消失")
         plan.ye_lan_q_bonus.stop()
 
@@ -1026,40 +1027,40 @@ class Salon_Member_Damage_Action(Action):
 
 
 class Fu_Ren_Kou_Xue_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.debug("夫人扣血")
         plan.consume_hp(0.016)
 
 
 class Fu_Ren_Damage_Action(Salon_Member_Damage_Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.do_damage(plan, FU_REN_BEI_LV)
 
 
 class Xun_Jue_Kou_Xue_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.debug("勋爵扣血")
         plan.consume_hp(0.024)
 
 
 class Xun_Jue_Damage_Action(Salon_Member_Damage_Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.do_damage(plan, XUN_JUE_BEI_LV)
 
 
 class Pang_Xie_Kou_Xue_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.debug("螃蟹扣血")
         plan.consume_hp(0.036)
 
 
 class Pang_Xie_Damage_Action(Salon_Member_Damage_Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         self.do_damage(plan, PANG_XIE_BEI_LV)
 
 
 class Ge_Zhe_Cure_Action(Action):
-    def do_impl(self, plan: FuFuActionPlan, data, index):
+    def do_impl(self, plan: FuFuActionPlan):
         cure_num = plan.get_max_hp() * GE_ZHE_CURE_BEI_LV / 100 + GE_ZHE_CURE_BASE
         cure_num *= plan.get_fufu().get_healing_bonus()
 
@@ -1255,11 +1256,15 @@ def calc_score_worker(fufu_initial_state: Character):
                     base_action="万叶e扩散", wan_ye=wan_ye)
     plan.add_action("风套减抗消失", FengTaoInvalidAction,
                     10, 10, base_action="万叶e扩散")
+    
+    if enable_debug:
+        action_names = [a.name for a in plan.action_list]
+        action_name_set = set(action_names)
+        if len(action_names) != len(action_name_set):
+            raise Exception("action name duplicated!")
 
-    three_little_first_action_time = plan.find_first_action(
-        three_little_first_action).get_timestamp()
-    three_little_disappear_time = plan.find_first_action(
-        three_little_disappear).get_timestamp()
+    three_little_first_action_time = plan.find_action(three_little_first_action).get_timestamp()
+    three_little_disappear_time = plan.find_action(three_little_disappear).get_timestamp()
     #print(three_little_first_action_time)
     #print(three_little_disappear_time)
 
@@ -1278,9 +1283,9 @@ def calc_score_worker(fufu_initial_state: Character):
                           Pang_Xie_Kou_Xue_Action, Pang_Xie_Damage_Action,
                           kou_xue_num=1, chu_shang_num=1)
 
-    second_start_time = plan.find_first_action(
+    second_start_time = plan.find_action(
         three_little_2nd_action).get_timestamp()
-    second_end_time = plan.find_first_action(
+    second_end_time = plan.find_action(
         second_run_turn_start).get_timestamp() + random.randint(6285, 6453) / 1000
     #print(second_start_time)
     #print(second_end_time)
@@ -1303,7 +1308,7 @@ def calc_score_worker(fufu_initial_state: Character):
     c_action_lst[1].force_add_fufu_q_bonus = True
 
     ge_zhe_start_time = three_little_disappear_time
-    ge_zhe_stop_time = plan.find_first_action("第六刀重击").get_timestamp()
+    ge_zhe_stop_time = plan.find_action("第六刀重击").get_timestamp()
 
     ge_zhe_cure_time = ge_zhe_start_time + random.randint(1019, 1199) / 1000
     while ge_zhe_cure_time < ge_zhe_stop_time:
@@ -1325,7 +1330,7 @@ def calc_score_worker(fufu_initial_state: Character):
 def calc_score(fufu_initial_state: Character):
     all_damage  = 0
     full_six_zhan_bi = 0
-    run_num = 10
+    run_num = MAX_RUN_NUM
 
     if enable_debug:
         run_num = 1
