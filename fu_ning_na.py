@@ -27,8 +27,7 @@ has_zhuan_wu = True
 
 include_extra = False    # 某些配队，在芙芙大招结束后还继续输出，不切芙芙出来续大，此时将include_extra置为True
 
-# 队友生命值上限
-
+# 队友生命值上限设置，影响到叠层速度
 
 class Teammate:
     def __init__(self, base_hp, max_hp, elem_type=None):
@@ -57,6 +56,18 @@ for t in g_teammates.values():
     if t.elem_type == ShengYiWu.ELEM_TYPE_SHUI:
         has_shuang_shui = True
         break
+
+# 充能要求设置
+if ming_zuo_num >= 4:
+    if has_shuang_shui:
+        required_energy_recharge = 110
+    else:
+        required_energy_recharge = 160
+else:
+    if has_shuang_shui:
+        required_energy_recharge = 170
+    else:
+        required_energy_recharge = 220
 
 # 以下是队友或武器带来的一些额外属性（专武不需要手动填）
 # 四命夜兰的生命值加成是在具体的流程中动态计算的，不能写死
@@ -88,71 +99,55 @@ if has_shuang_shui:
     extra_hp_bonus["双水"] = 0.25
 
 if ming_zuo_num >= 1:
-    base_qi_fen_zhi = 150
-    max_qi_fen_zhi = 400
+    BASE_QI_FEN_ZHI = 150
+    MAX_QI_FEN_ZHI = 400
 else:
-    base_qi_fen_zhi = 0
-    max_qi_fen_zhi = 300
+    BASE_QI_FEN_ZHI = 0
+    MAX_QI_FEN_ZHI = 300
 
 if ming_zuo_num >= 2:
-    qi_bei_lv = 3.5
-    qi_hp_bei_lv = 0.0035
-    ming_2_hp_bonus_max = 1.4
+    QI_INCREASE_BEI_LV = 3.5
+    QI_HP_BEI_LV = 0.0035
+    MING_2_HP_BONUS_MAX = 1.4
 else:
-    qi_bei_lv = 1
-    qi_hp_bei_lv = 0
-    ming_2_hp_bonus_max = 0
+    QI_INCREASE_BEI_LV = 1
+    QI_HP_BEI_LV = 0
+    MING_2_HP_BONUS_MAX = 0
 
 if ming_zuo_num >= 3:
-    q_bei_lv = 24.2
-    qi_bonus_bei_lv = 0.0031
-    qi_cure_bei_lv = 0.0013
+    Q_BEI_LV = 24.2
+    QI_TO_BONUS_BEI_LV = 0.0031
+    QI_TO_CURE_BEI_LV = 0.0013
 else:
-    q_bei_lv = 20.5
-    qi_bonus_bei_lv = 0.0025
-    qi_cure_bei_lv = 0.001
-
-if ming_zuo_num >= 4:
-    if has_shuang_shui:
-        required_energy_recharge = 110
-    else:
-        required_energy_recharge = 160
-else:
-    if has_shuang_shui:
-        required_energy_recharge = 170
-    else:
-        required_energy_recharge = 220
+    Q_BEI_LV = 20.5
+    QI_TO_BONUS_BEI_LV = 0.0025
+    QI_TO_CURE_BEI_LV = 0.001
 
 if ming_zuo_num >= 5:
-    e_bei_lv = 16.7
-    e_cure_bei_lv = 10.2
-    e_cure_base = 1271
+    E_BEI_LV = 16.7
+    GE_ZHE_CURE_BEI_LV = 10.2
+    GE_ZHE_CURE_BASE = 1271
 
     FU_REN_BEI_LV = 6.87
     XUN_JUE_BEI_LV = 12.67
     PANG_XIE_BEI_LV = 17.61
 else:
-    e_bei_lv = 14.2
-    e_cure_bei_lv = 8.64
-    e_cure_base = 1017
+    E_BEI_LV = 14.2
+    GE_ZHE_CURE_BEI_LV = 8.64
+    GE_ZHE_CURE_BASE = 1017
 
     FU_REN_BEI_LV = 5.82
     XUN_JUE_BEI_LV = 10.73
     PANG_XIE_BEI_LV = 14.92
 
-if ming_zuo_num >= 6:
-    only_e = False
-else:
-    only_e = True
-
-e_extra_damage_bonus = 1.4  # 队友大于50%血量，e技能伤害为原来的1.4倍
+E_EXTRA_DAMAGE_BONUS = 1.4  # 队友大于50%血量，e技能伤害为原来的1.4倍
 HEI_FU_BEI_LV = 18
 BAI_FU_BEI_LV = 18 + 25
 
-fu_ning_na_base_hp = 15307
+FU_NING_NA_BASE_HP = 15307
 
-zhuan_wu_hp_bei_lv = 0.14
-zhuan_wu_e_bonus_bei_lv = 0.08
+ZHUAN_WU_HP_BEI_LV = 0.14
+ZHUAN_WU_E_BONUS_BEI_LV = 0.08
 
 if has_zhuan_wu:
     extra_crit_damage["专武"] = 0.882
@@ -443,7 +438,7 @@ class ActionPlan:
     
     def fufu_q_start(self):
         self.__fufu_q_stopped = False
-        self.set_qi_fen_zhi(base_qi_fen_zhi)
+        self.set_qi_fen_zhi(BASE_QI_FEN_ZHI)
     
     def fufu_q_stop(self):
         self.set_qi_fen_zhi(0)
@@ -488,17 +483,19 @@ class ActionPlan:
     def __do_apply_qi_fen_zhi(self):
         fufu = self.get_fufu()
 
-        if self.__qi_fen_zhi > max_qi_fen_zhi:
-            bonus_qi_fen_zhi = max_qi_fen_zhi
-            hp_qi_fen_zhi = min(
-                self.__qi_fen_zhi - max_qi_fen_zhi, max_qi_fen_zhi)
+        if self.__qi_fen_zhi > MAX_QI_FEN_ZHI:
+            bonus_qi_fen_zhi = MAX_QI_FEN_ZHI
+            if ming_zuo_num >= 2:
+                hp_qi_fen_zhi = min(self.__qi_fen_zhi - MAX_QI_FEN_ZHI, MAX_QI_FEN_ZHI)
+            else:
+                hp_qi_fen_zhi = 0
         else:
             bonus_qi_fen_zhi = self.__qi_fen_zhi
             hp_qi_fen_zhi = 0
 
-        elem_bonus = bonus_qi_fen_zhi * qi_bonus_bei_lv
-        healing_bonus = bonus_qi_fen_zhi * qi_cure_bei_lv
-        hp_per_bonus = hp_qi_fen_zhi * qi_hp_bei_lv
+        elem_bonus = bonus_qi_fen_zhi * QI_TO_BONUS_BEI_LV
+        healing_bonus = bonus_qi_fen_zhi * QI_TO_CURE_BEI_LV
+        hp_per_bonus = hp_qi_fen_zhi * QI_HP_BEI_LV
 
         fufu.modify_all_elem_bonus(elem_bonus - self.prev_qi_elem_bonus)
         fufu.modify_healing_bonus(healing_bonus - self.prev_qi_healing_bonus)
@@ -519,7 +516,7 @@ class ActionPlan:
             return
 
         self.__zhuan_wu_hp_last_change_time = cur_time
-        self.__fufu.get_hp().modify_max_hp_per(zhuan_wu_hp_bei_lv)
+        self.__fufu.get_hp().modify_max_hp_per(ZHUAN_WU_HP_BEI_LV)
         self.__zhuan_wu_hp_level += 1
         self.damage_debug("专武生命叠一层，目前层数: %d",  self.__zhuan_wu_hp_level)
 
@@ -531,7 +528,7 @@ class ActionPlan:
             return
 
         self.__zhuan_wu_e_bonus_last_change_time = cur_time
-        self.__fufu.add_e_bonus(zhuan_wu_e_bonus_bei_lv)
+        self.__fufu.add_e_bonus(ZHUAN_WU_E_BONUS_BEI_LV)
         self.__zhuan_wu_e_bonus_level += 1
         self.damage_debug("专武战技叠一层，目前层数: %d", self.__zhuan_wu_e_bonus_level)
 
@@ -542,17 +539,17 @@ class ActionPlan:
         for c in characters:
             if hp > 0:
                 _, hp_per_changed = c.regenerate_hp(hp)
-                qi_fen_zhi += abs(hp_per_changed) * qi_bei_lv * 100
+                qi_fen_zhi += abs(hp_per_changed) * QI_INCREASE_BEI_LV * 100
             elif hp < 0:
                 _, hp_per_changed = c.get_hp().modify_cur_hp(hp)
-                qi_fen_zhi += abs(hp_per_changed) * qi_bei_lv * 100
+                qi_fen_zhi += abs(hp_per_changed) * QI_INCREASE_BEI_LV * 100
 
             if hp_per > 0:
                 _, hp_per_changed = c.regenerate_hp_per(hp_per)
-                qi_fen_zhi += abs(hp_per_changed) * qi_bei_lv * 100
+                qi_fen_zhi += abs(hp_per_changed) * QI_INCREASE_BEI_LV * 100
             elif hp_per < 0:
                 _, hp_per_changed = c.get_hp().modify_cur_hp_per(hp_per)
-                qi_fen_zhi += abs(hp_per_changed) * qi_bei_lv * 100
+                qi_fen_zhi += abs(hp_per_changed) * QI_INCREASE_BEI_LV * 100
 
             if qi_fen_zhi != prev_qi_fen_zhi:
                 # hp changed
@@ -747,7 +744,7 @@ class FuFu_Q_Action(Action):
         hp = plan.get_max_hp()
         q_bonus = 1 + plan.get_q_bonus()
 
-        q_damage = hp * q_bei_lv / 100 * q_bonus
+        q_damage = hp * Q_BEI_LV / 100 * q_bonus
         q_damage = monster.attacked(q_damage)
 
         plan.total_damage += q_damage
@@ -763,7 +760,7 @@ class FuFu_E_Action(Action):
         hp = plan.get_max_hp()
         e_bonus = 1 + plan.get_e_bonus()
 
-        e_damage = hp * e_bei_lv / 100 * e_bonus
+        e_damage = hp * E_BEI_LV / 100 * e_bonus
         damage = monster.attacked(e_damage)
 
         plan.total_damage += damage
@@ -1055,10 +1052,10 @@ class Salon_Member_Damage_Action(Action):
 
         if plan.effective_qi_fen_zhi == 0 and self.force_add_fufu_q_bonus:
             # print("force add q bonus")
-            hp += round(400 * qi_hp_bei_lv * fu_ning_na_base_hp)
-            e_bonus += max_qi_fen_zhi * qi_bonus_bei_lv
+            hp += round(MAX_QI_FEN_ZHI * QI_HP_BEI_LV * FU_NING_NA_BASE_HP)
+            e_bonus += MAX_QI_FEN_ZHI * QI_TO_BONUS_BEI_LV
 
-        damage = hp * bei_lv / 100 * e_bonus * e_extra_damage_bonus
+        damage = hp * bei_lv / 100 * e_bonus * E_EXTRA_DAMAGE_BONUS
         damage = plan.monster.attacked(damage)
 
         plan.total_damage += damage
@@ -1103,7 +1100,7 @@ class Pang_Xie_Damage_Action(Salon_Member_Damage_Action):
 
 class Ge_Zhe_Cure_Action(Action):
     def do_impl(self, plan: ActionPlan, data, index):
-        cure_num = plan.get_max_hp() * e_cure_bei_lv / 100 + e_cure_base
+        cure_num = plan.get_max_hp() * GE_ZHE_CURE_BEI_LV / 100 + GE_ZHE_CURE_BASE
         cure_num *= plan.get_fufu().get_healing_bonus()
 
         foreground_character = plan.get_foreground_character()
@@ -1379,7 +1376,7 @@ def calc_score(fufu_initial_state: Character):
     return (all_damage, round(full_six_zhan_bi, 3))
 
 def scan_syw_combine(combine: list[ShengYiWu]) -> Character:
-    fufu = Character(name="fufu", base_hp=fu_ning_na_base_hp)
+    fufu = Character(name="fufu", base_hp=FU_NING_NA_BASE_HP)
     fufu.set_crit_rate(0.242)  # 突破加成
     fufu.set_crit_damage(0.5 + sum(extra_crit_damage.values()))
     fufu.get_hp().modify_max_hp(4780)  # 花
@@ -1439,52 +1436,52 @@ def calculate_score_qualifier(score_data: ShengYiWu_Score):
         # ”录制“了一次计算过程，作为快速筛选的依据
         damage = 0
         cur_hp = hp
-        damage += cur_hp * q_bei_lv / 100 * 1.615 * 1.05 * 0.487
-        damage += cur_hp * e_bei_lv / 100 * 2.013 * 1.25 * 0.487
+        damage += cur_hp * Q_BEI_LV / 100 * 1.615 * 1.05 * 0.487
+        damage += cur_hp * E_BEI_LV / 100 * 2.013 * 1.25 * 0.487
         damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.013 * 1.25 * 0.487
 
-        cur_hp  = hp + 0.14 * fu_ning_na_base_hp
+        cur_hp  = hp + 0.14 * FU_NING_NA_BASE_HP
         damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.117 * 1.25 * 0.487
         damage += cur_hp* HEI_FU_BEI_LV / 100 * 2.117 * 1.25 * 0.487
         damage += cur_hp * FU_REN_BEI_LV / 100 * 2.477 * 1.25 * 0.487
         damage += cur_hp * XUN_JUE_BEI_LV / 100 * 2.702 * 1.25 * 0.487
         damage += cur_hp * PANG_XIE_BEI_LV / 100 * 2.702 * 1.25 * 0.487
 
-        cur_hp = hp + (0.14 * 2 + 0.1) * fu_ning_na_base_hp
+        cur_hp = hp + (0.14 * 2 + 0.1) * FU_NING_NA_BASE_HP
         damage += cur_hp * FU_REN_BEI_LV / 100 * 3.168 * 1.25 * 0.487
 
-        cur_hp = hp + (0.14 * 2 +  0.1 + (491.584 - 400) * 0.0035) * fu_ning_na_base_hp
+        cur_hp = hp + (0.14 * 2 +  0.1 + (491.584 - 400) * 0.0035) * FU_NING_NA_BASE_HP
         damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487
 
-        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (491.584 - 400) * 0.0035) * fu_ning_na_base_hp
+        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (491.584 - 400) * 0.0035) * FU_NING_NA_BASE_HP
         damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487
 
-        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (508.377 - 400) * 0.0035) * fu_ning_na_base_hp
+        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (508.377 - 400) * 0.0035) * FU_NING_NA_BASE_HP
         damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.868 * 1.25 * 0.487
         damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.868 * 1.25 * 0.487
 
-        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (525.886 - 400) * 0.0035) * fu_ning_na_base_hp
+        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (525.886 - 400) * 0.0035) * FU_NING_NA_BASE_HP
         damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
 
-        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (560.904 - 400) * 0.0035) * fu_ning_na_base_hp
+        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (560.904 - 400) * 0.0035) * FU_NING_NA_BASE_HP
         damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
         damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
 
-        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (799.891 - 400) * 0.0035) * fu_ning_na_base_hp
+        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (799.891 - 400) * 0.0035) * FU_NING_NA_BASE_HP
         damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487
         damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487
         damage += cur_hp * PANG_XIE_BEI_LV / 100 * 3.308 * 1.25 * 0.487
 
-        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (800 - 400) * 0.0035) * fu_ning_na_base_hp
+        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (800 - 400) * 0.0035) * FU_NING_NA_BASE_HP
         damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487
         damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487
         damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487
 
-        cur_hp = hp + (0.14 * 2 +  0.1 * 3 + (800 - 400) * 0.0035) * fu_ning_na_base_hp
+        cur_hp = hp + (0.14 * 2 +  0.1 * 3 + (800 - 400) * 0.0035) * FU_NING_NA_BASE_HP
         damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487
         damage += cur_hp * PANG_XIE_BEI_LV / 100 * 3.308 * 1.25 * 0.487
 
-        cur_hp = hp + (0.14 * 2 +  0.1 * 3) * fu_ning_na_base_hp
+        cur_hp = hp + (0.14 * 2 +  0.1 * 3) * FU_NING_NA_BASE_HP
         damage += cur_hp * FU_REN_BEI_LV / 100 * 2.068 * 1.25 * 0.487
         damage += cur_hp * XUN_JUE_BEI_LV / 100 * 2.068 * 1.25 * 0.487
         damage += cur_hp * FU_REN_BEI_LV / 100 * 2.068 * 1.25 * 0.487
@@ -1518,9 +1515,9 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
     score_data.damage_to_score(damage, fufu.get_crit_rate(), 1 + fufu.get_crit_damage())
 
     panel_hp = fufu.get_hp().get_max_hp()
-    fufu.get_hp().modify_max_hp_per(ming_2_hp_bonus_max)
+    fufu.get_hp().modify_max_hp_per(MING_2_HP_BONUS_MAX)
     if has_zhuan_wu:
-        fufu.get_hp().modify_max_hp_per(zhuan_wu_hp_bei_lv * 2)
+        fufu.get_hp().modify_max_hp_per(ZHUAN_WU_HP_BEI_LV * 2)
     if has_4_ming_ye_lan:
         # 至少在单个怪上两次e
         fufu.get_hp().modify_max_hp_per(0.2)
@@ -1529,10 +1526,10 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
 
     max_e_bonus = fufu.get_e_bonus()
     if has_zhuan_wu:
-        max_e_bonus += zhuan_wu_e_bonus_bei_lv * 3
+        max_e_bonus += ZHUAN_WU_E_BONUS_BEI_LV * 3
     max_e_bonus += 0.28  # 按固有天赋2吃满计算
     # 大招满气氛值增伤
-    qi_max_elem_bonus = qi_bonus_bei_lv * max_qi_fen_zhi
+    qi_max_elem_bonus = QI_TO_BONUS_BEI_LV * MAX_QI_FEN_ZHI
     max_e_bonus += qi_max_elem_bonus
 
     max_a_bonus = fufu.get_normal_a_bonus() + qi_max_elem_bonus
