@@ -247,19 +247,11 @@ class Action:
         # timestamp是动态计算出来的，这里只是放一个占位符
         self.__timestamp = 0
 
-        # action的发起者，action执行的时候，会从source获取一些属性，以决定如何作用于target
-        # 发起者可以是系统，也可以是某个角色，不考虑怪物给角色上负面效果的情形
-        # 如果发起者是系统，则source是None
-        # self.__source = source
-        # action的目标对像，可以有多个，可以是怪物，也可以是队友
-        # 如果目标是怪物，目前我们关心的有：减抗、减防、造成伤害
-        # 如果目标是队友，目前我们关心的有：双爆加成、治疗、扣血、改变各种属性（例如：攻击力，生命值上限、元素伤害加成，等等）
-        # self.__targets = targets
-
     def set_done(self):
         self.done = True
 
     def set_timestamp(self, t):
+        # 时间戳只允许设置一次，这样做是为了防止将同一个action实例插入到 action_list
         if self.__timestamp:
             raise ActionTimestampException(
                 "Action timestamp already setted, can not change")
@@ -508,6 +500,9 @@ class ActionPlan:
         return (elem_bonus, healing_bonus, hp_per_bonus)
 
     def increase_zhuan_wu_hp_level(self, cur_time):
+        if not has_zhuan_wu:
+            return
+        
         if self.__zhuan_wu_hp_level >= 2:
             return
 
@@ -521,6 +516,9 @@ class ActionPlan:
         self.damage_debug("专武生命叠一层，目前层数: %d",  self.__zhuan_wu_hp_level)
 
     def increase_zhuan_wu_e_bonus_level(self, cur_time):
+        if not has_zhuan_wu:
+            return
+        
         if self.__zhuan_wu_e_bonus_level >= 3:
             return
 
