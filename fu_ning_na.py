@@ -41,6 +41,8 @@ class Teammate:
 YE_LAN_NAME = "ye lan"
 ZHONG_LI_NAME = "zhong li"
 WAN_YE_NAME = "wan ye"
+YING_BAO_NAME = "ying bao"
+QIN_NAME = "qing"
 
 g_teammates = {
     # 夜兰
@@ -343,7 +345,8 @@ class FuFuActionPlan(ActionPlan):
             self.prev_hp_str = s
 
     def damage_record_hp(self):
-        self.__damage_record_hp()
+        pass
+        # self.__damage_record_hp()
 
     def switch_to_forground(self, character_name):
         if self.__forground_character:
@@ -494,6 +497,9 @@ class FuFuActionPlan(ActionPlan):
         changed_characters = []
         qi_fen_zhi = 0
         prev_qi_fen_zhi = 0
+        fufu_hp_changed = False
+        teammate_hp_changed = False
+
         for c in characters:
             if hp > 0:
                 _, hp_per_changed = c.regenerate_hp(hp)
@@ -512,9 +518,9 @@ class FuFuActionPlan(ActionPlan):
             if qi_fen_zhi != prev_qi_fen_zhi:
                 # hp changed
                 if c is self.__fufu:
-                    self.increase_zhuan_wu_e_bonus_level(cur_time)
+                    fufu_hp_changed = True
                 else:
-                    self.increase_zhuan_wu_hp_level(cur_time)
+                    teammate_hp_changed = True
 
                 changed_characters.append(c)
 
@@ -522,6 +528,24 @@ class FuFuActionPlan(ActionPlan):
         
         if qi_fen_zhi:
             self.debug("当前生命值变化，影响的角色: %s", ",".join([c.name for c in changed_characters]))
+
+            if cur_time < self.get_current_action_time():
+                cur_time = self.get_current_action_time()
+
+            action_time = cur_time + self.get_effective_delay()
+
+            if fufu_hp_changed:
+                # self.increase_zhuan_wu_e_bonus_level(cur_time)
+                action = Increase_ZhuanWu_E_Bonus_Level_Action()
+                action.set_timestamp(action_time)
+                self.insert_action_runtime(action, re_sort=True)
+            
+            if teammate_hp_changed:
+                action = Increase_ZhuanWu_Hp_Level_Action()
+                action.set_timestamp(action_time)
+                self.insert_action_runtime(action, re_sort=True)
+                
+                # self.increase_zhuan_wu_hp_level(cur_time)
 
         self.add_qi_fen_zhi(qi_fen_zhi)
 
@@ -538,6 +562,21 @@ class FuFuActionPlan(ActionPlan):
             if c is self.__fufu and self.hei_fu_cure_fufu_action and self.hei_fu_cure_fufu_action.blocking:
                 self.hei_fu_cure_fufu_action.do(self)
         #self.debug("被扣血的角色 %s", changed_characters_str)
+
+class Increase_ZhuanWu_Hp_Level_Action(Action):
+    def __init__(self):
+        super().__init__("专武生命值叠层")
+
+    def do_impl(self, plan: FuFuActionPlan, data, index):
+        plan.increase_zhuan_wu_hp_level(self.get_timestamp())
+
+
+class Increase_ZhuanWu_E_Bonus_Level_Action(Action):
+    def __init__(self):
+        super().__init__("专武战技增伤叠层")
+
+    def do_impl(self, plan: FuFuActionPlan, data, index):
+        plan.increase_zhuan_wu_e_bonus_level(self.get_timestamp())
 
 class Apply_Qi_Fen_Zhi_Action(Action):
     def __init__(self):
@@ -561,7 +600,7 @@ class Apply_Qi_Fen_Zhi_Action(Action):
         else:
             next_time = self.get_timestamp() + random.randint(429, 587) / 1000
             action.set_timestamp(next_time)
-        plan.append_action(action, re_sort=True)
+        plan.insert_action_runtime(action, re_sort=True)
 
         plan.apply_qi_fen_zhi_action = action
 
@@ -674,6 +713,7 @@ class FuFu_E_Action(Action):
 class Hei_Fu_Cure_Action(Action):
     def __init__(self, name):
         super().__init__(name)
+        self.actual_cure_time = 0
         self.end_cure_time = 0
 
     def get_cure_num(self, fufu: Character):
@@ -693,13 +733,13 @@ class Hei_Fu_Cure_Teammate_Action(Hei_Fu_Cure_Action):
         self.re_schedule(plan)
 
     def re_schedule(self, plan: FuFuActionPlan):
-        next_time = self.get_timestamp() + plan.get_hei_fu_cure_interval() + \
-            plan.get_effective_delay()
+        next_time = self.actual_cure_time + plan.get_hei_fu_cure_interval()
         if next_time <= self.end_cure_time:
             action = Hei_Fu_Cure_Teammate_Action()
+            action.actual_cure_time = next_time
             action.end_cure_time = self.end_cure_time
-            action.set_timestamp(next_time)
-            plan.append_action(action, re_sort=True)
+            action.set_timestamp(next_time + plan.get_effective_delay())
+            plan.insert_action_runtime(action, re_sort=True)
 
             plan.hei_fu_cure_teammate_action = action
         else:
@@ -742,19 +782,21 @@ class Hei_Fu_Cure_FuFu_Action(Hei_Fu_Cure_Action):
                 plan.hei_fu_cure_fufu_action = None
                 return
             else:
-                next_time = plan.hei_fu_cure_teammate_action.get_timestamp() + \
-                    plan.get_hei_fu_cure_fufu_delay()
+                next_time = plan.hei_fu_cure_teammate_action.actual_cure_time + plan.get_hei_fu_cure_fufu_delay()
         else:
-            next_time = plan.get_current_action_time() + plan.get_hei_fu_cure_interval() + \
-                plan.get_effective_delay()
+            if self.blocking:
+                next_time = plan.get_current_action_time() + plan.get_hei_fu_cure_interval()
+            else:
+                next_time = self.actual_cure_time + plan.get_hei_fu_cure_interval()
 
         if next_time <= self.end_cure_time:
             # self.debug("治疗重新调度，模式%s", self.sync_with_cure_teammate)
             action = Hei_Fu_Cure_FuFu_Action(
                 sync_with_cure_teammate=self.sync_with_cure_teammate)
+            action.actual_cure_time = next_time
             action.end_cure_time = self.end_cure_time
-            action.set_timestamp(next_time)
-            plan.append_action(action, re_sort=True)
+            action.set_timestamp(next_time + plan.get_effective_delay())
+            plan.insert_action_runtime(action, re_sort=True)
             plan.hei_fu_cure_fufu_action = action
         else:
             self.debug("治疗芙芙到时间，终止")
@@ -762,8 +804,6 @@ class Hei_Fu_Cure_FuFu_Action(Hei_Fu_Cure_Action):
 
 # 芒、荒的伤害刀似乎都是按黑芙计算的
 # 注意：芒荒刀出伤的时候，芙芙不一定在前台
-
-
 class Mang_Huang_Damage_Action(Action):
     def do_impl(self, plan: FuFuActionPlan, data, index):
         monster = plan.monster
@@ -816,9 +856,10 @@ class Hei_Fu_Damage_Action(Action):
 
         # 治疗芙芙自身：因为治疗会blocking，逻辑更复杂
         if plan.hei_fu_cure_fufu_action:
+            # 已经有一个action在队列上，要检查其状态
             if plan.hei_fu_cure_fufu_action.blocking:
                 if self.get_timestamp() < plan.hei_fu_cure_fufu_action.end_cure_time:
-                    # 阻塞着，在结束时间之前又砍了一刀奶刀，则延长结束时间
+                    # 阻塞着，在有效时间之内又砍了一刀奶刀，则延长结束时间
                     self.debug("奶刀治疗芙芙阻塞中，延长持续时间")
                     plan.hei_fu_cure_fufu_action.end_cure_time += 2.9
                 else:
@@ -830,13 +871,14 @@ class Hei_Fu_Damage_Action(Action):
                 plan.hei_fu_cure_fufu_action.end_cure_time += 2.9
 
         if not plan.hei_fu_cure_fufu_action:
+            # 没有action，或者因为超时被重置了，需要重启
             if cure_teammate_restarted:
                 self.debug("启动奶刀治疗芙芙，同步模式")
                 action = Hei_Fu_Cure_FuFu_Action(sync_with_cure_teammate=True)
                 action.end_cure_time = plan.hei_fu_cure_teammate_action.end_cure_time
-                t = plan.hei_fu_cure_teammate_action.get_timestamp() + plan.get_hei_fu_cure_fufu_delay()
-                action.set_timestamp(t)
-                plan.append_action(action, re_sort=True)
+                action.actual_cure_time = plan.hei_fu_cure_teammate_action.actual_cure_time + plan.get_hei_fu_cure_fufu_delay()
+                action.set_timestamp(action.actual_cure_time + plan.get_effective_delay())
+                plan.insert_action_runtime(action, re_sort=True)
             else:
                 self.debug("启动奶刀治疗芙芙，独立模式")
                 action = self.start_new_cure(plan, Hei_Fu_Cure_FuFu_Action)
@@ -844,14 +886,14 @@ class Hei_Fu_Damage_Action(Action):
             plan.hei_fu_cure_fufu_action = action
 
     def start_new_cure(self, plan: FuFuActionPlan, cls):
-        effective_delay = plan.get_effective_delay()
-        first_cure_time = self.get_timestamp() + plan.get_hei_fu_first_cure_delay() + effective_delay
-        end_cure_time = first_cure_time + (2.9 - 1) + plan.get_hei_fu_cure_extension() + effective_delay
+        actual_cure_time = self.get_timestamp() + plan.get_hei_fu_first_cure_delay()
+        end_cure_time = actual_cure_time + (2.9 - 1) + plan.get_hei_fu_cure_extension()
         action = cls()
+        action.actual_cure_time = actual_cure_time
         action.end_cure_time = end_cure_time
-        action.set_timestamp(first_cure_time)
+        action.set_timestamp(actual_cure_time + plan.get_effective_delay())
 
-        plan.append_action(action, re_sort=True)
+        plan.insert_action_runtime(action, re_sort=True)
 
         return action
 
@@ -979,7 +1021,8 @@ class Salon_Member_Damage_Action(Action):
         self.debug("%s出伤, damage: %s, hp:%s bonus:%s, monster:%s",
                    bei_lv_to_salon_member_name[bei_lv], round(damage), hp, round(e_bonus, 3), 
                    plan.monster)
-        self.damage_record_hp(bei_lv_str=bei_lv_to_str[bei_lv], bonus=e_bonus, monster=plan.monster)
+        self.damage_record_hp(bei_lv_str=bei_lv_to_str[bei_lv], 
+                              bonus=e_bonus, monster=plan.monster, other_bonus=E_EXTRA_DAMAGE_BONUS)
 
 
 class Fu_Ren_Kou_Xue_Action(Action):
@@ -1078,8 +1121,8 @@ def schedule_little_three(plan: FuFuActionPlan, name,
 
     while kou_xue_time < end_time:
         kou_xue_action = kou_xue_cls(name + "扣血")
-        kou_xue_action.set_timestamp(kou_xue_time)
-        plan.append_action(kou_xue_action)
+        kou_xue_action.set_timestamp(kou_xue_time + plan.get_effective_delay())
+        plan.insert_action(kou_xue_action)
         k_action_lst.append(kou_xue_action)
 
         if last_chu_shang_time:
@@ -1109,7 +1152,7 @@ def schedule_little_three(plan: FuFuActionPlan, name,
         if chu_shang_time < end_time:
             chu_shang_action = chu_shang_cls(name + "出伤")
             chu_shang_action.set_timestamp(chu_shang_time)
-            plan.append_action(chu_shang_action)
+            plan.insert_action(chu_shang_action)
             c_action_lst.append(chu_shang_action)
 
             c_num += 1
@@ -1175,15 +1218,18 @@ def calc_score_worker(fufu_initial_state: Character):
                     0.8, 0.883, base_action="切芙芙出来")
     plan.add_action("第四刀", Bai_Fu_Damage_Action, 0.75,
                     0.767, base_action="第三刀重击出伤")
-    plan.add_action("第四刀扣血", Bai_Dao_Kou_Xue_Action, 0.165, 0.230, base_action="第四刀")
+    plan.add_action("第四刀扣血", Bai_Dao_Kou_Xue_Action, 0.165, 0.230, 
+                    base_action="第四刀", effective_delay=plan.get_effective_delay())
     plan.add_action("第五刀", Bai_Fu_Damage_Action,
                     0.383, 0.417, base_action="第四刀")
-    plan.add_action("第五刀扣血", Bai_Dao_Kou_Xue_Action, 0.165, 0.230, base_action="第五刀")
+    plan.add_action("第五刀扣血", Bai_Dao_Kou_Xue_Action, 0.165, 0.230, 
+                    base_action="第五刀", effective_delay=plan.get_effective_delay())
     plan.add_action("芒刀", Mang_Huang_Damage_Action,
                     0.6, 0.734, base_action="第四刀")
     plan.add_action("第六刀重击", Bai_Fu_Damage_Action,
                     0.683, 0.734, base_action="第五刀")
-    plan.add_action("第六刀扣血", Bai_Dao_Kou_Xue_Action, 0.05, 0.117, base_action="第六刀重击")
+    plan.add_action("第六刀扣血", Bai_Dao_Kou_Xue_Action, 0.05, 0.117, 
+                    base_action="第六刀重击", effective_delay=plan.get_effective_delay())
 
     # TODO: 这里的切人时间沿用了切夜兰出来的时间，是否需要重新测试
     plan.add_action("切万叶出来", Switch_To_Wan_Ye_Action, 0.333, 0.549, base_action="第六刀重击")
@@ -1262,8 +1308,8 @@ def calc_score_worker(fufu_initial_state: Character):
     ge_zhe_cure_time = ge_zhe_start_time + random.randint(1019, 1199) / 1000
     while ge_zhe_cure_time < ge_zhe_stop_time:
         ge_zhe = Ge_Zhe_Cure_Action("众水的歌者治疗")
-        ge_zhe.set_timestamp(ge_zhe_cure_time)
-        plan.append_action(ge_zhe)
+        ge_zhe.set_timestamp(ge_zhe_cure_time + plan.get_effective_delay())
+        plan.insert_action(ge_zhe)
 
         ge_zhe_cure_time += random.randint(1612, 1783) / 1000
 
@@ -1357,67 +1403,73 @@ def calculate_score_qualifier(score_data: ShengYiWu_Score):
         # ”录制“了一次计算过程，作为快速筛选的依据
         # 录制方法：
         # 1. 找到本文件开头处的 enable_debug，置为 True
-        # 2. 将 Action 类中的 damage_record_hp 里的注释去掉
+        # 2. 将 Action 相关类中的 damage_record_hp 里的注释去掉
         # 3. 在本文件最底部，去掉两行Logging相关的注释，你可能需要修改logging的输出文件
         # 然后执行，在logging的输出文件里能找到录制好的计算过程，稍作处理去掉一些冗余即可，也可不处理
+        # 后面会打印出这个计算的结果(需要把后面的 logging.debug注释去掉)，记得运行一下确认伤害量是正常的
 
         cur_hp = hp
         damage += cur_hp * Q_BEI_LV / 100 * 1.615 * 1.05 * 0.487
         damage += cur_hp * E_BEI_LV / 100 * 2.013 * 1.25 * 0.487
         damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.013 * 1.25 * 0.487
 
-        cur_hp  = hp + 0.14 * FU_NING_NA_BASE_HP
-        damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.117 * 1.25 * 0.487
-        damage += cur_hp* HEI_FU_BEI_LV / 100 * 2.117 * 1.25 * 0.487
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 2.477 * 1.25 * 0.487
-        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 2.702 * 1.25 * 0.487
-        damage += cur_hp * PANG_XIE_BEI_LV / 100 * 2.702 * 1.25 * 0.487
+        cur_hp = hp + (0.14 * 1) * FU_NING_NA_BASE_HP
+        damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.082 * 1.25 * 0.487
+        damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.082 * 1.25 * 0.487
+        damage += cur_hp * FU_REN_BEI_LV / 100 * 2.442 * 1.25 * 0.487 * 1.4
+        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 2.702 * 1.25 * 0.487 * 1.4
+        damage += cur_hp * PANG_XIE_BEI_LV / 100 * 2.702 * 1.25 * 0.487 * 1.4
 
-        cur_hp = hp + (0.14 * 2 + 0.1) * FU_NING_NA_BASE_HP
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.168 * 1.25 * 0.487
+        cur_hp = hp + (0.14 * 2 + 0.1 * 1) * FU_NING_NA_BASE_HP
+        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.258 * 1.25 * 0.487 * 1.4
 
-        cur_hp = hp + (0.14 * 2 +  0.1 + (491.584 - 400) * 0.0035) * FU_NING_NA_BASE_HP
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487
+        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (457.982 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.353 * 1.25 * 0.487 * 1.4
 
-        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (491.584 - 400) * 0.0035) * FU_NING_NA_BASE_HP
-        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487
-
-        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (508.377 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (499.975 - 400) * 0.0035) * FU_NING_NA_BASE_HP
         damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.868 * 1.25 * 0.487
+
+        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (508.375 - 400) * 0.0035) * FU_NING_NA_BASE_HP
         damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.868 * 1.25 * 0.487
 
-        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (525.886 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (525.884 - 400) * 0.0035) * FU_NING_NA_BASE_HP
         damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
-
-        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (560.904 - 400) * 0.0035) * FU_NING_NA_BASE_HP
         damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
+
+        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (550.395 - 400) * 0.0035) * FU_NING_NA_BASE_HP
         damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
 
-        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (799.891 - 400) * 0.0035) * FU_NING_NA_BASE_HP
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487
-        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487
-        damage += cur_hp * PANG_XIE_BEI_LV / 100 * 3.308 * 1.25 * 0.487
+        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (698.806 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
 
-        cur_hp = hp + (0.14 * 2 +  0.1 * 2 + (800 - 400) * 0.0035) * FU_NING_NA_BASE_HP
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487
-        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487
+        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (799.884 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+        damage += cur_hp * PANG_XIE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
 
-        cur_hp = hp + (0.14 * 2 +  0.1 * 3 + (800 - 400) * 0.0035) * FU_NING_NA_BASE_HP
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487
-        damage += cur_hp * PANG_XIE_BEI_LV / 100 * 3.308 * 1.25 * 0.487
+        cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (800 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
 
-        cur_hp = hp + (0.14 * 2 +  0.1 * 3) * FU_NING_NA_BASE_HP
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 2.068 * 1.25 * 0.487
-        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 2.068 * 1.25 * 0.487
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 2.068 * 1.25 * 0.487
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 1.67 * 1.25 * 0.487
-        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 1.67 * 1.25 * 0.487
-        damage += cur_hp * PANG_XIE_BEI_LV / 100 * 1.67 * 1.05 * 0.487
-        damage += cur_hp * FU_REN_BEI_LV / 100 * 1.67 * 1.05 * 0.487
+        cur_hp = hp + (0.14 * 2 + 0.1 * 3 + (800 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+        damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+        damage += cur_hp * PANG_XIE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+
+        cur_hp = hp + (0.14 * 2 + 0.1 * 3) * FU_NING_NA_BASE_HP
+        damage += cur_hp * FU_REN_BEI_LV / 100 * 2.068 * 1.25 * 0.487 * 1.4
+        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 2.068 * 1.25 * 0.487 * 1.4
+        damage += cur_hp * FU_REN_BEI_LV / 100 * 2.068 * 1.25 * 0.487 * 1.4
+        damage += cur_hp * FU_REN_BEI_LV / 100 * 1.67 * 1.25 * 0.487 * 1.4
+        damage += cur_hp * XUN_JUE_BEI_LV / 100 * 1.67 * 1.25 * 0.487 * 1.4
+        damage += cur_hp * PANG_XIE_BEI_LV / 100 * 1.67 * 1.05 * 0.487 * 1.4
+        damage += cur_hp * FU_REN_BEI_LV / 100 * 1.67 * 1.05 * 0.487 * 1.4
 
         score_data.damage_to_score(damage, fufu.get_crit_rate(), 1 + fufu.get_crit_damage())
         score_data.custom_data = fufu
+        
+        #logging.debug("damage:%s, expect_score:%s, crit_score:%s", 
+        #              damage, score_data.expect_score, score_data.crit_score)
 
         return True
     else:
@@ -1489,7 +1541,7 @@ def find_syw_for_fu_ning_na():
 
 # Main body
 if __name__ == '__main__':
-    #logging.basicConfig(filename='D:\\logs\\fufu.log', encoding='utf-8', filemode='w', level=logging.DEBUG)
-    #logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(filename='D:\\logs\\fufu.log', encoding='utf-8', filemode='w', level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
     print("默认算法复杂，圣遗物多的话需要执行0.5~1小时多")
     find_syw_for_fu_ning_na()

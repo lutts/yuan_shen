@@ -43,18 +43,20 @@ class Action:
     
     def debug(self, fmt_str, *args, **kwargs):
         pass
-        #self.__debug(fmt_str, *args, **kwargs)
+        # self.__debug(fmt_str, *args, **kwargs)
         
-    def damage_record(self,  prefix, bei_lv_str, bonus, monster: Monster):
+    def damage_record(self,  prefix, bei_lv_str, bonus, monster: Monster, other_bonus=0):
         s = [prefix, bei_lv_str]
         s.append(str(round(bonus, 3)))
         s.append(str(round(monster.kang_xin_xi_su, 3)))
         s.append(str(round(monster.fang_yu_xi_shu, 3)))
+        if other_bonus:
+            s.append(str(other_bonus))
         logging.debug(" * ".join(s))
 
-    def damage_record_hp(self, bei_lv_str, bonus, monster: Monster):
+    def damage_record_hp(self, bei_lv_str, bonus, monster: Monster, other_bonus=0):
         pass
-        # self.damage_record("damage += cur_hp", bei_lv_str, bonus, monster)
+        # self.damage_record("damage += cur_hp", bei_lv_str, bonus, monster, other_bonus)
 
     def do(self, plan: ActionPlan, data=None, index=-1):
         if self.done:
@@ -88,38 +90,50 @@ class ActionPlan:
 
     def debug(self, fmt_str, *args, **kwargs):
         pass
-        #self.__debug(fmt_str, *args, **kwargs)
+        # self.__debug(fmt_str, *args, **kwargs)
 
     def sort_action(self):
         self.action_list.sort(key=lambda a: a.get_timestamp())
 
-    def add_action(self, name, cls, min_t, max_t, base_action=None, negative=False, **kwargs):
+    def add_action(self, name, cls, min_t, max_t, base_action=None, negative=False, effective_delay=0, **kwargs):
         action = cls(name, **kwargs)
         base_time = 0
         if base_action:
+            base_action_found = False
             for a in self.action_list:
                 if a.name == base_action:
                     base_time = a.get_timestamp()
+                    base_action_found = True
                     break
+
+            if not base_action_found:
+                raise Exception("base action " + base_action + " not found!")
 
         t = random.randint(round(min_t * 1000), round(max_t * 1000)) / 1000
         if negative:
             timestamp = base_time - t
         else:
             timestamp = base_time + t
-        action.set_timestamp(timestamp)
+        action.set_timestamp(timestamp + effective_delay)
 
-        self.append_action(action)
-
-    def append_action(self, action, re_sort=False):
         self.action_list.append(action)
-        if re_sort:
-            self.sort_action()
 
     def find_first_action(self, action_name) -> Action:
         for t in self.action_list:
             if t.name == action_name:
                 return t
+            
+    def insert_action(self, action, re_sort=False):
+        self.action_list.append(action)
+        if re_sort:
+            self.sort_action()
+            
+    def insert_action_runtime(self, action, re_sort=True):
+        if action.get_timestamp() < self.__current_action_time:
+            raise Exception("action timestamp small than current action time")
+        
+        self.insert_action(action, re_sort)
+        
 
     def run(self):
         self.sort_action()
