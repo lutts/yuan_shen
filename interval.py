@@ -1,5 +1,53 @@
 import math
 import numpy
+import itertools
+from base_syw import all_syw
+
+def all_syw_combines():
+    print(len(all_syw['h']))
+    print(len(all_syw['y']))
+    print(len(all_syw['s']))
+    print(len(all_syw['b']))
+    print(len(all_syw['t']))
+
+    all_parts_name = ['h', 'y', 's', 'b', 't']
+    all_parts = set([0, 1, 2, 3, 4])
+    l4 = list(itertools.combinations(all_parts, 4))
+    l4_with_san = []
+    for l in  l4:
+        s = all_parts - set(l)
+        l4_with_san.append([list(l), list(s)])
+    print("四件套：", len(l4_with_san))
+
+    print(l4_with_san)
+
+    l2 = list(itertools.combinations(all_parts,  2))
+    l2_with_san = []
+    for l in l2:
+        s = all_parts - set(l)
+        l2_with_san.append([list(l), list(s)])
+    print("两件套: ", len(l2_with_san))
+    print(l2_with_san)
+
+    l2p2 = []
+    for c in l2:
+        missed = all_parts - set(c)
+        missed_c = list(itertools.combinations(missed, 2))
+        
+        for m in missed_c:
+            l2p2.append(c + m)
+
+    l2p2 = list(set(l2p2))
+    l2p2_with_san = []
+    for l in l2p2:
+        c = [l[0], l[1]]
+        m = [l[2], l[3]]
+        s = list(all_parts - set(l))
+        l2p2_with_san.append([c, m, s])
+    print("2+2: ", len(l2p2_with_san))
+    print(l2p2_with_san)
+
+
 
 def quantile_exc(data, n):
     """
@@ -194,7 +242,31 @@ def damage_sum():
     for i in range(0, len(damages)):
         print(str(damages[i]) + ", " + str(sum(damages[0:i+1])))
 
+
+class Haha:
+    i = 0
+
+    def __init__(self):
+        self.a = 0
+        self.b = Haha.i
+        Haha.i += 1
+
+h1 = Haha()
+h2 = Haha()
+
 # Main body
 if __name__ == '__main__':
     #avg_min_max()
-    damage_sum()
+    # damage_sum()
+    all_syw_combines()
+    print(h1.b)
+    print(h2.b)
+    print(Haha.i)
+
+    s = {"1", "2", "3"}
+    all_2p2 = list(itertools.combinations(s, 2))
+    for set1_name, set2_name in all_2p2:
+        print("---")
+        print(set1_name)
+        print(set2_name)
+        

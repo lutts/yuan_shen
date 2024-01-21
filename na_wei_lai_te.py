@@ -8,37 +8,9 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, find_syw, calc_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
 ming_zuo_num = 1
-
-def match_sha_callback(syw: ShengYiWu):
-    return syw.hp_percent == 0.466 or syw.energy_recharge == ShengYiWu.energy_recharge_MAX
-
-
-def match_bei_callback(syw: ShengYiWu):
-    return syw.hp_percent == 0.466 or syw.elem_type == ShengYiWu.ELEM_TYPE_SHUI
-
-
-def match_syw(s: ShengYiWu, expect_name):
-    if s.name != expect_name:
-        return False
-
-    if s.part == ShengYiWu.PART_SHA:
-        return match_sha_callback(s)
-    elif s.part == ShengYiWu.PART_BEI:
-        return match_bei_callback(s)
-    else:
-        return True
-
-
-def find_combine_callback():
-    yue_tuan = find_syw(
-        match_syw_callback=lambda s: match_syw(s, ShengYiWu.YUE_TUAN))
-    lie_ren = find_syw(
-        match_syw_callback=lambda s: match_syw(s, ShengYiWu.LIE_REN))
-    
-    return list(itertools.combinations(yue_tuan, 4)) + list(itertools.combinations(lie_ren, 4))
 
 def calculate_score_callback(score_data: ShengYiWu_Score):
     base_hp = 14695
@@ -115,11 +87,31 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
 
 result_description = ["生命值", "面板暴击率", "实战暴击率", "暴击伤害", "充能效率"]
 
+def match_sha_callback(syw: ShengYiWu):
+    return syw.hp_percent == 0.466 or syw.energy_recharge == ShengYiWu.ENERGY_RECHARGE_MAX
+
+
+def match_bei_callback(syw: ShengYiWu):
+    return syw.hp_percent == 0.466 or syw.elem_type == ShengYiWu.ELEM_TYPE_SHUI
+
+
+def match_tou_callback(syw: ShengYiWu):
+    return syw.crit_rate == ShengYiWu.CRIT_RATE_MAIN or syw.crit_damage == ShengYiWu.CRIT_DAMAGE_MAIN or syw.hp_percent == ShengYiWu.BONUS_MAX
+
 
 def find_syw_for_na_wei_lai_te():
-    return calculate_score(find_combine_callback=find_combine_callback,
-                           match_sha_callback=match_sha_callback,
-                           match_bei_callback=match_bei_callback,
+    combine_desc_lst = [
+        Syw_Combine_Desc(set1_name=ShengYiWu.YUE_TUAN, set1_num=4),
+        Syw_Combine_Desc(set1_name=ShengYiWu.LIE_REN, set1_num=4),
+    ]
+
+    raw_score_list = find_syw_combine(combine_desc_lst,
+                                      match_sha_callback=match_sha_callback,
+                                      match_bei_callback=match_bei_callback,
+                                      match_tou_callback=match_tou_callback)
+    print(len(raw_score_list))
+
+    return calculate_score(raw_score_list,
                            calculate_score_callbak=calculate_score_callback,
                            result_txt_file="na_wei_lai_te_syw.txt",
                            result_description=result_description)

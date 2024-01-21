@@ -8,62 +8,11 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, find_syw, calc_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
 ming_zuo_num = 6
 qian_tai_damage = True
 shuang_cao = False  # 双草
-
-def match_sha_callback(syw: ShengYiWu):
-    return syw.elem_mastery == ShengYiWu.ELEM_MASTERY_MAIN
-
-
-def match_bei_callback(syw: ShengYiWu):
-    # or syw.atk_per == ShengYiWu.BONUS_MAX or syw.elem_mastery == ShengYiWu.ELEM_MASTERY_MAIN
-    return syw.elem_type == ShengYiWu.ELEM_TYPE_CAO
-
-
-def match_syw(s: ShengYiWu, expect_name):
-    if s.name != expect_name:
-        return False
-
-    if s.part == ShengYiWu.PART_SHA:
-        return match_sha_callback(s)
-    elif s.part == ShengYiWu.PART_BEI:
-        return match_bei_callback(s)
-    else:
-        return True
-
-
-def find_combins_callback_all():
-    shen_lin = find_syw(
-        match_syw_callback=lambda s: match_syw(s, ShengYiWu.SHEN_LIN))
-    shi_jin = find_syw(
-        match_syw_callback=lambda s: match_syw(s, ShengYiWu.SHI_JIN))
-    ju_tuan = find_syw(
-        match_syw_callback=lambda s: match_syw(s, ShengYiWu.JU_TUAN))
-    yue_tuan = find_syw(
-        match_syw_callback=lambda s: match_syw(s, ShengYiWu.YUE_TUAN))
-
-    shen_lin_2 = list(itertools.combinations(shen_lin, 2))
-    shi_jin_2 = list(itertools.combinations(shi_jin, 2))
-    ju_tuan_2 = list(itertools.combinations(ju_tuan, 2))
-    yue_tuan_2 = list(itertools.combinations(yue_tuan, 2))
-
-    all_2 = shen_lin_2 + shi_jin_2 + ju_tuan_2 + yue_tuan_2
-    all_4 = list(itertools.combinations(shen_lin, 4)) + \
-        list(itertools.combinations(shi_jin, 4)) + \
-            list(itertools.combinations(ju_tuan, 4))
-
-    return [(l[0] + l[1])
-            for l in list(itertools.combinations(all_2, 2))] + all_4
-
-
-def find_combins_callback():
-    shen_lin = find_syw(
-        match_syw_callback=lambda s: match_syw(s, ShengYiWu.SHEN_LIN))
-    return list(itertools.combinations(shen_lin, 4))
-
 
 def calculate_score_callback(score_data: ShengYiWu_Score):
     wu_qi_atk = 542
@@ -177,19 +126,47 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
 
 result_description = ["实战前台精通", "实战后台精通", "实战攻击力", "面板暴击率", "实战暴击率", "暴伤", "充能效率"]
 
+def match_sha_callback(syw: ShengYiWu):
+    return syw.elem_mastery == ShengYiWu.ELEM_MASTERY_MAIN
+
+
+def match_bei_callback(syw: ShengYiWu):
+    # or syw.atk_per == ShengYiWu.BONUS_MAX or syw.elem_mastery == ShengYiWu.ELEM_MASTERY_MAIN
+    return syw.elem_type == ShengYiWu.ELEM_TYPE_CAO
+
+def match_tou_callback(syw: ShengYiWu):
+    return syw.crit_rate == ShengYiWu.CRIT_RATE_MAIN or syw.crit_damage == ShengYiWu.CRIT_DAMAGE_MAIN
+
+
+def get_raw_score_list(only_shen_lin=True):
+    combine_desc_lst = []
+
+    if not only_shen_lin:
+        combine_desc_lst = Syw_Combine_Desc.any_2p2([ShengYiWu.SHEN_LIN,
+                                                    ShengYiWu.SHI_JIN,
+                                                    ShengYiWu.JU_TUAN,
+                                                    ShengYiWu.YUE_TUAN])
+        combine_desc_lst.append(Syw_Combine_Desc(set1_name=ShengYiWu.SHI_JIN, set1_num=4))
+        combine_desc_lst.append(Syw_Combine_Desc(set1_name=ShengYiWu.JU_TUAN, set1_num=4))
+
+    combine_desc_lst.append(Syw_Combine_Desc(set1_name=ShengYiWu.SHEN_LIN, set1_num=4))
+
+    raw_score_list = find_syw_combine(combine_desc_lst,
+                                      match_sha_callback=match_sha_callback,
+                                      match_bei_callback=match_bei_callback,
+                                      match_tou_callback=match_tou_callback)
+    print(len(raw_score_list))
+    return raw_score_list
+
 def find_syw_for_na_xi_da_all():
-    return calculate_score(find_combine_callback=find_combins_callback_all,
-                           match_sha_callback=match_sha_callback,
-                           match_bei_callback=match_bei_callback,
+    return calculate_score(get_raw_score_list(only_shen_lin=False),
                            calculate_score_callbak=calculate_score_callback,
                            result_txt_file="na_xi_da_syw_all.txt",
                            result_description=result_description
                            )
 
 def find_syw_for_na_xi_da():
-    return calculate_score(find_combine_callback=find_combins_callback,
-                           match_sha_callback=match_sha_callback,
-                           match_bei_callback=match_bei_callback,
+    return calculate_score(get_raw_score_list(only_shen_lin=True),
                            calculate_score_callbak=calculate_score_callback,
                            result_txt_file="na_xi_da_syw_shen_lin.txt",
                            result_description=result_description)

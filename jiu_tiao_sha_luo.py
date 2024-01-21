@@ -8,32 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, find_syw, set_score_threshold, calc_expect_damage
-
-
-def match_sha_callback(syw: ShengYiWu):
-    return syw.energy_recharge == ShengYiWu.energy_recharge_MAX 
-
-
-def match_bei_callback(syw: ShengYiWu):
-    return syw.elem_type == ShengYiWu.ELEM_TYPE_LEI
-
-
-def match_syw(s: ShengYiWu, expect_name):
-    if s.name != expect_name:
-        return False
-
-    if s.part == ShengYiWu.PART_SHA:
-        return match_sha_callback(s)
-    elif s.part == ShengYiWu.PART_BEI:
-        return match_bei_callback(s)
-    else:
-        return True
-
-
-def find_combins_callback():
-    jue_yuan = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.JUE_YUAN))
-    return list(itertools.combinations(jue_yuan, 4))
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, set_score_threshold, Syw_Combine_Desc, find_syw_combine
 
 
 def calculate_score_callback(score_data: ShengYiWu_Score):
@@ -107,13 +82,29 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
 result_description = ["总评分", "期望伤害评分", "暴击伤害评分", "攻击力", "暴击率", "暴击伤害", "充能效率"]
 
 
+def match_sha_callback(syw: ShengYiWu):
+    return syw.energy_recharge == ShengYiWu.ENERGY_RECHARGE_MAX 
+
+
+def match_bei_callback(syw: ShengYiWu):
+    return syw.elem_type == ShengYiWu.ELEM_TYPE_LEI
+
+
+def match_tou_callback(syw: ShengYiWu):
+    return syw.crit_rate == ShengYiWu.CRIT_RATE_MAIN or syw.crit_damage == ShengYiWu.CRIT_DAMAGE_MAIN
+
+
 def find_syw_for_jiu_tiao_sha_luo():
-    return calculate_score(find_combine_callback=find_combins_callback,
-                    match_sha_callback=match_sha_callback,
-                    match_bei_callback=match_bei_callback,
-                    calculate_score_callbak=calculate_score_callback,
-                    result_txt_file="jiu_tiao_sha_luo_syw.txt",
-                    result_description=result_description)
+    raw_score_list = find_syw_combine([Syw_Combine_Desc(set1_name=ShengYiWu.JUE_YUAN, set1_num=4)],
+                                      match_sha_callback=match_sha_callback,
+                                      match_bei_callback=match_bei_callback,
+                                      match_tou_callback=match_tou_callback)
+    print(len(raw_score_list))
+
+    return calculate_score(raw_score_list,
+                           calculate_score_callbak=calculate_score_callback,
+                           result_txt_file="jiu_tiao_sha_luo_syw.txt",
+                           result_description=result_description)
 
 # Main body
 if __name__ == '__main__':

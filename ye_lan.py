@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, ShengYiWu_Score, find_syw, calculate_score, calc_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine, calc_expect_damage
 
 ming_zuo_num = 6
 
@@ -34,69 +34,6 @@ fu_fu_q_bonus = 1.24
 wan_ye_bonus = 0.4
 
 ye_lan_base_hp = 14450.0
-
-
-def match_sha_callback(syw: ShengYiWu):
-    return syw.hp_percent == 0.466 or syw.energy_recharge == ShengYiWu.energy_recharge_MAX
-
-
-def match_bei_callback(syw: ShengYiWu):
-    return syw.hp_percent == 0.466 or syw.elem_type == ShengYiWu.ELEM_TYPE_SHUI
-
-
-def match_syw(s: ShengYiWu, expect_name):
-    if s.name != expect_name:
-        return False
-
-    if s.part == ShengYiWu.PART_SHA:
-        return match_sha_callback(s)
-    elif s.part == ShengYiWu.PART_BEI:
-        return match_bei_callback(s)
-    else:
-        return True
-
-
-def find_combine_callback():
-    # [(hua_hai, h, cc:0.035, cd:0.218, hpp:0.157, atk:31),
-    # (qian_yan, y, cc:0.101, cd:0.132, hpp:0.041, re:0.175),
-    # (qian_yan, s, cc:0.066, cd:0.21, hpp:0.466, atk:33, elem:40),
-    # (hua_hai, b, cd:0.14, hpp:0.163, re:0.052, atk:27, bonus:0.466),
-    # jue_dou_shi, t, cc:0.311, cd:0.303, hpp:0.053, hp:209, atk:39)]]
-    # return [
-    #     (
-    #         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_HUA,
-    #                   crit_rate=0.035, crit_damage=0.218, hp_percent=0.157, atk=31),
-    #         ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_YU,
-    #                   crit_rate=0.101, crit_damage=0.132, hp_percent=0.041, energy_recharge=0.175),
-    #         ShengYiWu(ShengYiWu.QIAN_YAN, ShengYiWu.PART_SHA,
-    #                   crit_rate=0.066, crit_damage=0.21, hp_percent=0.466, atk=33, elem_mastery=40),
-    #         ShengYiWu(ShengYiWu.HUA_HAI, ShengYiWu.PART_BEI, elem_bonus=0.466, elem_type=ShengYiWu.ELEM_TYPE_SHUI,
-    #                   crit_damage=0.14, hp_percent=0.163, energy_recharge=0.052, atk=27)
-    #     )
-    # ]
-    hua_hai = find_syw(
-        match_syw_callback=lambda s: match_syw(s, ShengYiWu.HUA_HAI))
-    qian_yan = find_syw(
-        match_syw_callback=lambda s: match_syw(s, ShengYiWu.QIAN_YAN))
-    chen_lun = find_syw(
-        match_syw_callback=lambda s: match_syw(s, ShengYiWu.CHEN_LUN))
-    shui_xian = find_syw(
-        match_syw_callback=lambda s: match_syw(s, ShengYiWu.SHUI_XIAN))
-    jue_yuan = find_syw(
-        match_syw_callback=lambda s: match_syw(s, ShengYiWu.JUE_YUAN))
-
-    hua_hai_combins = list(itertools.combinations(hua_hai, 2))
-    qian_yan_combins = list(itertools.combinations(qian_yan, 2))
-    chen_lun_combins = list(itertools.combinations(chen_lun, 2))
-    shui_xian_combins = list(itertools.combinations(shui_xian, 2))
-
-    jue_yuan_4 = list(itertools.combinations(jue_yuan, 4))
-
-    all_combins = hua_hai_combins + qian_yan_combins + \
-        chen_lun_combins + shui_xian_combins
-    return [(l[0] + l[1])
-            for l in list(itertools.combinations(all_combins, 2))] + jue_yuan_4
-
 
 class YeLanQBonus:
     def __init__(self):
@@ -471,6 +408,7 @@ def calculate_score_callback(score_data: ShengYiWu_Score, has_fu_fu=True, has_le
 
 result_description = ", ".join(["出战生命值上限", "实战元素伤害加成", "暴击率", "暴击伤害", "充能效率"])
 
+
 def calculate_score_qualifier_only_fu_fu(score_data: ShengYiWu_Score):
     return calculate_score_qualifier(score_data)
 
@@ -484,10 +422,36 @@ def calculate_score_callback_only_lei_shen(score_data: ShengYiWu_Score):
     return calculate_score_callback(score_data, False, True)
 
 
+def match_sha_callback(syw: ShengYiWu):
+    return syw.hp_percent == ShengYiWu.BONUS_MAX or syw.energy_recharge == ShengYiWu.ENERGY_RECHARGE_MAX
+
+
+def match_bei_callback(syw: ShengYiWu):
+    return syw.hp_percent == ShengYiWu.BONUS_MAX or syw.elem_type == ShengYiWu.ELEM_TYPE_SHUI
+
+
+def match_tou_callback(syw: ShengYiWu):
+    return syw.crit_rate == ShengYiWu.CRIT_RATE_MAIN or syw.crit_damage == ShengYiWu.CRIT_DAMAGE_MAIN or syw.hp_percent == ShengYiWu.BONUS_MAX
+
+
+def get_raw_score_list():
+    combine_desc_lst = Syw_Combine_Desc.any_2p2([ShengYiWu.HUA_HAI,
+                                                 ShengYiWu.QIAN_YAN,
+                                                 ShengYiWu.CHEN_LUN,
+                                                 ShengYiWu.SHUI_XIAN])
+
+    combine_desc_lst.append(Syw_Combine_Desc(set1_name=ShengYiWu.JUE_YUAN, set1_num=4))
+
+    raw_score_list = find_syw_combine(combine_desc_lst,
+                                      match_sha_callback=match_sha_callback,
+                                      match_bei_callback=match_bei_callback,
+                                      match_tou_callback=match_tou_callback)
+    print(len(raw_score_list))
+    return  raw_score_list
+
+
 def find_syw_for_ye_lan_with_fu_fu():
-    return calculate_score(find_combine_callback=find_combine_callback,
-                           match_sha_callback=match_sha_callback,
-                           match_bei_callback=match_bei_callback,
+    return calculate_score(get_raw_score_list(),
                            calculate_score_callbak=calculate_score_callback_only_fufu,
                            result_txt_file="ye_lan_syw_with_fu_fu.txt",
                            result_description=result_description,
@@ -496,9 +460,7 @@ def find_syw_for_ye_lan_with_fu_fu():
 
 
 def find_syw_for_ye_lan_with_lei_shen():
-    return calculate_score(find_combine_callback=find_combine_callback,
-                           match_sha_callback=match_sha_callback,
-                           match_bei_callback=match_bei_callback,
+    return calculate_score(get_raw_score_list(),
                            calculate_score_callbak=calculate_score_callback_only_lei_shen,
                            result_txt_file="ye_lan_syw_with_lei_shen.txt",
                            result_description=result_description,

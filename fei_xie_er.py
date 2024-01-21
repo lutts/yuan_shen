@@ -8,47 +8,7 @@ import sys
 import os
 import logging
 import itertools
-from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, find_syw, calc_expect_damage
-
-
-def match_sha_callback(syw: ShengYiWu):
-    return syw.atk_per == ShengYiWu.BONUS_MAX or syw.elem_mastery == ShengYiWu.ELEM_MASTERY_MAIN
-
-
-def match_bei_callback(syw: ShengYiWu):
-    return syw.elem_type == ShengYiWu.ELEM_TYPE_LEI
-
-
-def match_syw(s: ShengYiWu, expect_name):
-    if s.name != expect_name:
-        return False
-
-    if s.part == ShengYiWu.PART_SHA:
-        return match_sha_callback(s)
-    elif s.part == ShengYiWu.PART_BEI:
-        return match_bei_callback(s)
-    else:
-        return True
-
-def find_combins_callback():
-    ju_tuan = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.JU_TUAN))
-    ru_lei = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.RU_LEI))
-    zhui_yi = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.ZHUI_YI))
-    jue_dou_shi = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.JUE_DOU_SHI))
-    shi_jin = find_syw(match_syw_callback=lambda s: match_syw(s, ShengYiWu.SHI_JIN))
-
-    ju_tuan_2_combins = list(itertools.combinations(ju_tuan, 2))
-    ju_tuan_4_combins = list(itertools.combinations(ju_tuan, 4))
-    ru_lei_combins = list(itertools.combinations(ru_lei, 2))
-    zhui_yi_combins = list(itertools.combinations(zhui_yi, 2))
-    jue_dou_shi_combins = list(itertools.combinations(jue_dou_shi, 2))
-    shi_jin_combins = list(itertools.combinations(shi_jin, 4))
-
-    all_combins_2 = ju_tuan_2_combins + ru_lei_combins + zhui_yi_combins + jue_dou_shi_combins
-    all_combins = [(l[0] + l[1])
-                   for l in list(itertools.combinations(all_combins_2, 2))] + ju_tuan_4_combins + shi_jin_combins
-    
-    return all_combins
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
 
 def calculate_score_callback(score_data: ShengYiWu_Score):
@@ -130,13 +90,35 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
 
 result_description = ["精通", "实战攻击力", "暴击率", "暴击伤害"]
 
+def match_sha_callback(syw: ShengYiWu):
+    return syw.atk_per == ShengYiWu.BONUS_MAX or syw.elem_mastery == ShengYiWu.ELEM_MASTERY_MAIN
+
+
+def match_bei_callback(syw: ShengYiWu):
+    return syw.elem_type == ShengYiWu.ELEM_TYPE_LEI
+
+def match_tou_callback(syw: ShengYiWu):
+    return syw.crit_rate == ShengYiWu.CRIT_RATE_MAIN or syw.crit_damage == ShengYiWu.CRIT_DAMAGE_MAIN
+
 def find_syw_for_fei_xie_er():
-    return calculate_score(find_combine_callback=find_combins_callback,
-                    match_sha_callback=match_sha_callback,
-                    match_bei_callback=match_bei_callback,
-                    calculate_score_callbak=calculate_score_callback,
-                    result_txt_file="fei_xie_er_syw.txt",
-                    result_description=result_description)
+    combine_desc_lst = Syw_Combine_Desc.any_2p2([ShengYiWu.JU_TUAN,
+                                                 ShengYiWu.RU_LEI,
+                                                 ShengYiWu.ZHUI_YI,
+                                                 ShengYiWu.JUE_DOU_SHI])
+
+    combine_desc_lst.append(Syw_Combine_Desc(set1_name=ShengYiWu.JU_TUAN, set1_num=4))
+    combine_desc_lst.append(Syw_Combine_Desc(set1_name=ShengYiWu.SHI_JIN, set1_num=4))
+
+    raw_score_list = find_syw_combine(combine_desc_lst,
+                                      match_sha_callback=match_sha_callback,
+                                      match_bei_callback=match_bei_callback,
+                                      match_tou_callback=match_tou_callback)
+    print(len(raw_score_list))
+
+    return calculate_score(raw_score_list,
+                           calculate_score_callbak=calculate_score_callback,
+                           result_txt_file="fei_xie_er_syw.txt",
+                           result_description=result_description)
 
 # Main body
 if __name__ == '__main__':
