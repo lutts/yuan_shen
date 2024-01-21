@@ -1224,54 +1224,6 @@ def calc_score_inline(raw_score_list, calculate_score_callbak, threshold) -> Sco
     return calc_score_2nd_phrase(score_list, threshold)
 
 
-def find_syw_combine_old(find_combine_callback, match_sha_callback, match_bei_callback):
-    all_combins_4: list[list[ShengYiWu]] = find_combine_callback()
-    print(len(all_combins_4))
-
-    raw_score_list: list[ShengYiWu_Score] = []
-
-    all_combins_5 = {}
-    for c in all_combins_4:
-        sorted_combine = [None, None, None, None, None]
-        miss_idx = 0 + 1 + 2 + 3 + 4
-        syw_duplicated = False
-        for p in c:
-            idx = p.position
-            if not sorted_combine[idx]:
-                sorted_combine[idx] = p
-            else:
-                syw_duplicated = True
-                break
-            miss_idx -= idx
-
-        if syw_duplicated:
-            continue
-
-        for s in all_syw[ShengYiWu.ALL_PARTS[miss_idx]]:
-            if s.part == ShengYiWu.PART_SHA:
-                if not match_sha_callback(s):
-                    continue
-            elif s.part == ShengYiWu.PART_BEI:
-                if not match_bei_callback(s):
-                    continue
-
-            # shallow copy
-            combine_5 = copy.copy(sorted_combine)
-            combine_5[miss_idx] = s
-            scid = ""
-            for sc in combine_5:
-                scid += sc.id
-
-            if scid not in all_combins_5:
-                all_combins_5[scid] = True
-                raw_score_list.append(ShengYiWu_Score(combine_5))
-
-    lst_len = len(raw_score_list)
-    print(lst_len)
-
-    return raw_score_list
-
-
 def calculate_score(raw_score_list: list[ShengYiWu_Score],
                     calculate_score_callbak,
                     result_txt_file, result_description,
