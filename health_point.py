@@ -69,33 +69,42 @@ class HealthPoint:
     def modify_max_hp_per(self, hp_per):
         self.modify_max_hp(round(self.__base_hp * hp_per))
 
-    def modify_cur_hp(self, hp_changed) -> tuple[float, float]:
+    def modify_cur_hp(self, hp_changed) -> tuple[float, float, bool]:
+        """
+        返回值说明：
+        [0]: 实际变化 hp
+        [1]: 实际变化百分比 hp
+        [2]: 治疗溢出量
+        """
         # 大招动画的时候不会掉血
         if hp_changed < 0 and self.__in_q_animation:
-            return (0, 0)
+            return (0, 0, 0)
         
         if hp_changed == 0:
-            return (0, 0)
+            return (0, 0, 0)
         
         if hp_changed > 0 and self.__cur_hp == self.__max_hp:
-            return (0, 0)
+            return (0, 0, hp_changed)
         
+        over_heal_num = 0
+
         cur_hp = round(self.__cur_hp + hp_changed)
         if cur_hp > self.__max_hp:
             actual_modified_hp = self.__max_hp - self.__cur_hp
+            over_heal_num = cur_hp - self.__max_hp
             self.__cur_hp = self.__max_hp
         elif cur_hp < 0:
             actual_modified_hp = 0 - self.__cur_hp
             self.__cur_hp = 0
-        else:
+        else:   # 0 <= cur_hp <= max_hp
             actual_modified_hp = cur_hp - self.__cur_hp
             self.__cur_hp = cur_hp
 
         actual_modified_hp_per = actual_modified_hp / self.__max_hp
 
-        return (actual_modified_hp, actual_modified_hp_per)
+        return (actual_modified_hp, actual_modified_hp_per, over_heal_num)
 
-    def modify_cur_hp_per(self, hp_per) -> tuple[float, float]:
+    def modify_cur_hp_per(self, hp_per):
         return self.modify_cur_hp(round(self.__max_hp * hp_per))
 
     def __str__(self):

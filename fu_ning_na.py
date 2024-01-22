@@ -491,26 +491,31 @@ class FuFuActionPlan(ActionPlan):
         self.__zhuan_wu_e_bonus_level += 1
         self.debug("专武战技叠一层，目前层数: %d", self.__zhuan_wu_e_bonus_level)
 
-    def change_cur_hp(self, cur_time, characters: list[Character] = [], hp=0, hp_per=0):
+    def do_trigger_gu_you_tian_fu_1(self):
+        self.debug("触发芙芙固有天赋1")
+
+    def change_cur_hp(self, cur_time, characters: list[Character] = [], hp=0, hp_per=0, heal_by_fufu=True):
         changed_characters = []
         qi_fen_zhi = 0
         prev_qi_fen_zhi = 0
         fufu_hp_changed = False
         teammate_hp_changed = False
 
+        over_heal_num = 0
+
         for c in characters:
             if hp > 0:
-                _, hp_per_changed = c.regenerate_hp(hp)
+                _, hp_per_changed, over_heal_num = c.regenerate_hp(hp)
                 qi_fen_zhi += abs(hp_per_changed) * QI_INCREASE_BEI_LV * 100
             elif hp < 0:
-                _, hp_per_changed = c.get_hp().modify_cur_hp(hp)
+                _, hp_per_changed, _ = c.get_hp().modify_cur_hp(hp)
                 qi_fen_zhi += abs(hp_per_changed) * QI_INCREASE_BEI_LV * 100
 
             if hp_per > 0:
-                _, hp_per_changed = c.regenerate_hp_per(hp_per)
+                _, hp_per_changed, over_heal_num = c.regenerate_hp_per(hp_per)
                 qi_fen_zhi += abs(hp_per_changed) * QI_INCREASE_BEI_LV * 100
             elif hp_per < 0:
-                _, hp_per_changed = c.get_hp().modify_cur_hp_per(hp_per)
+                _, hp_per_changed, _ = c.get_hp().modify_cur_hp_per(hp_per)
                 qi_fen_zhi += abs(hp_per_changed) * QI_INCREASE_BEI_LV * 100
 
             if qi_fen_zhi != prev_qi_fen_zhi:
@@ -523,6 +528,9 @@ class FuFuActionPlan(ActionPlan):
                 changed_characters.append(c)
 
             prev_qi_fen_zhi = qi_fen_zhi
+
+        if over_heal_num > 0 and not heal_by_fufu:
+            self.do_trigger_gu_you_tian_fu_1()
 
         if qi_fen_zhi:
             self.debug("当前生命值变化，影响的角色: %s", ",".join(
@@ -1081,6 +1089,8 @@ class Ge_Zhe_Cure_Action(Action):
         self.debug("歌者治疗 %s, 治疗量: %s", foreground_character.name, cure_num)
         plan.change_cur_hp(self.get_timestamp(), characters=[
                            foreground_character], hp=cure_num)
+        
+
 
 
 fu_ren_kou_xue_interval = (1468, 1684)
