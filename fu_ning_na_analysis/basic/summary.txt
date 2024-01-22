@@ -1723,6 +1723,7 @@ q: 芙芙q出伤，qe间隔：2.8, 2.884, 2.783,  2.85, 	2.833+-0.051, [2.783, 2
 09. 夜兰q出伤                                                        9-8：1.35, 1.3, 1.333, 1.352				0.326+-0.026	[1.3, 1.352]
 10. 夜兰四命生效两层                                         10-9：0.868, 0.952, 0.952, 0.933		0.91+-0.042		[0.868, 0.952]
 
+				【注：切夜兰出来到切芙芙出来的时间差为：3.568, 3.568, 3.368, 3.352，这就是夜兰驻场的时间，我的手法很稳呀】
 11. 切芙芙出来                                                      11-10： 0.3 ,  0.316 , 0.25 ,  0.3  		0.283+-0.033	[0.25, 0.316]
 12. 三小只开始消失                                             12-11： 0.767 ,  0.751 , 0.783 ,  0.783 		0.767+-0.016	[0.751, 0.783]
 13. 第三刀重击                                                      13-11： 0.8 ,  0.834 , 0.883 ,  0.867  			0.842+-0.041	[0.8, 0.883]
@@ -1796,141 +1797,81 @@ for a in action_list:
 
 FIXME: 万叶增伤何时生效，何时失效的问题如何处理？ 单独写一个 增伤失效的Action和减抗失效的Action即可，不需要处理的太复杂
 	
-FIXME: 专武生命值叠层是遵循0.5秒结算机制，还是立即生效？
+FIXME: 专武生命值叠层是遵循0.5秒结算机制，还是立即生效？---> 有生效延迟
+
+
+## 非满命芙芙 eq 还是 qe
+
+eq 起手的话，三小只第一次扣血扣不到芙芙的
+
+* 如果是0~1命，则损失气氛值 7.6 的气氛值，损失增伤7.6 * 0.0025 = 1.9%，微乎其微，
+* 如果是2命及以上，则损失气氛值 7.6 * 3.5 = 26.6 * 0.0025 = 6.65%，也不算太多
+
+有损失，但也有所得：提前开e烧队友血，奶妈奶的时候就能加更多的气氛值的，总体是赚的
+
+
+## 影夜芙琴的手法
+
+起手的选择有：雷神e，芙芙e，各有优点
+雷神e：紧接着是芙芙 eq, 操作流畅
+芙芙e:  紧接着是雷神e，芙芙q，需要切一次人，有点别扭，好处也有，就是早点扣血，奶妈全队奶的时候叠的气氛值可能会多些（注意：这里用的是“可能”）
+
+我选雷神e起手
+
+1. 雷神e
+2. 芙芙e
+3. 芙芙q
+4. 夜兰eqe, 我平时操作需要3.5秒左右，夜兰还可以再a一下
+	低命夜兰eqe伤害占比不大，不必太在意能吃到芙芙的多少增伤
+5. 琴eaqa
+6. 雷神q
+
+我现在已经能几乎准确模拟出三小只的扣血，需要用程序分析一下上面的流程，看琴奶的时候是否能让芙芙叠满层：
+
+理论上：
+
+* 0命：300层，300 / 2 / 4 = 37.5，即全队每人要扣37.5的血，需要的三小只行动序列为(后面为距离e的大致时间)：
+
+夫人(1.8s)
+螃蟹(2.2s)
+勋爵(2.4s)
+
+夫人(3.44s)
+----------------------------二命够用分界线
+夫人(5.159s)
+勋爵(5.76s)
+----------------------------二命满层分界线
+夫人(6.72s)
+螃蟹(7.6s)
+
+夫人(8.4s)
+勋爵(9.08s)
+夫人(10s)
+夫人(11.6s)
+勋爵(12.4s)
+-------------------------------一命满层分界线
+螃蟹(12.72)
+
+夫人(13.36)
+夫人(15.04)
+勋爵(15.88)
+------------------------------0命满层分界线
+
+这个序列能扣：1.6 + 3.6 + 2.4 + 1.6 + 1.6 +  2.4 + 1.6 + 3.6 + 1.6 + 2.4 + 1.6 + 1.6 + 2.4 + 3.6 + 1.6 + 1.6 + 2.4 = 37.2
+
+耗时为点按e后16秒左右，时间太长，所以0命不要指望能叠满，按操作流程来就行，不必注意叠层细节，被怪打了一下可能是好事哦
+
+* 1命：只需要叠250层，250 / 2 / 4 = 31.25，参见上面的分界线，切琴出来的时候，如果在12秒左右，就能满层了
+
+* 2命及以上：250 / 2 / 4 / 3.5 = 8.9，点按e后，3.5秒左右奶妈全队奶就能满层，而芙芙大招占时就有接近两面，此时手法要变一变
+
+雷神e，芙芙eq，夜兰q，琴eaqa，夜兰eaaeaaa 琴e 雷神q
+
+2命及以上的时候，除了气氛值之外，还有二命的生命值叠层
+
+
 	
-class Qi_HP_Bonus:
-    def __init__(self, fixed_hp, fixed_e_bonus, fixed_common_bonus,
-                 qi_fen_level, zhuan_wu_hp_level, zhuan_wu_e_bonus_level,
-                 ye_lan_e_num=0, ye_lan_q_bonus=0):
-        self.fixed_hp = fixed_hp
-        self.fixed_e_bonus = fixed_e_bonus
-        self.fixed_common_bonus = fixed_common_bonus
 
-        self.qi_fen_level = qi_fen_level
-        self.zhuan_wu_hp_level = zhuan_wu_hp_level
-        self.zhuan_wu_e_bonus_level = zhuan_wu_e_bonus_level
-        self.ye_lan_e_num = ye_lan_e_num
-        self.ye_lan_q_bonus = ye_lan_q_bonus
-
-        self.__hp = None
-        self.__common_bonus = None
-        self.__e_bonus = None
-
-    def hp(self):
-        if not self.__hp:
-            extra_hp_percent = self.ye_lan_e_num * 0.1
-            extra_hp_percent += self.zhuan_wu_hp_level * zhuan_wu_hp_bei_lv
-            if ming_zuo_num >= 2 and self.qi_fen_level > 400:
-                extra_hp_percent += min((self.qi_fen_level - 400)
-                                        * 0.0035, 1.4)
-
-            self.__hp = self.fixed_hp + \
-                int(fu_ning_na_base_hp * extra_hp_percent)
-
-        return self.__hp
-
-    def common_elem_bonus(self, has_extra_bonus=True, in_front=False):
-        if not self.__common_bonus:
-            bonus = self.fixed_common_bonus
-            bonus += min(400, self.qi_fen_level) * qi_bonus_bei_lv
-            if in_front:
-                bonus += self.ye_lan_q_bonus
-            if not has_extra_bonus:
-                bonus -= sum(extra_common_elem_bonus.values())
-
-            self.__common_bonus = bonus
-
-        return self.__common_bonus
-
-    def e_bonus(self, has_extra_bonus=True, in_front=False):
-        if not self.__e_bonus:
-            bonus = self.fixed_e_bonus
-            bonus += self.zhuan_wu_e_bonus_level * zhuan_wu_e_bonus_bei_lv
-            bonus += gu_you_tian_fu_2_bonus(self.hp())
-            bonus += min(400, self.qi_fen_level) * qi_bonus_bei_lv
-            if in_front:
-                bonus += self.ye_lan_q_bonus
-            if not has_extra_bonus:
-                bonus -= sum(extra_e_bonus.values())
-
-            self.__e_bonus = bonus
-
-        return self.__e_bonus
-
-
-class Damage:
-    def __init__(self, bei_lv, has_feng_tao=True, is_extra=False, has_extra_bonus=True, in_front=False):
-        self.bei_lv = bei_lv
-        self.has_feng_tao = has_feng_tao
-        self.is_extra = is_extra
-        self.has_extra_bonus = has_extra_bonus
-        self.in_front = in_front
-
-    def set_qi_hp_bonus(self, qi_hp_bonus: Qi_HP_Bonus):
-        self.qi_hp_bonus = qi_hp_bonus
-
-    def damage(self):
-        return 0
-
-
-class E_Damage(Damage):
-    def damage(self):
-        elem_bonus = self.qi_hp_bonus.e_bonus(
-            self.has_extra_bonus, self.in_front)
-        d = self.qi_hp_bonus.hp() * self.bei_lv / 100 * e_extra_damage_bonus * elem_bonus
-        if not self.has_feng_tao:
-            d /= 1.2777  # 风套增伤27.77%
-        return d
-
-
-class Fu_Ren_E_Damage(E_Damage):
-    def __init__(self, has_feng_tao=True, is_extra=False, has_extra_bonus=True, in_front=False):
-        super().__init__(FU_REN_BEI_LV, has_feng_tao, is_extra, has_extra_bonus, in_front)
-
-
-class Xun_Jue_E_Damage(E_Damage):
-    def __init__(self, has_feng_tao=True, is_extra=False, has_extra_bonus=True, in_front=False):
-        super().__init__(XUN_JUE_BEI_LV,  has_feng_tao, is_extra, has_extra_bonus, in_front)
-
-
-class Pang_Xie_E_Damage(E_Damage):
-    def __init__(self, has_feng_tao=True, is_extra=False, has_extra_bonus=True, in_front=False):
-        super().__init__(PANG_XIE_BEI_LV, has_feng_tao, is_extra, has_extra_bonus, in_front)
-
-
-class Ming_6_Damage(Damage):
-    def __init__(self, bei_lv):
-        super().__init__(bei_lv, has_feng_tao=True,
-                         is_extra=False, has_extra_bonus=True, in_front=True)
-
-    def damage(self):
-        elem_bonus = self.qi_hp_bonus.common_elem_bonus(
-            self.has_extra_bonus, in_front=True)
-        d = self.qi_hp_bonus.hp() * self.bei_lv / 100 * elem_bonus
-        if not self.has_feng_tao:
-            d /= 1.2777
-        return d
-
-
-class Bai_Fu_Damage(Ming_6_Damage):
-    def __init__(self):
-        super().__init__(BAI_FU_BEI_LV)
-
-
-class Hei_Fu_Damage(Ming_6_Damage):
-    def __init__(self):
-        super().__init__(HEI_FU_BEI_LV)
-
-## FIXME
-
-FIXME：芙芙大招效果是从什么时候开始计算的？
-
-夜兰第三个e要加到芙芙身上，还有夜兰自身 （done)
-
-fixme: 夜兰的增伤只针对前台！！！（done)
-fixme: 手法1里用的是琴，需要换成万叶再测试(done)
-fixme: 要把所有的代码再检查一遍，行秋那样的bug不能出了呀
-fixme: 夜兰开大开始~结束看样子是要记录的，这期间不夜兰扣血
 
 
 
