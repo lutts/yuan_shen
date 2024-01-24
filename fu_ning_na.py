@@ -25,7 +25,7 @@ has_zhuan_wu = True
 
 include_extra = False    # 某些配队，在芙芙大招结束后还继续输出，不切芙芙出来续大，此时将include_extra置为True
 
-enable_debug = True
+enable_debug = False
 MAX_RUN_NUM = 10
 
 # 队友生命值上限设置，影响到叠层速度
