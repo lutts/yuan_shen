@@ -25,7 +25,7 @@ has_zhuan_wu = True
 
 include_extra = False    # 某些配队，在芙芙大招结束后还继续输出，不切芙芙出来续大，此时将include_extra置为True
 
-enable_debug = False
+enable_debug = True
 MAX_RUN_NUM = 10
 
 # 队友生命值上限设置，影响到叠层速度
@@ -40,13 +40,15 @@ class Teammate:
 YE_LAN_NAME = "ye lan"
 ZHONG_LI_NAME = "zhong li"
 WAN_YE_NAME = "wan ye"
-YING_BAO_NAME = "ying bao"
-QIN_NAME = "qing"
-NA_WEI_LAI_TE_NAME = "na wei lai te"
-BAI_ZHU_NAME = "bai zhu"
 
 # 夜芙万钟：目前的满命芙宁娜算法采用的是这个配队，
-# 这是我喜欢的配队，瞬时爆发极高，12层的怪也抗不住一轮，钟离保证芙芙满命刀不会被打断，从而没有任何意外地把怪秒掉
+# 使用这个配队计算的伤害，也可以作为以下手法模式的通解：
+# 
+#   芙芙qeaa，其他角色放技能等叠满层，切芙芙重击转白芙, 白芙a两刀再重击转黑芙，切其他角色输出
+#
+# 钟离和万叶是这个手法模式下最好的辅助，钟离能避免芙芙砍的时候被击飞，万叶就不用说了
+# 夜兰是这个手法模式下最好的副C
+#
 # 不修改算法的情况下，只允许改变各个角色的生命值上限
 ye_fu_wan_zhong_team = {
     # 夜兰
@@ -57,10 +59,9 @@ ye_fu_wan_zhong_team = {
     WAN_YE_NAME: Teammate(13348, 23505),
 }
 
-# 影夜芙琴：目前的非满命芙宁娜算法采用的是这个配队
-# 实际算法是比较通用的，适用于任意以下手法模式的配队：
+# 以下配队针对以下手法模式：
 #
-#   芙芙eq，其他角色放技能，切奶妈奶全队，切主C站场输出
+#   芙芙eq，副C放技能，切奶妈奶全队，切主C站场输出
 # 
 # 原理：二命及以上的芙芙，在点按e(指点按这个操作，而非e技能放完)后，三小只出来后会几乎同时扣一次血，大约1.6秒后夫人再扣一次血，
 #      这四次扣血，从点按e算起，大约耗时3.5秒左右
@@ -73,12 +74,13 @@ ye_fu_wan_zhong_team = {
 #      56 + 343.2 = 399.2，几乎就满层了
 #      但为了这56层，需要有其他角色的操作来填这1.6秒的时间，从芙芙点按e到叠满，预计需要5.5秒左右，即在5.5秒左右切奶妈奶全队
 #
+#      以 影夜芙琴 为例：
 #      芙芙eq动画占时约2.7秒多，夜兰q动画1.7秒多，总用时4.4秒，切琴 ea 再 q 的话，视手速，可能叠满，也可能叠不满
 #      夜兰如果eqe，eqe一般用时3.5秒左右，则2.7 + 3.5 = 6.2秒，时间足够叠满
 #
 #      二命以下的芙芙，因为叠层较慢，一般不刻意去追求叠满层，不过排轴时尽量把全队奶的时间间往后挪
 #
-# 对于二命芙芙来说，针对上面 343 层和满层两种不同要求，输出手法会有所不同
+# 对于二命芙芙来说，针对上面 343 层和满层两种不同要求，输出手法会有所不同，这里还是以 影夜芙琴 为例：
 #
 #    觉得343层就够用了，则：雷神e,芙芙eq，夜兰q，琴eaqa，夜兰eaaeaa，琴ea，雷神qazazazazaz
 #                优点：让夜兰两个e的输出更高，但雷神开砍前建议切琴补风套减抗，否则可能覆盖不了雷神所有输出
@@ -86,39 +88,34 @@ ye_fu_wan_zhong_team = {
 #           
 #    如果一定要叠满400层，则：雷神e，芙芙eq，夜兰eq(e)，琴eaqa，雷神qazazazazaz
 #
+#    注：理论上来讲，芙芙e，雷神e，芙芙q，这样更有利于叠满层，但频繁切人有点繁琐
+#
 # 对于二命以下的芙芙来说，依据”尽量把全队奶的时间点往后挪“的原则，一般采用”一定要叠满400层“的轴，即夜兰eqe连放
 #
 # 那维莱特等会自烧血回血的枫丹角色特殊一些，能一定程度上加快气氛值叠层，从而使圣遗物的选择有一些变化
-# 但总体上而言，如果你不想麻烦，想配一套通用的圣遗物的话，可以不去考虑这些角色的特殊性
+# 从算法层而而言，他们相当有奶妈能力的副C
 
 # 是否一定要叠满400层，参见上面的相关原理注解，二命芙芙的话，根据你的习惯设置，二命以下的话，一般置为 True
 I_want_max_qi_fen_zhi = True
 
-ying_ye_fu_qing_team = {
-    # 影宝
-    YING_BAO_NAME: Teammate(12907, 21650),
-    # 夜兰
-    YE_LAN_NAME: Teammate(14450, 46461, elem_type=ShengYiWu.ELEM_TYPE_SHUI),
-    # 琴
-    QIN_NAME: Teammate(12965, 24224)
-}
+MAIN_CARRY = "主C"
+SECONDARY_CARRY = "副C"
+HEALER = "奶妈"
 
-# 白万芙特：有用于这个配队的非满命算法，但我没有那维莱特，算法轴的安排可能不是很准确
-bai_wan_fu_te_team = {
-    # 白术
-    BAI_ZHU_NAME: Teammate(13348, 50000),
-    # 万叶
-    WAN_YE_NAME: Teammate(13348, 23505),
-    # 那维莱特
-    NA_WEI_LAI_TE_NAME: Teammate(
-        14695, 40000, elem_type=ShengYiWu.ELEM_TYPE_SHUI)
+non_full_ming_zuo_team = {
+    # 影宝
+    MAIN_CARRY: Teammate(12907, 21650),
+    # 夜兰
+    SECONDARY_CARRY: Teammate(14450, 46461, elem_type=ShengYiWu.ELEM_TYPE_SHUI),
+    # 琴
+    HEALER: Teammate(12965, 24224)
 }
 
 # 将这个值设置你想要使用的配队
 if ming_zuo_num >= 6:
     g_teammates = ye_fu_wan_zhong_team
 else:
-    g_teammates = ying_ye_fu_qing_team
+    g_teammates = non_full_ming_zuo_team
 
 # 是否有四命夜兰，仅用于最终生命值上限的展示，不影响最终伤害的计算
 has_4_ming_ye_lan = True
@@ -1349,6 +1346,9 @@ def calc_score_worker(fufu_initial_state: Character):
         ge_zhe.set_timestamp(ge_zhe_cure_time + plan.get_effective_delay())
         plan.insert_action(ge_zhe)
 
+        # FIXME: 这里没有考虑固有天赋2，如果当前生命值上限低于4w，则治疗间隔是更长的
+        # 歌者的治疗间隔目前是在这里写死的，实际应该是根据生命值上限实时决定的
+        # 不过话说回来，按满命的流程，切白芙的时候，最终排名靠前的圣遗物组合应该生命值上限都在4w附近吧？
         ge_zhe_cure_time += random.randint(1612, 1783) / 1000
 
     # plan.sort_action()

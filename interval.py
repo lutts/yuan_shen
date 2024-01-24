@@ -116,7 +116,8 @@ def kou_xue_chu_shang():
 
 def avg_min_max():
     l2 = [
-5.168, 5.168, 5.17, 5.185, 5.2, 5.2, 5.2, 5.201, 5.217, 5.218, 5.218, 5.268
+4.902, 5.001, 5.018, 5.071, 5.002, 5.0, 5.018, 4.983, 4.935, 5.016, 5.002, 5.0,  5.0, 5.001, 4.983, 5.018, 5.016, 4.985, 4.919, 4.985
+
         ]
     l2.sort()
 
@@ -256,17 +257,18 @@ h2 = Haha()
 
 # Main body
 if __name__ == '__main__':
-    #avg_min_max()
+    avg_min_max()
     # damage_sum()
-    all_syw_combines()
-    print(h1.b)
-    print(h2.b)
-    print(Haha.i)
+    t = [
+2.684, 4.719, 6.719, 8.719, 10.719, 12.687,
+1.617, 3.584, 5.486, 7.519, 9.502, 11.502,
+1.084, 3.068, 4.969, 6.986, 8.952, 10.986
+         ]
 
-    s = {"1", "2", "3"}
-    all_2p2 = list(itertools.combinations(s, 2))
-    for set1_name, set2_name in all_2p2:
-        print("---")
-        print(set1_name)
-        print(set2_name)
-        
+    i = 1
+    intervals = []
+    while i < len(t):
+        intervals.append(str(round(t[i] - t[i-1], 3)))
+        i += 1
+
+    print(", ".join(intervals))
