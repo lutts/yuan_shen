@@ -175,10 +175,13 @@ else:
     BASE_QI_FEN_ZHI = 0
     MAX_QI_FEN_ZHI = 300
 
+MAX_TOTAL_QI_FEN_ZHI = MAX_QI_FEN_ZHI
+
 if ming_zuo_num >= 2:
     QI_INCREASE_BEI_LV = 3.5
     QI_HP_BEI_LV = 0.0035
     MING_2_HP_BONUS_MAX = 1.4
+    MAX_TOTAL_QI_FEN_ZHI = 800
 else:
     QI_INCREASE_BEI_LV = 1
     QI_HP_BEI_LV = 0
@@ -393,7 +396,7 @@ class FuFuActionPlan(ActionPlan):
         if self.__fufu_q_stopped or qi == 0:
             return
 
-        if self.__qi_fen_zhi >= 800:
+        if self.__qi_fen_zhi >= MAX_TOTAL_QI_FEN_ZHI:
             return
 
         self.__qi_fen_zhi += qi
