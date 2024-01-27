@@ -37,12 +37,13 @@ class Teammate:
         self.elem_type = elem_type
 
 
+FU_FU_NAME = "furina"
 YE_LAN_NAME = "ye lan"
 ZHONG_LI_NAME = "zhong li"
 WAN_YE_NAME = "wan ye"
 
 # 夜芙万钟：目前的满命芙宁娜算法采用的是这个配队，
-# 使用这个配队计算的伤害，也可以作为以下手法模式的通解：
+# 使用这个配队计算的伤害，也可以作为以下满命手法模式的通解：
 # 
 #   芙芙qeaa，其他角色放技能等叠满层，切芙芙重击转白芙, 白芙a两刀再重击转黑芙，切其他角色输出
 #
@@ -59,44 +60,35 @@ ye_fu_wan_zhong_team = {
     WAN_YE_NAME: Teammate(13348, 23505),
 }
 
-# 以下配队针对以下手法模式：
+# 非满命算法针对以下手法模式：
 #
-#   芙芙eq，副C放技能，切奶妈奶全队，切主C站场输出
-# 
-# 原理：二命及以上的芙芙，在点按e(指点按这个操作，而非e技能放完)后，三小只出来后会几乎同时扣一次血，大约1.6秒后夫人再扣一次血，
-#      这四次扣血，从点按e算起，大约耗时3.5秒左右
-#      能叠满 (1.6 + 2.4 + 3.6 + 1.6) * 3 * 3.5 = 96.6层，如果此时奶妈再把全队奶满，则96.6 * 2= 193.2
-#      193.2 + 一命150 = 343.2层，差不多够用了
-#      这里之所以只算3个人的，是因为角色大招动画期间不会扣血，芙芙eq，三小只的第一次同时扣血扣不了芙芙，
-#      然后夫人的再一次扣血，也有可能碰上其他角色的大招，因此都只算三个角色的叠层
+#   芙芙eq，副 C 放技能，切奶妈奶全队，切主C站场输出直到芙芙大招结束，开启下一轮循环
 #
-#      如果一定要叠满400层，则再过大约1.6秒后，夫人和勋爵会几乎同时扣一次血，叠层 (1.6 + 2.4) * 4 * 3.5 = 56层
-#      56 + 343.2 = 399.2，几乎就满层了
-#      但为了这56层，需要有其他角色的操作来填这1.6秒的时间，从芙芙点按e到叠满，预计需要5.5秒左右，即在5.5秒左右切奶妈奶全队
+# 下面是芙芙和沙龙成员的行动序列，奶妈不同介入时间的气氛值叠层情况
 #
-#      以 影夜芙琴 为例：
-#      芙芙eq动画占时约2.7秒多，夜兰q动画1.7秒多，总用时4.4秒，切琴 ea 再 q 的话，视手速，可能叠满，也可能叠不满
-#      夜兰如果eqe，eqe一般用时3.5秒左右，则2.7 + 3.5 = 6.2秒，时间足够叠满
+#  芙芙eq:  q期间三小只扣血，但芙芙大招期间不扣血，因此扣血情况是： 其他人扣7.6%
+#  夫人扣血：基本是紧接在芙芙q动画结束的，二命以上：1.6 * 4 * 3.5 + 150 = 172.4, 一命：1.6 * 4 + 150 = 156.4
+#  夫人扣血：二命：172.4 + 1.6 * 4 * 3.5 = 194.8，一命: 1.6 * 4 + 156.4 = 162.8
+#  勋爵扣血：二命：194.8 + 2.4 * 4 * 3.5 = 228.4,一命：2.4 * 4 + 162.8 = 172.4
+#          二命的话，此时就可以奶全队，228.4 + 7.6 * 3 * 3.5 + (1.6 + 1.6 + 2.4) * 4 * 3.5 = 386.6
+#          虽然没满层，但也不差多少了，但如果芙芙的练度高，建议把全队奶再推后一些，多叠一些芙芙二命的生命值加成
+#  夫人扣血：我们假设此前副C在放q，则之前夫人和勋爵扣不了放q的角色的血，则一命: 172.4 - (1.6 + 2.4) + 1.6 * 4 = 174.8
+#  螃蟹扣血: 一命: 174.8 + 3.6 * 4 = 189.2
+#  夫人扣血：一命：189.2 + 1.6 * 4 = 195.6
+#          如果此时奶全队，则 195.6 + 7.6 * 3 + 1.6 * 4 + (1.6 + 2.4) * 3 + (1.6 + 3.6 + 1.6) * 4 = 264层
 #
-#      二命以下的芙芙，因为叠层较慢，一般不刻意去追求叠满层，不过排轴时尽量把全队奶的时间间往后挪
+# 根据以上分析，对于二命芙芙，几个配队的第一轮打法如下：
+#   注：奶妈e后都a了一下，是为了拖时间，确保放q的时候勋爵会扣血
 #
-# 对于二命芙芙来说，针对上面 343 层和满层两种不同要求，输出手法会有所不同，这里还是以 影夜芙琴 为例：
+#    影夜芙琴: 雷神e，芙芙eq，夜兰eq(e), 琴eaq，雷神qazazazazaz
+#         或：雷神e，芙芙eq, 琴eaq, 夜兰eqe，琴e，雷神qazazazazaz，
+#             缺点：雷神没砍完，芙芙大招就可能消失了，不切琴补减抗，风套效果会提前消失，适用于夜兰输出比雷神高的旅行者
+#                  芙芙练度高也不推荐，奶妈越往后就越能多叠一些芙芙二命的生命值加成
+#       注：也可以芙芙e，雷神e，琴e, 芙芙q，这样更有利于叠满层，但频繁切人有点繁琐
 #
-#    觉得343层就够用了，则：雷神e,芙芙eq，夜兰q，琴eaqa，夜兰eaaeaa，琴ea，雷神qazazazazaz
-#                优点：让夜兰两个e的输出更高，但雷神开砍前建议切琴补风套减抗，否则可能覆盖不了雷神所有输出
-#                缺点：琴奶全队的时候，是否能叠满层需要一点运气成份
-#           
-#    如果一定要叠满400层，则：雷神e，芙芙eq，夜兰eq(e)，琴eaqa，雷神qazazazazaz
+#    非风系奶妈+二命芙芙+风系辅助的配队：芙芙e，风系减抗，芙芙q, 奶妈eaq，风系减抗，主C输出
 #
-#    注：理论上来讲，芙芙e，雷神e，芙芙q，这样更有利于叠满层，但频繁切人有点繁琐
-#
-# 对于二命以下的芙芙来说，依据”尽量把全队奶的时间点往后挪“的原则，一般采用”一定要叠满400层“的轴，即夜兰eqe连放
-#
-# 那维莱特等会自烧血回血的枫丹角色特殊一些，能一定程度上加快气氛值叠层，从而使圣遗物的选择有一些变化
-# 从算法层而而言，他们相当有奶妈能力的副C
-
-# 是否一定要叠满400层，参见上面的相关原理注解，二命芙芙的话，根据你的习惯设置，二命以下的话，一般置为 True
-I_want_max_qi_fen_zhi = True
+# 对于二命以下的芙芙，打法是一样的，只不过第一轮输出会低些，但第一轮扣了很多血后，进第二轮瞬间奶满就和二命体验差不多了
 
 MAIN_CARRY = "主C"
 SECONDARY_CARRY = "副C"
@@ -118,7 +110,10 @@ else:
     g_teammates = non_full_ming_zuo_team
 
 # 是否有四命夜兰，仅用于最终生命值上限的展示，不影响最终伤害的计算
-has_4_ming_ye_lan = True
+if ming_zuo_num >= 6:
+    has_4_ming_ye_lan = True
+else:
+    has_4_ming_ye_lan = False
 
 # 算法自动根据配队检索，不需要手动改
 has_shuang_shui = False
@@ -400,6 +395,8 @@ class FuFuActionPlan(ActionPlan):
             return
 
         self.__qi_fen_zhi += qi
+        if self.__qi_fen_zhi > MAX_TOTAL_QI_FEN_ZHI:
+            self.__qi_fen_zhi = MAX_TOTAL_QI_FEN_ZHI
         self.debug("气氛值增加%s, 增加到:%s", round(
             qi, 3), round(self.__qi_fen_zhi, 3))
 
@@ -436,11 +433,7 @@ class FuFuActionPlan(ActionPlan):
 
         if self.__qi_fen_zhi > MAX_QI_FEN_ZHI:
             bonus_qi_fen_zhi = MAX_QI_FEN_ZHI
-            if ming_zuo_num >= 2:
-                hp_qi_fen_zhi = min(self.__qi_fen_zhi -
-                                    MAX_QI_FEN_ZHI, MAX_QI_FEN_ZHI)
-            else:
-                hp_qi_fen_zhi = 0
+            hp_qi_fen_zhi = self.__qi_fen_zhi - MAX_QI_FEN_ZHI
         else:
             bonus_qi_fen_zhi = self.__qi_fen_zhi
             hp_qi_fen_zhi = 0
@@ -674,6 +667,16 @@ class FengTaoInvalidAction(Action):
         self.debug("风套减抗消失")
         plan.monster.sub_jian_kang(0.4)
 
+
+class FuFu_Q_Animation_Start(Action):
+    def do_impl(self, plan: FuFuActionPlan):
+        self.debug("芙芙大招动画开始")
+        plan.get_fufu().get_hp().set_in_q_animation(True)
+
+class FuFu_Q_Animation_Stop(Action):
+    def do_impl(self, plan: FuFuActionPlan):
+        self.debug("芙芙大招动画结束")
+        plan.get_fufu().get_hp().set_in_q_animation(False)
 
 class FuFu_Q_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
@@ -1136,6 +1139,7 @@ def schedule_little_three(plan: FuFuActionPlan, name,
     chu_shang_interval_min, chu_shang_interval_max = chu_shang_interval_dict[name]
     chu_kou_interval_min, chu_kou_interval_max = chu_shang_kou_xue_interval_dict[name]
 
+    # 三小只第一次扣血并不一定是同时的，是在一个窗口内有先后顺序
     kou_xue_time = start_time + randtime(0, 133)
     last_chu_shang_time = 0
 
@@ -1199,7 +1203,7 @@ def schedule_little_three(plan: FuFuActionPlan, name,
     return (k_action_lst, c_action_lst)
 
 
-def calc_score_worker(fufu_initial_state: Character):
+def calc_score_full_ming_zuo(fufu_initial_state: Character):
     plan = FuFuActionPlan(fufu_initial_state)
 
     # 这个 plan 有几个比较大的变数：
@@ -1220,7 +1224,7 @@ def calc_score_worker(fufu_initial_state: Character):
     plan.add_action("芙芙点按e", FuFu_E_Action,  0, 0)
     plan.add_action("第一刀", Hei_Fu_Damage_Action, 1.15, 1.284)
     three_little_first_action = "三小只开始扣血"
-    plan.add_action(three_little_first_action, Action, 1.317, 1.45)
+    plan.add_action(three_little_first_action, Action, 1.282, 1.455)
     plan.add_action("第二刀", Hei_Fu_Damage_Action,
                     0.366, 0.401, base_action="第一刀")
     plan.add_action("荒刀", Mang_Huang_Damage_Action,
@@ -1362,6 +1366,25 @@ def calc_score_worker(fufu_initial_state: Character):
     plan.run()
     return (plan.total_damage, plan.full_six_damage)
 
+
+def calc_score_ying_ye_fu_qin(fufu_initial_state: Character):
+    plan = FuFuActionPlan(fufu_initial_state)
+
+    YING_BAO = MAIN_CARRY
+    YE_LAN_NAME = SECONDARY_CARRY
+    QIN = HEALER
+
+    plan.add_action("芙芙点按e", FuFu_E_Action,  0, 0)
+    plan.add_action("芙芙大招动画开始", FuFu_Q_Animation_Start, 0.9, 0.9)
+    three_little_first_action = "三小只开始扣血"
+    plan.add_action(three_little_first_action, Action, 1.317, 1.45)
+    plan.add_action("芙芙大招动画结束", FuFu_Q_Animation_Stop, 1.7, 1.7, base_action="芙芙大招动画开始")
+
+
+if ming_zuo_num >= 6:
+    calc_score_worker = calc_score_full_ming_zuo
+else:
+    calc_score_worker = calc_score_ying_ye_fu_qin
 
 def calc_score(fufu_initial_state: Character):
     all_damage = 0
@@ -1505,7 +1528,7 @@ def ye_fu_wan_zhong_team_qualifier(hp):
     return damage
 
 
-def ying_ye_fu_qing_team_qualifier(hp):
+def ying_ye_fu_qin_qualifier(hp):
     return 0
 
 
@@ -1527,7 +1550,7 @@ def calculate_score_qualifier(score_data: ShengYiWu_Score):
     if ming_zuo_num >= 6:
         damage = ye_fu_wan_zhong_team_qualifier(hp)
     else:
-        damage = ying_ye_fu_qing_team_qualifier(hp)
+        damage = ying_ye_fu_qin_qualifier(hp)
 
     score_data.damage_to_score(
         damage, fufu.get_crit_rate(), 1 + fufu.get_crit_damage())
