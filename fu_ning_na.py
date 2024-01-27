@@ -1093,17 +1093,6 @@ class Ge_Zhe_Cure_Action(Action):
         self.debug("歌者治疗 %s, 治疗量: %s", foreground_character.name, cure_num)
         plan.change_cur_hp(self.get_timestamp(), characters=[foreground_character], hp=cure_num)
 
-fu_ren_kou_xue_interval = (1468, 1684)
-fu_ren_kou_xue_chu_shang_interval = (330, 721)
-fu_ren_chu_shang_interval = (1467, 1725)
-
-xun_jue_kou_xue_interval = (3180, 3387)
-xun_jue_kou_xue_chu_shang_interval = (723, 951)
-xun_jue_chu_shang_interval = (3127, 3443)
-
-pang_xie_kou_xue_interval = (5056, 5293)
-pang_xie_kou_xue_chu_shang_interval = (745, 1018)
-pang_xie_chu_shang_interval = (5063, 5325)
 
 FU_REN_NAME = "夫人"
 XUN_JUE_NAME = "勋爵"
