@@ -59,7 +59,10 @@ class Monster:
     def get_jian_kang_bonus(self):
         cur_kang_xin = self.kang_xin - self.jian_kang
         if cur_kang_xin >= 0:
-            return 1 - cur_kang_xin
+            if cur_kang_xin > 0.75:
+                return 1 / (1 + cur_kang_xin * 4)
+            else:
+                return 1 - cur_kang_xin
         else:
             return 1 - cur_kang_xin / 2
         

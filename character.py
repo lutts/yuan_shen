@@ -192,12 +192,14 @@ class Character:
     def get_hp(self) -> HealthPoint:
         return self.__hp
     
-    def regenerate_hp(self, cure_hp):
-        actual_cure_hp = round(cure_hp * (1 + self.get_incoming_healing_bonus()))
+    def regenerate_hp(self, cure_hp, healing_bonus):
+        actual_cure_hp = round(cure_hp * (1 + healing_bonus + self.get_incoming_healing_bonus()))
+        #print("incoming_healing_bonus: ", round(self.get_incoming_healing_bonus(), 1))
+        #print("actual_cure_hp: ", round(actual_cure_hp))
         return self.__hp.modify_cur_hp(actual_cure_hp)
     
-    def regenerate_hp_per(self, hp_per):
-        return self.regenerate_hp(self.__hp.get_max_hp() * hp_per)
+    def regenerate_hp_per(self, hp_per, healing_bonus):
+        return self.regenerate_hp(self.__hp.get_max_hp() * hp_per, healing_bonus)
 
     def get_normal_a_bonus(self):
         return self.__normal_a_bonus

@@ -443,12 +443,14 @@ class FuFuActionPlan(ActionPlan):
         hp_per_bonus = hp_qi_fen_zhi * QI_HP_BEI_LV
 
         fufu.modify_all_elem_bonus(elem_bonus - self.prev_qi_elem_bonus)
-        fufu.modify_healing_bonus(healing_bonus - self.prev_qi_healing_bonus)
+        fufu.modify_incoming_healing_bonus(healing_bonus - self.prev_qi_healing_bonus)
+        for t in self.__teammates:
+            t.modify_incoming_healing_bonus(healing_bonus - self.prev_qi_healing_bonus)
         fufu.get_hp().modify_max_hp_per(hp_per_bonus - self.prev_qi_hp_per_bonus)
         self.debug("气氛值调整完成，生命值上限：%d， a_bonus: %s, e_bonus: %s, q_bonus: %s, healing_bonus:%s",
                    round(self.get_max_hp()),
                    round(fufu.get_a_bonus(), 3), round(fufu.get_e_bonus(), 3),
-                   round(fufu.get_q_bonus(), 3), round(fufu.get_healing_bonus(), 3))
+                   round(fufu.get_q_bonus(), 3), round(fufu.get_incoming_healing_bonus(), 3))
 
         return (elem_bonus, healing_bonus, hp_per_bonus)
 
@@ -487,7 +489,7 @@ class FuFuActionPlan(ActionPlan):
     def do_trigger_gu_you_tian_fu_1(self):
         self.debug("触发芙芙固有天赋1")
 
-    def change_cur_hp(self, cur_time, characters: list[Character] = [], hp=0, hp_per=0, heal_by_fufu=True):
+    def change_cur_hp(self, cur_time, characters: list[Character] = [], hp=0, hp_per=0, healing_bonus=0, heal_by_fufu=True):
         changed_characters = []
         qi_fen_zhi = 0
         prev_qi_fen_zhi = 0
@@ -498,14 +500,14 @@ class FuFuActionPlan(ActionPlan):
 
         for c in characters:
             if hp > 0:
-                _, hp_per_changed, over_heal_num = c.regenerate_hp(hp)
+                _, hp_per_changed, over_heal_num = c.regenerate_hp(hp, healing_bonus)
                 qi_fen_zhi += abs(hp_per_changed) * QI_INCREASE_BEI_LV * 100
             elif hp < 0:
                 _, hp_per_changed, _ = c.get_hp().modify_cur_hp(hp)
                 qi_fen_zhi += abs(hp_per_changed) * QI_INCREASE_BEI_LV * 100
 
             if hp_per > 0:
-                _, hp_per_changed, over_heal_num = c.regenerate_hp_per(hp_per)
+                _, hp_per_changed, over_heal_num = c.regenerate_hp_per(hp_per, healing_bonus)
                 qi_fen_zhi += abs(hp_per_changed) * QI_INCREASE_BEI_LV * 100
             elif hp_per < 0:
                 _, hp_per_changed, _ = c.get_hp().modify_cur_hp_per(hp_per)
@@ -730,7 +732,7 @@ class Hei_Fu_Cure_Action(Action):
         self.end_cure_time = 0
 
     def get_cure_num(self, fufu: Character):
-        return round(fufu.get_hp().get_max_hp() * 0.04 * (1 + fufu.get_healing_bonus()))
+        return round(fufu.get_hp().get_max_hp() * 0.04)
 
 
 class Hei_Fu_Cure_Teammate_Action(Hei_Fu_Cure_Action):
@@ -1085,16 +1087,11 @@ class Pang_Xie_Damage_Action(Salon_Member_Damage_Action):
 
 class Ge_Zhe_Cure_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
-        cure_num = plan.get_max_hp() * GE_ZHE_CURE_BEI_LV / 100 + GE_ZHE_CURE_BASE
-        cure_num *= plan.get_fufu().get_healing_bonus()
+        cure_num = round(plan.get_max_hp() * GE_ZHE_CURE_BEI_LV / 100 + GE_ZHE_CURE_BASE)
 
         foreground_character = plan.get_foreground_character()
         self.debug("歌者治疗 %s, 治疗量: %s", foreground_character.name, cure_num)
-        plan.change_cur_hp(self.get_timestamp(), characters=[
-                           foreground_character], hp=cure_num)
-        
-
-
+        plan.change_cur_hp(self.get_timestamp(), characters=[foreground_character], hp=cure_num)
 
 fu_ren_kou_xue_interval = (1468, 1684)
 fu_ren_kou_xue_chu_shang_interval = (330, 721)
@@ -1466,53 +1463,44 @@ def ye_fu_wan_zhong_team_qualifier(hp):
 
     cur_hp = hp + (0.14 * 1) * FU_NING_NA_BASE_HP
     damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.082 * 1.25 * 0.487
-    damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.082 * 1.25 * 0.487
     damage += cur_hp * FU_REN_BEI_LV / 100 * 2.442 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * XUN_JUE_BEI_LV / 100 * 2.702 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.082 * 1.25 * 0.487
     damage += cur_hp * PANG_XIE_BEI_LV / 100 * 2.702 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * XUN_JUE_BEI_LV / 100 * 2.702 * 1.25 * 0.487 * 1.4
 
     cur_hp = hp + (0.14 * 2 + 0.1 * 1) * FU_NING_NA_BASE_HP
-    damage += cur_hp * FU_REN_BEI_LV / 100 * 3.258 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * FU_REN_BEI_LV / 100 * 3.185 * 1.25 * 0.487 * 1.4
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (457.982 - 400)
-                   * 0.0035) * FU_NING_NA_BASE_HP
+    cur_hp = hp + (0.14 * 2 + 0.1 * 1 + (435.583 - 400) * 0.0035) * FU_NING_NA_BASE_HP
     damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.353 * 1.25 * 0.487 * 1.4
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (499.975 - 400)
-                   * 0.0035) * FU_NING_NA_BASE_HP
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (469.181 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+    damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (519.571 - 400) * 0.0035) * FU_NING_NA_BASE_HP
     damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.868 * 1.25 * 0.487
-
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (508.375 - 400)
-                   * 0.0035) * FU_NING_NA_BASE_HP
     damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.868 * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (525.884 - 400)
-                   * 0.0035) * FU_NING_NA_BASE_HP
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (537.08 - 400) * 0.0035) * FU_NING_NA_BASE_HP
     damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
     damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (550.395 - 400)
-                   * 0.0035) * FU_NING_NA_BASE_HP
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (551.085 - 400) * 0.0035) * FU_NING_NA_BASE_HP
     damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (698.806 - 400)
-                   * 0.0035) * FU_NING_NA_BASE_HP
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (768.799 - 400) * 0.0035) * FU_NING_NA_BASE_HP
     damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (799.884 - 400)
-                   * 0.0035) * FU_NING_NA_BASE_HP
+    damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
     damage += cur_hp * PANG_XIE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (791.207 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+    damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (800 - 400) * 0.0035) * FU_NING_NA_BASE_HP
+    damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
     damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (800 - 400)
-                   * 0.0035) * FU_NING_NA_BASE_HP
-    damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-
-    cur_hp = hp + (0.14 * 2 + 0.1 * 3 + (800 - 400)
-                   * 0.0035) * FU_NING_NA_BASE_HP
+    cur_hp = hp + (0.14 * 2 + 0.1 * 3 + (800 - 400) * 0.0035) * FU_NING_NA_BASE_HP
     damage += cur_hp * FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
     damage += cur_hp * PANG_XIE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
 
@@ -1539,11 +1527,13 @@ def calculate_score_qualifier(score_data: ShengYiWu_Score):
 
     # ”录制“一次计算过程，作为快速筛选的依据
     # 录制方法：
+    # 0. 在get_debug_raw_score_list设置好用于录制的圣遗物组合，选那种80分的，不要选最好的，也不要选太差的
     # 1. 找到本文件开头处的 enable_debug，置为 True
-    # 2. 将 Action 相关类中的 damage_record_hp 里的注释去掉
-    # 3. 在本文件最底部，去掉两行Logging相关的注释，你可能需要修改logging的输出文件
+    # 2. 找到本文件以入action.py中的 damage_record_hp，恢复被注释的代码
+    # 3. 在calculate_score_callback，去掉四行Logging相关的注释，你可能需要修改logging的输出文件路径
     # 然后执行，在logging的输出文件里能找到录制好的计算过程，稍作处理去掉一些冗余即可，也可不处理
     # 后面会打印出这个计算的结果(需要把后面的 logging.debug注释去掉)，记得运行一下确认伤害量是正常的
+    # 可多录制几次，找接近于平均值的
 
     hp = fufu.get_hp().get_max_hp()
 
