@@ -19,14 +19,6 @@ from ye_lan import YeLanQBonus
 from action import Action, ActionPlan
 
 
-# 命座
-# ming_zuo_num = 6
-# 是否有专武
-# has_zhuan_wu = True
-
-# 是否有四命夜兰，仅用于最终生命值上限的展示，不影响最终伤害的计算
-has_4_ming_ye_lan = True
-
 enable_debug = False
 MAX_RUN_NUM = 10
 
@@ -35,10 +27,6 @@ BAI_FU_BEI_LV = 18 + 25
 
 ZHUAN_WU_HP_BEI_LV = 0.14
 ZHUAN_WU_E_BONUS_BEI_LV = 0.08
-
-# 充能要求设置，如果队友有西福斯的月光或西风系列武器，或者队友有雷神等充能的话，可以适当下调
-
-
 
 def randtime(t_min, t_max):
     return random.randint(t_min, t_max) / 1000
@@ -1206,29 +1194,12 @@ def calculate_score_common(score_data: ShengYiWu_Score,
     #                 round(damage), round(full_six_zhan_bi, 3),
     #                 round(score_data.expect_score), round(score_data.crit_score),
     #                 round(fufu.get_crit_rate(), 3), round(fufu.get_crit_damage(), 3))
-
+    
     panel_hp = fufu.get_hp().get_max_hp()
-    fufu.get_hp().modify_max_hp_per(fufu.MING_2_HP_BONUS_MAX)
-    if fufu.has_zhuan_wu:
-        fufu.get_hp().modify_max_hp_per(ZHUAN_WU_HP_BEI_LV * 2)
-    if has_4_ming_ye_lan:
-        # 至少在单个怪上两次e
-        fufu.get_hp().modify_max_hp_per(0.2)
-
-    max_hp = fufu.get_hp().get_max_hp()
-
-    max_e_bonus = fufu.get_e_bonus()
-    if fufu.has_zhuan_wu:
-        max_e_bonus += ZHUAN_WU_E_BONUS_BEI_LV * 3
-    max_e_bonus += 0.28  # 按固有天赋2吃满计算
-    # 大招满气氛值增伤
-    qi_max_elem_bonus = fufu.QI_TO_BONUS_BEI_LV * fufu.MAX_QI_FEN_ZHI
-    max_e_bonus += qi_max_elem_bonus
-
-    max_a_bonus = fufu.get_normal_a_bonus() + qi_max_elem_bonus
-
-    score_data.custom_data = [full_six_zhan_bi, int(max_hp), int(panel_hp), round(max_e_bonus, 3), round(max_a_bonus, 3),
-                              round(fufu.get_crit_rate(), 3), round(fufu.get_crit_damage(), 3), round(fufu.get_energy_recharge(), 1)]
+    score_data.custom_data = [full_six_zhan_bi, int(panel_hp),
+                              round(fufu.get_e_bonus(), 3), round(fufu.get_normal_a_bonus(), 3),
+                              round(fufu.get_crit_rate(), 3), round(fufu.get_crit_damage(), 3), 
+                              round(fufu.get_energy_recharge(), 1)]
 
     return True
 
@@ -1291,9 +1262,9 @@ def find_syw_for_fu_ning_na(calculate_score_callback,
                                           match_tou_callback=match_tou_callback)
         print(len(raw_score_list))
 
-    result_description = ", ".join(["满命六刀伤害占比", "实战最大生命值上限",
-                                "面板最大生命值", "战技最高元素伤害加成(不包含夜兰的)", "满命六刀最高元素伤害加成（不包含夜兰的）",
-                                "暴击率", "暴击伤害", "充能效率"])
+    result_description = ", ".join(["满命六刀伤害占比", "面板最大生命值", 
+                                    "战技元素伤害加成", "满命六刀元素伤害加成",
+                                    "暴击率", "暴击伤害", "充能效率"])
     
     return calculate_score(raw_score_list,
                            calculate_score_callbak=calculate_score_callback,

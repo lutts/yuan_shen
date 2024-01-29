@@ -4,6 +4,11 @@
 Module documentation.
 """
 
+from base_syw import ShengYiWu_Score
+from health_point import HealthPoint
+from character import Character
+from fu_ning_na_common import *
+
 # 非满命算法针对以下手法模式：
 #
 #   芙芙eq，副 C 放技能，切奶妈奶全队，切主C站场输出直到芙芙大招结束，开启下一轮循环
@@ -34,7 +39,6 @@ Module documentation.
 #
 # 对于二命以下的芙芙，打法是一样的，只不过第一轮输出会低些，但第一轮扣了很多血后，进第二轮瞬间奶满就和二命体验差不多了
 
-FU_FU_NAME = "furina"
 MAIN_CARRY = "主C"
 SECONDARY_CARRY = "副C"
 HEALER = "奶妈"
@@ -75,17 +79,54 @@ class Character_Q_Animation:
 
 # 队伍各个角色大招动画开始时间、持续时长
 q_animation_start_end_times = {
-    FU_FU_NAME: Character_Q_Animation(start_time_min=0, start_time_max=0, duration_min=0, duration_max=0),
+    Character_FuFu.NAME: Character_Q_Animation(start_time_min=0, start_time_max=0, duration_min=0, duration_max=0),
     MAIN_CARRY: Character_Q_Animation(start_time_min=0, start_time_max=0, duration_min=0, duration_max=0),
     SECONDARY_CARRY: Character_Q_Animation(start_time_min=0, start_time_max=0, duration_min=0, duration_max=0),
     HEALER: Character_Q_Animation(start_time_min=0, start_time_max=0, duration_min=0, duration_max=0),
 }
 
-non_full_ming_zuo_team = {
+g_teammate_hps = {
     # 影宝
-    MAIN_CARRY: Teammate(12907, 21650),
+    MAIN_CARRY: HealthPoint(12907, 21650),
     # 夜兰
-    SECONDARY_CARRY: Teammate(14450, 46461, elem_type=ShengYiWu.ELEM_TYPE_SHUI),
+    SECONDARY_CARRY: HealthPoint(14450, 46461),
     # 琴
-    HEALER: Teammate(12965, 24224)
+    HEALER: HealthPoint(12965, 24224)
 }
+
+def create_fufu():
+    fufu = Character_FuFu(required_energy_recharge=110)
+    # 双水
+    fufu.get_hp().modify_max_hp_per(0.25)
+    # 专武
+    fufu.add_crit_damage(0.882)
+    return fufu
+
+def ying_ye_fu_qin_team_qualifier(fufu: Character_FuFu):
+    hp = fufu.get_hp().get_max_hp()
+    damage = 0
+
+    return damage
+
+
+def calculate_score_qualifier(score_data: ShengYiWu_Score):
+    return qualify_syw(score_data, create_fufu, ying_ye_fu_qin_team_qualifier)
+
+
+def create_action_plan(fufu_initial_state: Character):
+    plan = FuFuActionPlan(fufu_initial_state, g_teammate_hps)
+
+    return plan
+
+def calculate_score_callback(score_data: ShengYiWu_Score):
+    return calculate_score_common(score_data, create_fufu, create_action_plan)
+
+# Main body
+if __name__ == '__main__':
+    # logging.basicConfig(filename='D:\\logs\\fufu.log', encoding='utf-8', filemode='w', level=logging.DEBUG)
+    # logging.basicConfig(level=logging.DEBUG)
+    print("默认算法复杂，圣遗物多的话需要执行0.5~1小时多")
+    find_syw_for_fu_ning_na(calculate_score_callback=calculate_score_callback,
+                            result_txt_file="fu_ning_na_syw_non_full.txt",
+                            #calculate_score_qualifier=calculate_score_qualifier
+                            )
