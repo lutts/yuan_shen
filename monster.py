@@ -72,3 +72,11 @@ class Monster:
     
     def __str__(self):
         return "kang:" + str(round(self.kang_xin_xi_su, 3)) + ", fang:" + str(round(self.fang_yu_xi_shu, 3))
+    
+
+class Che_Dian_Shu(Monster):
+    """
+    掣电树，一个很好用的木桩
+    """
+    def __init__(self):
+        super().__init__(level=93, kang_xin=3.1)

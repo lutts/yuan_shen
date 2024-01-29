@@ -1,7 +1,19 @@
 import math
 import numpy
 import itertools
+from datetime import datetime
 from base_syw import all_syw
+
+time_format_data = "%H:%M:%S.%f"
+def time_diff(t1_str, t2_str):
+    t1 = datetime.strptime(t1_str, time_format_data)
+    t2 = datetime.strptime(t2_str, time_format_data)
+    diff = t2 - t1
+    seconds = diff.seconds
+    ms = diff.microseconds / 1000000
+    return seconds + round(ms, 3)
+
+print(time_diff("00:00:11.869", "00:00:13.963"))
 
 def all_syw_combines():
     print(len(all_syw['h']))
@@ -114,30 +126,25 @@ def kou_xue_chu_shang():
     print("出伤间隔：" + str([round(l[i + 3] - l[i+1], 3) for i in range(0, len(l) - 2, 2)]))
 
 
-def avg_min_max():
-    l2 = [
-0, 0.133,  0.15,  0.082,  0.167,  0.117,  0.1,  0.1,  0.017,
-0.1, 0.118, 0.1, 0.1, 0.151, 0.133, 0.0, 0.167, 0.1, 0.066, 0.118, 0.0, 0.1, 0.0, 0.0, 0.133, 0.1, 0.134
+def avg_min_max(times):
+    times.sort()
 
-        ]
-    l2.sort()
+    times_avg = round(sum(times) / len(times), 3)
+    times_max = max(times)
+    times_min = min(times)
+    min_max_avg = round((times_max + times_min) / 2, 3)
 
-    l2_avg = round(sum(l2) / len(l2), 3)
-    l2_max = max(l2)
-    l2_min = min(l2)
-    min_max_avg = round((l2_max + l2_min) / 2, 3)
-
-    print("排序: ", l2)
-    print("\t数量：" + str(len(l2)))
-    print("\t最大：" + str(l2_max) + ", +" + str(round(l2_max - l2_avg, 3)))
-    print("\t最小：" + str(l2_min) + ", " + str(round(l2_min - l2_avg, 3)))
-    print("\t平均：" + str(l2_avg))
+    print("排序: ", times)
+    print("\t数量：" + str(len(times)))
+    print("\t最大：" + str(times_max) + ", +" + str(round(times_max - times_avg, 3)))
+    print("\t最小：" + str(times_min) + ", " + str(round(times_min - times_avg, 3)))
+    print("\t平均：" + str(times_avg))
     print("\t最大-最小平均：" + str(min_max_avg))
-    print("\t最大-最小-平均-差值: " + str(round(l2_max - min_max_avg, 3)))
-    print("\t最小-最大范围：[" + str(l2_min) + ", " + str(l2_max) + "]")
-    print("\tquantile range: ", valid_quantile_range(l2))
-    print("\t2-sigma range: ", valid_sigma_range(l2))
-    print("\t3-sigma range: ", valid_sigma_range(l2, num_deviation=3))
+    print("\t最大-最小-平均-差值: " + str(round(times_max - min_max_avg, 3)))
+    print("\t最小-最大范围：[" + str(times_min) + ", " + str(times_max) + "]")
+    print("\tquantile range: ", valid_quantile_range(times))
+    print("\t2-sigma range: ", valid_sigma_range(times))
+    print("\t3-sigma range: ", valid_sigma_range(times, num_deviation=3))
 
 def action_timestamps():
     l3 = [
@@ -258,51 +265,33 @@ h2 = Haha()
 
 # Main body
 if __name__ == '__main__':
-    avg_min_max()
-    # damage_sum()
-    t = [
-2.684, 4.719, 6.719, 8.719, 10.719, 12.687,
-1.617, 3.584, 5.486, 7.519, 9.502, 11.502,
-1.084, 3.068, 4.969, 6.986, 8.952, 10.986
-         ]
-
-    i = 1
-    intervals = []
-    while i < len(t):
-        intervals.append(str(round(t[i] - t[i-1], 3)))
-        i += 1
-
-    print(", ".join(intervals))
-
-    t = [
-        [ 2.801, 4.102, 4.202 ],
-[ 2.584, 3.951, 4.069 ],
-[ 2.751, 4.069, 4.169 ],
-[ 2.684, 4.102, 4.202 ],
-[ 2.501, 3.867, 4.018 ],
-[ 3.067, 4.419, 4.552 ],
-[3.551, 4.886, 4.886  ],
-[ 3.284, 4.669, 4.836 ],
-[9.352, 10.669, 10.769  ],
-[ 2.784, 4.136, 4.202 ],
-[ 2.634, 3.968, 4.086 ],
-[ 3.767, 5.069, 5.069 ],
-[3.251, 4.552, 4.586, 4.652],
-[3.066, 4.486, 4.486],
-[2.234, 3.667, 3.667],
-[2.95, 4.286, 4.419  ],
-[1.884, 3.217, 3.317],
-[2.617, 3.935, 4.069],
+    #avg_min_max()
+    times = [
+        [2.094, 2.023, 1.951, 2.026, 1.926, 2.050],
+        [2.134, 1.966, 2.017, 1.985, 1.917, 2.083],
+        [2.116, 2.035, 1.950, 2.017, 1.983, 2.017],
+        [2.116, 1.985, 2.017, 2.117],
+        [2.168, 1.917],
+        [2.084, 2.000, 2.000, 2.018, 1.984, 2.000],
+        [2.120, 1.966, 2.017, 2.018, 1.984, 1.966],
+        [2.115, 2.019, 1.982, 2.003, 2.017, 2.016],
+        [2.116, 1.985, 2.017, 1.967, 2.016],
+        [2.116, 1.984],
+        [2.102, 2.000, 2.017, 1.966, 2.034, 1.966],
+        [2.117, 1.985, 2.016, 2.017, 2.017, 1.918],
+        [2.150, 1.985, 1.900, 1.983, 2.017, 2.101],
+        [2.118]
     ]
 
-    first_intervals = []
-    for l in t:
-        first_intervals.append(str(round(l[1] - l[0], 3)))
+    first_intervals = [t[0] for t in times]
+    other_intervals = []
+    for ts in [t[1:] for t in times]:
+        other_intervals += ts
 
-    print("first intervals: ", ", ".join(first_intervals))
+    print(first_intervals)
+    avg_min_max(first_intervals)
+    print(other_intervals)
+    avg_min_max(other_intervals)
+    ts = [1.95, 1.951, 1.966, 1.966, 1.966, 1.966, 1.966, 1.967, 1.982, 1.983, 1.983, 1.984, 1.984, 1.984, 1.985, 1.985, 1.985, 1.985, 1.985, 2.0, 2.0, 2.0, 2.0, 2.003, 2.016, 2.016, 2.016, 2.017, 2.017, 2.017, 2.017, 2.017, 2.017, 2.017, 2.017, 2.017, 2.017, 2.017, 2.018, 2.018, 2.019, 2.023, 2.026, 2.034, 2.035, 2.05]
+    avg_min_max(ts)
 
-    time_ranges = []
-    for l in t:
-        time_ranges.append(str(round(l[-1] - l[1], 3)))
-
-    print("time ranges: ", ", ".join(time_ranges))

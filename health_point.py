@@ -33,6 +33,9 @@ class HealthPoint:
     def get_cur_hp(self):
         return self.__cur_hp
     
+    def get_cur_hp_per(self):
+        return round(self.__cur_hp / self.__max_hp, 3)
+    
     def get_maxest_hp_ever(self):
         return round(self.__maxest_hp_ever)
     

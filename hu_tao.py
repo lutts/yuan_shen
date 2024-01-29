@@ -155,4 +155,4 @@ def find_syw_for_hu_tao_lie_ren():
 
 # Main body
 if __name__ == '__main__':
-    find_syw_for_hu_tao_lie_ren()
+    find_syw_for_hu_tao()
