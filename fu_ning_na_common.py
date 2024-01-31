@@ -117,8 +117,6 @@ class Character_FuFu(Character):
 
 class FuFuActionPlan(ActionPlan):
     def __init__(self, fufu_initial_state: Character_FuFu, teammate_hps: dict[str, HealthPoint]):
-        super().__init__()
-
         self.__fufu: Character_FuFu = copy.deepcopy(fufu_initial_state)
         self.__teammates: list[Character] = []
         for name, hp in teammate_hps.items():
@@ -126,11 +124,8 @@ class FuFuActionPlan(ActionPlan):
             c.set_hp(copy.deepcopy(hp))
             self.__teammates.append(c)
 
-        self.__all_characters: list[Character] = [self.__fufu] + self.__teammates
-
-        self.__forground_character: Character = None
-
-        self.monster = Monster()
+        super().__init__(characters=[self.__fufu] + self.__teammates,
+                         monster=Monster())
 
         self.__zhuan_wu_hp_last_change_time = None
         self.__zhuan_wu_hp_level = 0
@@ -155,7 +150,6 @@ class FuFuActionPlan(ActionPlan):
 
         self.ye_lan_q_bonus = YeLanQBonus()
 
-        self.total_damage = 0
         self.full_six_damage = 0
 
         # 用于预筛选代码录制
@@ -175,14 +169,6 @@ class FuFuActionPlan(ActionPlan):
         for t in self.__teammates:
             if t.name == name:
                 return t
-            
-    def get_character(self, name) -> Character:
-        for t in self.__all_characters:
-            if t.name == name:
-                return  t
-
-    def get_foreground_character(self) -> Character:
-        return self.__forground_character
 
     def get_max_hp(self):
         return self.__fufu.get_hp().get_max_hp()
@@ -235,25 +221,6 @@ class FuFuActionPlan(ActionPlan):
     def damage_record_hp(self):
         pass
         # self.__damage_record_hp()
-
-    def switch_to_forground(self, character_name):
-        if self.__forground_character:
-            if self.__forground_character.name == character_name:
-                return
-
-        prev_fore = self.__forground_character
-        if character_name == self.__fufu.name:
-            self.__fufu.switch_to_foreground()
-            self.__forground_character = self.__fufu
-        else:
-            for t in self.__teammates:
-                if t.name == character_name:
-                    t.switch_to_foreground()
-                    self.__forground_character = t
-                    break
-
-        if prev_fore:
-            prev_fore.switch_to_background()
 
     @staticmethod
     def get_effective_delay():
@@ -386,8 +353,7 @@ class FuFuActionPlan(ActionPlan):
         self.debug("触发芙芙固有天赋1")
 
     def change_cur_hp(self, cur_time, targets: list[Character]=None, hp=0, hp_per=0, source=None):
-        if not targets:
-            targets = self.__all_characters
+        source_ch, targets_with_change_data = super().modify_cur_hp(targets=targets, hp=hp, hp_per=hp_per, source=source)
 
         changed_targets = []
         qi_fen_zhi = 0
@@ -395,48 +361,28 @@ class FuFuActionPlan(ActionPlan):
         fufu_hp_changed = False
         teammate_hp_changed = False
 
-        over_heal_num = 0
-
-        healing_bonus = 0
+        over_healed = False
         heal_by_fufu = True
-        if source:
-            if isinstance(source, Character):
-                healing_bonus = source.get_healing_bonus()
-                if source is not self.__fufu:
-                    heal_by_fufu = False
-            else:
-                ch = self.get_character(source)
-                healing_bonus = ch.get_healing_bonus()
-                if ch is not self.__fufu:
-                    heal_by_fufu = False
+        if source_ch and source_ch is not self.__fufu:
+            heal_by_fufu = False
 
-        for c in targets:
-            if hp > 0:
-                _, hp_per_changed, over_heal_num = c.regenerate_hp(hp, healing_bonus)
-                qi_fen_zhi += abs(hp_per_changed) * self.__fufu.QI_INCREASE_BEI_LV * 100
-            elif hp < 0:
-                _, hp_per_changed, _ = c.get_hp().modify_cur_hp(hp)
-                qi_fen_zhi += abs(hp_per_changed) * self.__fufu.QI_INCREASE_BEI_LV * 100
+        for target, data in targets_with_change_data:
+            if data.over_heal_num > 0:
+                over_healed = True
 
-            if hp_per > 0:
-                _, hp_per_changed, over_heal_num = c.regenerate_hp_per(hp_per, healing_bonus)
-                qi_fen_zhi += abs(hp_per_changed) * self.__fufu.QI_INCREASE_BEI_LV * 100
-            elif hp_per < 0:
-                _, hp_per_changed, _ = c.get_hp().modify_cur_hp_per(hp_per)
-                qi_fen_zhi += abs(hp_per_changed) * self.__fufu.QI_INCREASE_BEI_LV * 100
-
+            qi_fen_zhi += abs(data.hp_per) * self.__fufu.QI_INCREASE_BEI_LV * 100
             if qi_fen_zhi != prev_qi_fen_zhi:
                 # hp changed
-                if c is self.__fufu:
+                if target is self.__fufu:
                     fufu_hp_changed = True
                 else:
                     teammate_hp_changed = True
 
-                changed_targets.append(c)
+                changed_targets.append(target)
 
             prev_qi_fen_zhi = qi_fen_zhi
 
-        if over_heal_num > 0 and not heal_by_fufu:
+        if over_healed and not heal_by_fufu:
             self.do_trigger_gu_you_tian_fu_1()
 
         if qi_fen_zhi:

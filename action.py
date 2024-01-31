@@ -9,6 +9,8 @@ import typing
 import random
 
 from monster import Monster
+from character import Character
+from health_point import HP_Change_Data
 
 ActionPlan = typing.NewType("ActionPlan", None)
 
@@ -72,15 +74,80 @@ class Action:
 
 
 class ActionPlan:
-    def __init__(self):
+    def __init__(self, characters: list[Character], monster: Monster):
+        self.__characters = characters
+        self.__forground_character: Character = None
+        self.__monster = monster
+
         self.__current_index = 0
         self.__current_action_time = 0
         self.action_list: list[Action] = []
+
+        self.total_damage = 0
+
+    @property
+    def characters(self):
+        return self.__characters
+
+    def get_character(self, name) -> Character:
+        for t in self.__characters:
+            if t.name == name:
+                return  t
+            
+    def get_foreground_character(self) -> Character:
+        return self.__forground_character
+
+    @property
+    def monster(self):
+        return self.__monster
 
     def get_current_action_time(self):
         return self.__current_action_time
 
     ##################################################
+
+    def switch_to_forground(self, character_name):
+        if self.__forground_character:
+            if self.__forground_character.name == character_name:
+                return
+
+        prev_fore = self.__forground_character
+        ch = self.get_character(character_name)
+        ch.switch_to_foreground()
+        self.__forground_character = ch
+        
+        if prev_fore:
+            prev_fore.switch_to_background()
+
+    def modify_cur_hp(self, targets: list[Character]=None, hp=0, hp_per=0, source=None) -> tuple[Character|None, list[tuple[Character, HP_Change_Data]]]:
+        if not targets:
+            targets = self.__characters
+
+        targets_with_change_data = []
+
+        healing_bonus = 0
+        source_ch = source
+        if source:
+            if isinstance(source, Character):
+                healing_bonus = source.get_healing_bonus()
+            else:
+                source_ch = self.get_character(source)
+                healing_bonus = source_ch.get_healing_bonus()
+
+        for c in targets:
+            if hp > 0:
+                change_data = c.regenerate_hp(hp, healing_bonus)
+            elif hp < 0:
+                change_data = c.get_hp().modify_cur_hp(hp)
+
+            if hp_per > 0:
+                change_data = c.regenerate_hp_per(hp_per, healing_bonus)
+            elif hp_per < 0:
+                change_data = c.get_hp().modify_cur_hp_per(hp_per)
+
+            targets_with_change_data.append((c, change_data, ))
+
+        return (source_ch, targets_with_change_data)
 
     def __debug(self, fmt_str, *args, **kwargs):
         fmt_str = str(round(self.get_current_action_time(), 3)) + ": " + fmt_str

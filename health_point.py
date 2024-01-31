@@ -4,6 +4,17 @@
 Module documentation.
 """
 
+class HP_Change_Data:
+    def __init__(self, hp, hp_per, over_heal_num):
+        self.hp = hp
+        self.hp_per = hp_per
+        self.over_heal_num = over_heal_num
+
+    def has_changed(self):
+        return self.hp != 0
+    
+not_changed_data = HP_Change_Data(0, 0, 0)
+
 class HealthPoint:
     def __init__(self, base_hp: int, max_hp: int = 0):
         # 确保为整数
@@ -72,7 +83,7 @@ class HealthPoint:
     def modify_max_hp_per(self, hp_per):
         self.modify_max_hp(round(self.__base_hp * hp_per))
 
-    def modify_cur_hp(self, hp_changed) -> tuple[float, float, bool]:
+    def modify_cur_hp(self, hp_changed) -> HP_Change_Data:
         """
         返回值说明：
         [0]: 实际变化 hp
@@ -81,13 +92,13 @@ class HealthPoint:
         """
         # 大招动画的时候不会掉血
         if hp_changed < 0 and self.__in_q_animation:
-            return (0, 0, 0)
+            return not_changed_data
         
         if hp_changed == 0:
-            return (0, 0, 0)
+            return not_changed_data
         
         if hp_changed > 0 and self.__cur_hp == self.__max_hp:
-            return (0, 0, hp_changed)
+            return HP_Change_Data(0, 0, hp_changed)
         
         over_heal_num = 0
 
@@ -105,7 +116,7 @@ class HealthPoint:
 
         actual_modified_hp_per = actual_modified_hp / self.__max_hp
 
-        return (actual_modified_hp, actual_modified_hp_per, over_heal_num)
+        return HP_Change_Data(actual_modified_hp, actual_modified_hp_per, over_heal_num)
 
     def modify_cur_hp_per(self, hp_per):
         return self.modify_cur_hp(round(self.__max_hp * hp_per))
