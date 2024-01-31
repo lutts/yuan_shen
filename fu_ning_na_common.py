@@ -126,6 +126,8 @@ class FuFuActionPlan(ActionPlan):
             c.set_hp(copy.deepcopy(hp))
             self.__teammates.append(c)
 
+        self.__all_characters: list[Character] = [self.__fufu] + self.__teammates
+
         self.__forground_character: Character = None
 
         self.monster = Monster()
@@ -160,8 +162,24 @@ class FuFuActionPlan(ActionPlan):
         self.ye_lan_e_num = 0
         self.prev_hp_str = None
 
+        # 方法别名
+        self.regenerate_hp = self.change_cur_hp
+
     def get_fufu(self) -> Character_FuFu:
         return self.__fufu
+    
+    def get_teammates(self) -> list[Character]:
+        return self.__teammates
+
+    def get_teammate(self, name) -> Character:
+        for t in self.__teammates:
+            if t.name == name:
+                return t
+            
+    def get_character(self, name) -> Character:
+        for t in self.__all_characters:
+            if t.name == name:
+                return  t
 
     def get_foreground_character(self) -> Character:
         return self.__forground_character
@@ -188,14 +206,6 @@ class FuFuActionPlan(ActionPlan):
             return self.ye_lan_q_bonus.bonus(self.get_current_action_time())
         else:
             return 0
-
-    def get_teammates(self) -> list[Character]:
-        return self.__teammates
-
-    def get_teammate(self, name) -> Character:
-        for t in self.__teammates:
-            if t.name == name:
-                return t
 
     ##################################################
 
@@ -375,8 +385,11 @@ class FuFuActionPlan(ActionPlan):
     def do_trigger_gu_you_tian_fu_1(self):
         self.debug("触发芙芙固有天赋1")
 
-    def change_cur_hp(self, cur_time, characters: list[Character] = [], hp=0, hp_per=0, healing_bonus=0, heal_by_fufu=True):
-        changed_characters = []
+    def change_cur_hp(self, cur_time, targets: list[Character]=None, hp=0, hp_per=0, source=None):
+        if not targets:
+            targets = self.__all_characters
+
+        changed_targets = []
         qi_fen_zhi = 0
         prev_qi_fen_zhi = 0
         fufu_hp_changed = False
@@ -384,7 +397,20 @@ class FuFuActionPlan(ActionPlan):
 
         over_heal_num = 0
 
-        for c in characters:
+        healing_bonus = 0
+        heal_by_fufu = True
+        if source:
+            if isinstance(source, Character):
+                healing_bonus = source.get_healing_bonus()
+                if source is not self.__fufu:
+                    heal_by_fufu = False
+            else:
+                ch = self.get_character(source)
+                healing_bonus = ch.get_healing_bonus()
+                if ch is not self.__fufu:
+                    heal_by_fufu = False
+
+        for c in targets:
             if hp > 0:
                 _, hp_per_changed, over_heal_num = c.regenerate_hp(hp, healing_bonus)
                 qi_fen_zhi += abs(hp_per_changed) * self.__fufu.QI_INCREASE_BEI_LV * 100
@@ -406,7 +432,7 @@ class FuFuActionPlan(ActionPlan):
                 else:
                     teammate_hp_changed = True
 
-                changed_characters.append(c)
+                changed_targets.append(c)
 
             prev_qi_fen_zhi = qi_fen_zhi
 
@@ -415,7 +441,7 @@ class FuFuActionPlan(ActionPlan):
 
         if qi_fen_zhi:
             self.debug("当前生命值变化，影响的角色: %s", ",".join(
-                [c.name for c in changed_characters]))
+                [c.name for c in changed_targets]))
 
             if cur_time < self.get_current_action_time():
                 cur_time = self.get_current_action_time()
@@ -437,15 +463,15 @@ class FuFuActionPlan(ActionPlan):
 
         self.add_qi_fen_zhi(qi_fen_zhi)
 
-        return changed_characters
+        return changed_targets
 
-    def consume_hp(self, hp_per):
+    def consume_hp_per(self, hp_per):
         characters = [self.__fufu] + self.__teammates
-        changed_characters = self.change_cur_hp(
-            self.get_current_action_time(), characters=characters, hp_per=(0 - hp_per))
+        changed_targets = self.change_cur_hp(
+            self.get_current_action_time(), targets=characters, hp_per=(0 - hp_per))
 
         # changed_characters_str = ""
-        for c in changed_characters:
+        for c in changed_targets:
             # changed_characters_str += c.name + ", "
             if c is self.__fufu and self.hei_fu_cure_fufu_action and self.hei_fu_cure_fufu_action.blocking:
                 self.hei_fu_cure_fufu_action.do(self)
@@ -618,8 +644,8 @@ class Hei_Fu_Cure_Teammate_Action(Hei_Fu_Cure_Action):
     def do_impl(self, plan: FuFuActionPlan):
         cure_num = self.get_cure_num(plan.get_fufu())
         self.debug("治疗后台三人, %s", cure_num)
-        plan.change_cur_hp(cur_time=self.get_timestamp(),
-                           characters=plan.get_teammates(), hp=cure_num)
+        plan.regenerate_hp(cur_time=self.get_timestamp(),
+                           targets=plan.get_teammates(), hp=cure_num)
 
         self.re_schedule(plan)
 
@@ -658,8 +684,8 @@ class Hei_Fu_Cure_FuFu_Action(Hei_Fu_Cure_Action):
             else:
                 cure_num = self.get_cure_num(fufu)
                 self.debug("治疗芙芙，%s", cure_num)
-                plan.change_cur_hp(self.get_timestamp(),
-                                   characters=[fufu], hp=cure_num)
+                plan.regenerate_hp(self.get_timestamp(),
+                                   targets=[fufu], hp=cure_num)
 
                 self.re_schedule(plan)
         else:
@@ -801,7 +827,7 @@ class Bai_Dao_Kou_Xue_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
         # 白刀扣血 1%
         self.debug("%s", self.name)
-        plan.consume_hp(0.01)
+        plan.consume_hp_per(0.01)
 
 
 class Bai_Fu_Damage_Action(Action):
@@ -837,11 +863,7 @@ class Q_Animation_Action(Action):
         self.character_name = character_name
 
     def do_impl(self, plan: FuFuActionPlan):
-        if self.character_name == Character_FuFu.NAME:
-            ch = plan.get_fufu()
-        else:
-            ch = plan.get_teammate(self.character_name)
-        self.set_anim_state(ch)
+        self.set_anim_state(plan.get_character(self.character_name))
 
     def set_anim_state(self, ch: Character):
         pass
@@ -936,7 +958,7 @@ class Salon_Member_Damage_Action(Action):
 class Fu_Ren_Kou_Xue_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
         self.debug("夫人扣血")
-        plan.consume_hp(0.016)
+        plan.consume_hp_per(0.016)
 
 
 class Fu_Ren_Damage_Action(Salon_Member_Damage_Action):
@@ -947,7 +969,7 @@ class Fu_Ren_Damage_Action(Salon_Member_Damage_Action):
 class Xun_Jue_Kou_Xue_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
         self.debug("勋爵扣血")
-        plan.consume_hp(0.024)
+        plan.consume_hp_per(0.024)
 
 
 class Xun_Jue_Damage_Action(Salon_Member_Damage_Action):
@@ -958,7 +980,7 @@ class Xun_Jue_Damage_Action(Salon_Member_Damage_Action):
 class Pang_Xie_Kou_Xue_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
         self.debug("螃蟹扣血")
-        plan.consume_hp(0.036)
+        plan.consume_hp_per(0.036)
 
 
 class Pang_Xie_Damage_Action(Salon_Member_Damage_Action):
@@ -973,7 +995,7 @@ class Ge_Zhe_Cure_Action(Action):
 
         foreground_character = plan.get_foreground_character()
         self.debug("歌者治疗 %s, 治疗量: %s", foreground_character.name, cure_num)
-        plan.change_cur_hp(self.get_timestamp(), characters=[foreground_character], hp=cure_num)
+        plan.regenerate_hp(self.get_timestamp(), targets=[foreground_character], hp=cure_num)
 
 
 FU_REN_NAME = "夫人"
