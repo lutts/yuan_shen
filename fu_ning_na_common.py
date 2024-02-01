@@ -711,33 +711,6 @@ class Hei_Fu_Cure_FuFu_Action(Hei_Fu_Cure_Action):
             self.supervisor.start_cure_fu_fu(plan, next_time)
 
 
-        # if self.sync_with_cure_teammate:
-        #     if not plan.hei_fu_cure_teammate_action:
-        #         self.debug("治疗芙芙重新调度时，同步模式下治疗队友已终止")
-        #         plan.hei_fu_cure_fufu_action = None
-        #         return
-        #     else:
-        #         next_time = plan.hei_fu_cure_teammate_action.actual_cure_time + \
-        #             plan.get_hei_fu_cure_fufu_delay()
-        # else:
-        #     if self.blocking:
-        #         next_time = plan.get_current_action_time() + plan.get_hei_fu_cure_interval()
-        #     else:
-        #         next_time = self.actual_cure_time + plan.get_hei_fu_cure_interval()
-
-        # if next_time <= self.end_cure_time:
-        #     # self.debug("治疗重新调度，模式%s", self.sync_with_cure_teammate)
-        #     action = Hei_Fu_Cure_FuFu_Action(
-        #         sync_with_cure_teammate=self.sync_with_cure_teammate)
-        #     action.actual_cure_time = next_time
-        #     action.end_cure_time = self.end_cure_time
-        #     action.set_timestamp(next_time + plan.get_effective_delay())
-        #     plan.insert_action_runtime(action)
-        #     plan.hei_fu_cure_fufu_action = action
-        # else:
-        #     self.debug("治疗芙芙到时间，终止")
-        #     plan.hei_fu_cure_fufu_action = None
-
 # 芒、荒的伤害刀似乎都是按黑芙计算的
 # 注意：芒荒刀出伤的时候，芙芙不一定在前台
 
@@ -781,65 +754,6 @@ class Hei_Fu_Damage_Action(Action):
                    self.name, round(damage), hp, round(a_bonus, 3), monster)
         self.damage_record_hp(bei_lv_str="HEI_FU_BEI_LV / 100",
                               bonus=a_bonus, monster=monster)
-
-    # def do_cure(self, plan: FuFuActionPlan):
-    #     # 治疗队友
-    #     cure_teammate_restarted = False
-    #     if plan.hei_fu_cure_teammate_action:
-    #         # 有一个cure action在队列后面，延长治疗时间即可
-    #         self.debug("延长奶刀治疗队友时间")
-    #         plan.hei_fu_cure_teammate_action.end_cure_time += 2.9
-    #     else:
-    #         self.debug("启动奶刀治疗队友")
-    #         cure_teammate_restarted = True
-    #         plan.hei_fu_cure_teammate_action = self.start_new_cure(
-    #             plan, Hei_Fu_Cure_Teammate_Action)
-
-    #     # 治疗芙芙自身：因为治疗会blocking，逻辑更复杂
-    #     if plan.hei_fu_cure_fufu_action:
-    #         # 已经有一个action在队列上，要检查其状态
-    #         if plan.hei_fu_cure_fufu_action.blocking:
-    #             if self.get_timestamp() < plan.hei_fu_cure_fufu_action.end_cure_time:
-    #                 # 阻塞着，在有效时间之内又砍了一刀奶刀，则延长结束时间
-    #                 self.debug("奶刀治疗芙芙阻塞中，延长持续时间")
-    #                 plan.hei_fu_cure_fufu_action.end_cure_time += 2.9
-    #             else:
-    #                 # 阻塞着，但已经超时了，重新启动
-    #                 self.debug("上次奶刀治疗芙芙阻塞超时，重启")
-    #                 plan.hei_fu_cure_fufu_action = None
-    #         else:
-    #             # 不在blocking，那么肯定在队列后面了
-    #             plan.hei_fu_cure_fufu_action.end_cure_time += 2.9
-
-    #     if not plan.hei_fu_cure_fufu_action:
-    #         # 没有action，或者因为超时被重置了，需要重启
-    #         if cure_teammate_restarted:
-    #             self.debug("启动奶刀治疗芙芙，同步模式")
-    #             action = Hei_Fu_Cure_FuFu_Action(sync_with_cure_teammate=True)
-    #             action.end_cure_time = plan.hei_fu_cure_teammate_action.end_cure_time
-    #             action.actual_cure_time = plan.hei_fu_cure_teammate_action.actual_cure_time + \
-    #                 plan.get_hei_fu_cure_fufu_delay()
-    #             action.set_timestamp(
-    #                 action.actual_cure_time + plan.get_effective_delay())
-    #             plan.insert_action_runtime(action)
-    #         else:
-    #             self.debug("启动奶刀治疗芙芙，独立模式")
-    #             action = self.start_new_cure(plan, Hei_Fu_Cure_FuFu_Action)
-
-    #         plan.hei_fu_cure_fufu_action = action
-
-    # def start_new_cure(self, plan: FuFuActionPlan, cls):
-    #     actual_cure_time = self.get_timestamp() + plan.get_hei_fu_first_cure_delay()
-    #     end_cure_time = actual_cure_time + \
-    #         (2.9 - 1) + plan.get_hei_fu_cure_extension()
-    #     action = cls()
-    #     action.actual_cure_time = actual_cure_time
-    #     action.end_cure_time = end_cure_time
-    #     action.set_timestamp(actual_cure_time + plan.get_effective_delay())
-
-    #     plan.insert_action_runtime(action)
-
-    #     return action
 
 
 class Bai_Dao_Kou_Xue_Action(Action):
