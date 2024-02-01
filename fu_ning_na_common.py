@@ -13,10 +13,11 @@ from collections.abc import Callable
 
 from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 from health_point import HealthPoint
-from character import Character
+from character import Character, Character_HP_Change_Data
 from monster import Monster
 from ye_lan import YeLanQBonus
 from action import Action, ActionPlan
+from events import EventsException
 
 
 enable_debug = False
@@ -366,19 +367,19 @@ class FuFuActionPlan(ActionPlan):
         if source_ch and source_ch is not self.__fufu:
             heal_by_fufu = False
 
-        for target, data in targets_with_change_data:
-            if data.over_heal_num > 0:
+        for tdata in targets_with_change_data:
+            if tdata.is_over_healed() > 0:
                 over_healed = True
 
-            qi_fen_zhi += abs(data.hp_per) * self.__fufu.QI_INCREASE_BEI_LV * 100
+            qi_fen_zhi += abs(tdata.data.hp_per) * self.__fufu.QI_INCREASE_BEI_LV * 100
             if qi_fen_zhi != prev_qi_fen_zhi:
                 # hp changed
-                if target is self.__fufu:
+                if tdata.character is self.__fufu:
                     fufu_hp_changed = True
                 else:
                     teammate_hp_changed = True
 
-                changed_targets.append(target)
+                changed_targets.append(tdata.character)
 
             prev_qi_fen_zhi = qi_fen_zhi
 
@@ -423,6 +424,12 @@ class FuFuActionPlan(ActionPlan):
                 self.hei_fu_cure_fufu_action.do(self)
         # self.debug("被扣血的角色 %s", changed_characters_str)
 
+    def add_hei_fu_damage_callback(self, callback):
+        self.events.on_hei_fu_damage += callback
+    
+    def call_hei_fu_damage_callback(self):
+        if hasattr(self.events, "on_hei_fu_damage"):
+            self.events.on_hei_fu_damage(self)
 
 class Increase_ZhuanWu_Hp_Level_Action(Action):
     def __init__(self):
@@ -573,21 +580,86 @@ class FuFu_E_Action(Action):
                               bonus=e_bonus, monster=monster)
 
 
+class Hei_Fu_Cure_Supervisor:
+    def __init__(self):
+        self.end_time = 0
+        self.is_cure_fufu_sync = True
+        self.last_cure_teammate_actual_time = 0
+        self.last_cure_teammate_effective_time = 0
+
+    def on_hei_fu_damage(self, plan: FuFuActionPlan):
+        cur_action_time = plan.get_current_action_time()
+        if cur_action_time <= self.end_time:
+            self.end_time += 2.9
+            plan.debug("adjust end_time to %s", round(self.end_time, 3))
+        else:
+            self.start_cure_teammate(plan, cur_action_time)
+
+    def start_cure_teammate(self, plan: FuFuActionPlan, cur_action_time):
+        actual_cure_time = cur_action_time + plan.get_hei_fu_first_cure_delay()
+        self.end_time = actual_cure_time + (2.9 - 1) + plan.get_hei_fu_cure_extension()
+        plan.debug("黑芙治疗启动, end_time=%s", round(self.end_time, 3))
+
+        action = Hei_Fu_Cure_Teammate_Action(self)
+        action.actual_cure_time = actual_cure_time
+        effective_time = actual_cure_time + plan.get_effective_delay()
+        action.set_timestamp(effective_time)        
+        plan.insert_action_runtime(action)
+
+        self.is_cure_fufu_sync = True
+        cure_fufu_delay = plan.get_hei_fu_cure_fufu_delay()
+        self.start_cure_fu_fu(plan, 
+                              actual_cure_time + cure_fufu_delay, 
+                              effective_time + cure_fufu_delay)
+
+    def start_cure_fu_fu(self, plan: FuFuActionPlan, actual_time, effective_time=None):
+        # plan.debug("start_cure_fufu: actual_time:%s, effetive_time:%s", actual_time, str(effective_time))
+        action = Hei_Fu_Cure_FuFu_Action(self)
+        action.actual_cure_time = actual_time
+        if not effective_time:
+            effective_time = actual_time + plan.get_effective_delay()
+        action.set_timestamp(effective_time)
+        plan.insert_action_runtime(action)
+
+    def on_consume_hp(self, plan: FuFuActionPlan, source: Character, targets_with_data: list[Character_HP_Change_Data]):
+        cur_action_time = plan.get_current_action_time()
+        if cur_action_time > self.end_time:
+            plan.remove_consume_hp_callback(self.on_consume_hp)
+            return
+        
+        fufu_hp_decreased = False
+        for tdata in targets_with_data:
+            if tdata.character is plan.get_fufu():
+                fufu_hp_decreased = tdata.has_changed()
+                break
+
+        if fufu_hp_decreased:
+            plan.remove_consume_hp_callback(self.on_consume_hp)
+            self.start_cure_fu_fu(plan, cur_action_time)
+
+    
 class Hei_Fu_Cure_Action(Action):
-    def __init__(self, name):
+    def __init__(self, name, supervisor: Hei_Fu_Cure_Supervisor):
         super().__init__(name)
         self.actual_cure_time = 0
-        self.end_cure_time = 0
+        self.supervisor: Hei_Fu_Cure_Supervisor = supervisor
 
     def get_cure_num(self, fufu: Character):
         return round(fufu.get_hp().get_max_hp() * 0.04)
+    
+    def do_impl(self, plan: FuFuActionPlan):
+        if self.get_timestamp() > self.supervisor.end_time:
+            self.debug("%s超时，不执行", self.name)
+            return
+        
+        self.do_cure(plan)
 
 
 class Hei_Fu_Cure_Teammate_Action(Hei_Fu_Cure_Action):
-    def __init__(self):
-        super().__init__("治疗后台三人")
+    def __init__(self, supervisor: Hei_Fu_Cure_Supervisor):
+        super().__init__("治疗后台三人", supervisor)
 
-    def do_impl(self, plan: FuFuActionPlan):
+    def do_cure(self, plan: FuFuActionPlan):
         cure_num = self.get_cure_num(plan.get_fufu())
         self.debug("治疗后台三人, %s", cure_num)
         plan.regenerate_hp(cur_time=self.get_timestamp(),
@@ -597,74 +669,74 @@ class Hei_Fu_Cure_Teammate_Action(Hei_Fu_Cure_Action):
 
     def re_schedule(self, plan: FuFuActionPlan):
         next_time = self.actual_cure_time + plan.get_hei_fu_cure_interval()
-        if next_time <= self.end_cure_time:
-            action = Hei_Fu_Cure_Teammate_Action()
-            action.actual_cure_time = next_time
-            action.end_cure_time = self.end_cure_time
-            action.set_timestamp(next_time + plan.get_effective_delay())
-            plan.insert_action_runtime(action)
+        effective_time = next_time + plan.get_effective_delay()
+        self.supervisor.last_cure_teammate_actual_time = next_time
+        self.supervisor.last_cure_teammate_effective_time = effective_time
 
-            plan.hei_fu_cure_teammate_action = action
-        else:
-            self.debug("治疗后台三人到时间，终止")
-            plan.hei_fu_cure_teammate_action = None
+        action = Hei_Fu_Cure_Teammate_Action(self.supervisor)
+        action.actual_cure_time = next_time
+        action.set_timestamp(effective_time)
+        plan.insert_action_runtime(action)
 
 
 class Hei_Fu_Cure_FuFu_Action(Hei_Fu_Cure_Action):
-    def __init__(self, sync_with_cure_teammate=False):
-        super().__init__("治疗芙芙")
-        self.sync_with_cure_teammate = sync_with_cure_teammate
-        self.blocking = False
+    def __init__(self, supervisor):
+        super().__init__("治疗芙芙", supervisor)
 
-    def do_impl(self, plan: FuFuActionPlan):
-        # 有可能是从 blocking状态唤醒，需要检查时间
-        if plan.get_current_action_time() <= self.end_cure_time:
-            fufu = plan.get_fufu()
+    def do_cure(self, plan: FuFuActionPlan):
+        fufu = plan.get_fufu()
 
-            if fufu.get_hp().is_full():
-                self.debug("治疗芙芙时，芙芙满血，阻塞并转入独立模式")
-                # 芙芙是满血的，不用治疗，转入阻塞独立模式
-                self.blocking = True
-                # 自此之后，不再和治疗队友保持同步
-                self.sync_with_cure_teammate = False
-            else:
-                cure_num = self.get_cure_num(fufu)
-                self.debug("治疗芙芙，%s", cure_num)
-                plan.regenerate_hp(self.get_timestamp(),
-                                   targets=[fufu], hp=cure_num)
-
-                self.re_schedule(plan)
+        if fufu.get_hp().is_full():
+            self.debug("治疗芙芙时，芙芙满血，阻塞并转入独立模式")
+            # 芙芙是满血的，不用治疗，转入阻塞独立模式
+            self.supervisor.is_cure_fufu_sync = False
+            plan.add_consume_hp_callback(self.supervisor.on_consume_hp)
         else:
-            self.debug("治疗芙芙，从blocking唤醒后发现超时，终止")
-            plan.hei_fu_cure_fufu_action = None
+            cure_num = self.get_cure_num(fufu)
+            self.debug("治疗芙芙，%s", cure_num)
+            plan.regenerate_hp(self.get_timestamp(),
+                                targets=[fufu], hp=cure_num)
+
+            self.re_schedule(plan)
 
     def re_schedule(self, plan: FuFuActionPlan):
-        if self.sync_with_cure_teammate:
-            if not plan.hei_fu_cure_teammate_action:
-                self.debug("治疗芙芙重新调度时，同步模式下治疗队友已终止")
-                plan.hei_fu_cure_fufu_action = None
-                return
-            else:
-                next_time = plan.hei_fu_cure_teammate_action.actual_cure_time + \
-                    plan.get_hei_fu_cure_fufu_delay()
+        if self.supervisor.is_cure_fufu_sync:
+            cure_fufu_delay = plan.get_hei_fu_cure_fufu_delay()
+            actual_time = self.supervisor.last_cure_teammate_actual_time + cure_fufu_delay
+            effective_time = self.supervisor.last_cure_teammate_effective_time + cure_fufu_delay
+            self.supervisor.start_cure_fu_fu(plan, actual_time, effective_time)
+            
         else:
-            if self.blocking:
-                next_time = plan.get_current_action_time() + plan.get_hei_fu_cure_interval()
-            else:
-                next_time = self.actual_cure_time + plan.get_hei_fu_cure_interval()
+            next_time = self.actual_cure_time + plan.get_hei_fu_cure_interval()
+            self.supervisor.start_cure_fu_fu(plan, next_time)
 
-        if next_time <= self.end_cure_time:
-            # self.debug("治疗重新调度，模式%s", self.sync_with_cure_teammate)
-            action = Hei_Fu_Cure_FuFu_Action(
-                sync_with_cure_teammate=self.sync_with_cure_teammate)
-            action.actual_cure_time = next_time
-            action.end_cure_time = self.end_cure_time
-            action.set_timestamp(next_time + plan.get_effective_delay())
-            plan.insert_action_runtime(action)
-            plan.hei_fu_cure_fufu_action = action
-        else:
-            self.debug("治疗芙芙到时间，终止")
-            plan.hei_fu_cure_fufu_action = None
+
+        # if self.sync_with_cure_teammate:
+        #     if not plan.hei_fu_cure_teammate_action:
+        #         self.debug("治疗芙芙重新调度时，同步模式下治疗队友已终止")
+        #         plan.hei_fu_cure_fufu_action = None
+        #         return
+        #     else:
+        #         next_time = plan.hei_fu_cure_teammate_action.actual_cure_time + \
+        #             plan.get_hei_fu_cure_fufu_delay()
+        # else:
+        #     if self.blocking:
+        #         next_time = plan.get_current_action_time() + plan.get_hei_fu_cure_interval()
+        #     else:
+        #         next_time = self.actual_cure_time + plan.get_hei_fu_cure_interval()
+
+        # if next_time <= self.end_cure_time:
+        #     # self.debug("治疗重新调度，模式%s", self.sync_with_cure_teammate)
+        #     action = Hei_Fu_Cure_FuFu_Action(
+        #         sync_with_cure_teammate=self.sync_with_cure_teammate)
+        #     action.actual_cure_time = next_time
+        #     action.end_cure_time = self.end_cure_time
+        #     action.set_timestamp(next_time + plan.get_effective_delay())
+        #     plan.insert_action_runtime(action)
+        #     plan.hei_fu_cure_fufu_action = action
+        # else:
+        #     self.debug("治疗芙芙到时间，终止")
+        #     plan.hei_fu_cure_fufu_action = None
 
 # 芒、荒的伤害刀似乎都是按黑芙计算的
 # 注意：芒荒刀出伤的时候，芙芙不一定在前台
@@ -692,7 +764,8 @@ class Hei_Fu_Damage_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
         plan.switch_to_forground(plan.get_fufu().name)
         self.do_damage(plan)
-        self.do_cure(plan)
+        #self.do_cure(plan)
+        plan.call_hei_fu_damage_callback()
 
     def do_damage(self, plan: FuFuActionPlan):
         monster = plan.monster
@@ -709,64 +782,64 @@ class Hei_Fu_Damage_Action(Action):
         self.damage_record_hp(bei_lv_str="HEI_FU_BEI_LV / 100",
                               bonus=a_bonus, monster=monster)
 
-    def do_cure(self, plan: FuFuActionPlan):
-        # 治疗队友
-        cure_teammate_restarted = False
-        if plan.hei_fu_cure_teammate_action:
-            # 有一个cure action在队列后面，延长治疗时间即可
-            self.debug("延长奶刀治疗队友时间")
-            plan.hei_fu_cure_teammate_action.end_cure_time += 2.9
-        else:
-            self.debug("启动奶刀治疗队友")
-            cure_teammate_restarted = True
-            plan.hei_fu_cure_teammate_action = self.start_new_cure(
-                plan, Hei_Fu_Cure_Teammate_Action)
+    # def do_cure(self, plan: FuFuActionPlan):
+    #     # 治疗队友
+    #     cure_teammate_restarted = False
+    #     if plan.hei_fu_cure_teammate_action:
+    #         # 有一个cure action在队列后面，延长治疗时间即可
+    #         self.debug("延长奶刀治疗队友时间")
+    #         plan.hei_fu_cure_teammate_action.end_cure_time += 2.9
+    #     else:
+    #         self.debug("启动奶刀治疗队友")
+    #         cure_teammate_restarted = True
+    #         plan.hei_fu_cure_teammate_action = self.start_new_cure(
+    #             plan, Hei_Fu_Cure_Teammate_Action)
 
-        # 治疗芙芙自身：因为治疗会blocking，逻辑更复杂
-        if plan.hei_fu_cure_fufu_action:
-            # 已经有一个action在队列上，要检查其状态
-            if plan.hei_fu_cure_fufu_action.blocking:
-                if self.get_timestamp() < plan.hei_fu_cure_fufu_action.end_cure_time:
-                    # 阻塞着，在有效时间之内又砍了一刀奶刀，则延长结束时间
-                    self.debug("奶刀治疗芙芙阻塞中，延长持续时间")
-                    plan.hei_fu_cure_fufu_action.end_cure_time += 2.9
-                else:
-                    # 阻塞着，但已经超时了，重新启动
-                    self.debug("上次奶刀治疗芙芙阻塞超时，重启")
-                    plan.hei_fu_cure_fufu_action = None
-            else:
-                # 不在blocking，那么肯定在队列后面了
-                plan.hei_fu_cure_fufu_action.end_cure_time += 2.9
+    #     # 治疗芙芙自身：因为治疗会blocking，逻辑更复杂
+    #     if plan.hei_fu_cure_fufu_action:
+    #         # 已经有一个action在队列上，要检查其状态
+    #         if plan.hei_fu_cure_fufu_action.blocking:
+    #             if self.get_timestamp() < plan.hei_fu_cure_fufu_action.end_cure_time:
+    #                 # 阻塞着，在有效时间之内又砍了一刀奶刀，则延长结束时间
+    #                 self.debug("奶刀治疗芙芙阻塞中，延长持续时间")
+    #                 plan.hei_fu_cure_fufu_action.end_cure_time += 2.9
+    #             else:
+    #                 # 阻塞着，但已经超时了，重新启动
+    #                 self.debug("上次奶刀治疗芙芙阻塞超时，重启")
+    #                 plan.hei_fu_cure_fufu_action = None
+    #         else:
+    #             # 不在blocking，那么肯定在队列后面了
+    #             plan.hei_fu_cure_fufu_action.end_cure_time += 2.9
 
-        if not plan.hei_fu_cure_fufu_action:
-            # 没有action，或者因为超时被重置了，需要重启
-            if cure_teammate_restarted:
-                self.debug("启动奶刀治疗芙芙，同步模式")
-                action = Hei_Fu_Cure_FuFu_Action(sync_with_cure_teammate=True)
-                action.end_cure_time = plan.hei_fu_cure_teammate_action.end_cure_time
-                action.actual_cure_time = plan.hei_fu_cure_teammate_action.actual_cure_time + \
-                    plan.get_hei_fu_cure_fufu_delay()
-                action.set_timestamp(
-                    action.actual_cure_time + plan.get_effective_delay())
-                plan.insert_action_runtime(action)
-            else:
-                self.debug("启动奶刀治疗芙芙，独立模式")
-                action = self.start_new_cure(plan, Hei_Fu_Cure_FuFu_Action)
+    #     if not plan.hei_fu_cure_fufu_action:
+    #         # 没有action，或者因为超时被重置了，需要重启
+    #         if cure_teammate_restarted:
+    #             self.debug("启动奶刀治疗芙芙，同步模式")
+    #             action = Hei_Fu_Cure_FuFu_Action(sync_with_cure_teammate=True)
+    #             action.end_cure_time = plan.hei_fu_cure_teammate_action.end_cure_time
+    #             action.actual_cure_time = plan.hei_fu_cure_teammate_action.actual_cure_time + \
+    #                 plan.get_hei_fu_cure_fufu_delay()
+    #             action.set_timestamp(
+    #                 action.actual_cure_time + plan.get_effective_delay())
+    #             plan.insert_action_runtime(action)
+    #         else:
+    #             self.debug("启动奶刀治疗芙芙，独立模式")
+    #             action = self.start_new_cure(plan, Hei_Fu_Cure_FuFu_Action)
 
-            plan.hei_fu_cure_fufu_action = action
+    #         plan.hei_fu_cure_fufu_action = action
 
-    def start_new_cure(self, plan: FuFuActionPlan, cls):
-        actual_cure_time = self.get_timestamp() + plan.get_hei_fu_first_cure_delay()
-        end_cure_time = actual_cure_time + \
-            (2.9 - 1) + plan.get_hei_fu_cure_extension()
-        action = cls()
-        action.actual_cure_time = actual_cure_time
-        action.end_cure_time = end_cure_time
-        action.set_timestamp(actual_cure_time + plan.get_effective_delay())
+    # def start_new_cure(self, plan: FuFuActionPlan, cls):
+    #     actual_cure_time = self.get_timestamp() + plan.get_hei_fu_first_cure_delay()
+    #     end_cure_time = actual_cure_time + \
+    #         (2.9 - 1) + plan.get_hei_fu_cure_extension()
+    #     action = cls()
+    #     action.actual_cure_time = actual_cure_time
+    #     action.end_cure_time = end_cure_time
+    #     action.set_timestamp(actual_cure_time + plan.get_effective_delay())
 
-        plan.insert_action_runtime(action)
+    #     plan.insert_action_runtime(action)
 
-        return action
+    #     return action
 
 
 class Bai_Dao_Kou_Xue_Action(Action):
@@ -1053,6 +1126,7 @@ def calc_score(fufu_initial_state: Character_FuFu,
 
     for _ in range(0, run_num):
         plan = aciton_plan_creator_func(fufu_initial_state)
+        plan.add_hei_fu_damage_callback(Hei_Fu_Cure_Supervisor().on_hei_fu_damage)
         plan.run()
         all_damage += plan.total_damage
         full_six_zhan_bi += plan.full_six_damage / plan.total_damage
@@ -1244,7 +1318,7 @@ def find_syw_for_fu_ning_na(calculate_score_callback,
 
 # Main body
 if __name__ == '__main__':
-    # logging.basicConfig(filename='D:\\logs\\fufu.log', encoding='utf-8', filemode='w', level=logging.DEBUG)
-    # logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(filename='D:\\logs\\fufu.log', encoding='utf-8', filemode='w', level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
     print("默认算法复杂，圣遗物多的话需要执行0.5~1小时多")
     find_syw_for_fu_ning_na()

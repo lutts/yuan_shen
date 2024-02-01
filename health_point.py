@@ -13,6 +13,12 @@ class HP_Change_Data:
     def has_changed(self):
         return self.hp != 0
     
+    def is_over_healed(self):
+        return self.over_heal_num > 0
+    
+    def __str__(self):
+        return "hp changed: " + str(round(self.hp)) + "(" + str(round(self.hp_per, 3)) + "), over_heal_num:" + str(round(self.over_heal_num))
+    
 not_changed_data = HP_Change_Data(0, 0, 0)
 
 class HealthPoint:

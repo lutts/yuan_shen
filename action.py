@@ -9,8 +9,8 @@ import typing
 import random
 
 from monster import Monster
-from character import Character
-from health_point import HP_Change_Data
+from character import Character, Character_HP_Change_Data
+from events import Events
 
 ActionPlan = typing.NewType("ActionPlan", None)
 
@@ -83,6 +83,11 @@ class ActionPlan:
         self.__current_action_time = 0
         self.action_list: list[Action] = []
 
+        self.events = Events()
+        # self.__has_on_consume_hp_callback = False
+        # self.__has_on_regenerate_hp_callback = False
+        # self.__has_on_over_healed_callback = False
+
         self.total_damage = 0
 
     @property
@@ -119,11 +124,44 @@ class ActionPlan:
         if prev_fore:
             prev_fore.switch_to_background()
 
-    def modify_cur_hp(self, targets: list[Character]=None, hp=0, hp_per=0, source=None) -> tuple[Character|None, list[tuple[Character, HP_Change_Data]]]:
+    def add_consume_hp_callback(self, callback):
+        self.events.on_consume_hp += callback
+
+    def remove_consume_hp_callback(self, callback):
+        self.events.on_consume_hp -= callback
+
+    def call_consume_hp_callback(self, source: Character, targets_with_data: list[Character_HP_Change_Data]):
+        if hasattr(self.events, "on_consume_hp"):
+            self.events.on_consume_hp(self, source, targets_with_data)
+
+    def add_regenerate_hp_callback(self, callback):
+        self.events.on_regenerate_hp += callback
+
+    def remove_regenerate_hp_callback(self, callback):
+        self.events.on_regenerate_hp -= callback
+
+    def call_regenerate_hp_callback(self, source: Character, targets_with_data: list[Character_HP_Change_Data]):
+        if hasattr(self.events, "on_regenerate_hp"):
+            self.events.on_regenerate_hp(self, source, targets_with_data)
+
+    def add_over_healed_callback(self, callback):
+        self.events.on_over_healed += callback
+
+    def remove_over_healed_callback(self, callback):
+        self.events.on_over_healed -= callback
+
+    def call_over_healed_callback(self, source: Character, targets_with_data: list[Character_HP_Change_Data]):
+        if hasattr(self.events, "on_over_healed"):
+            self.events.on_over_healed(self, source, targets_with_data)
+
+    def modify_cur_hp(self, targets: list[Character]=None, hp=0, hp_per=0, source=None) -> tuple[Character|None, list[Character_HP_Change_Data]]:
         if not targets:
             targets = self.__characters
 
         targets_with_change_data = []
+
+        has_changed = False
+        has_over_healed = False
 
         healing_bonus = 0
         source_ch = source
@@ -138,14 +176,30 @@ class ActionPlan:
             if hp > 0:
                 change_data = c.regenerate_hp(hp, healing_bonus)
             elif hp < 0:
-                change_data = c.get_hp().modify_cur_hp(hp)
+                change_data = c.consume_hp(hp)
 
             if hp_per > 0:
                 change_data = c.regenerate_hp_per(hp_per, healing_bonus)
             elif hp_per < 0:
-                change_data = c.get_hp().modify_cur_hp_per(hp_per)
+                change_data = c.consume_hp_per(hp_per)
 
-            targets_with_change_data.append((c, change_data, ))
+            # self.debug(str(change_data))
+            if change_data.has_changed():
+                has_changed = True
+
+            if change_data.is_over_healed():
+                has_over_healed = True
+
+            targets_with_change_data.append(change_data)
+
+        if has_changed:
+            if hp < 0 or hp_per < 0:
+                self.call_consume_hp_callback(source=source_ch, targets_with_data=targets_with_change_data)
+            else:
+                self.call_regenerate_hp_callback(source=source_ch, targets_with_data=targets_with_change_data)
+
+        if has_over_healed:
+            self.call_over_healed_callback(source_ch, targets_with_change_data)
 
         return (source_ch, targets_with_change_data)
 

@@ -5,7 +5,21 @@ Module documentation.
 """
 
 import logging
-from health_point import HealthPoint
+from health_point import HealthPoint, HP_Change_Data
+
+class Character_HP_Change_Data:
+    def __init__(self, ch, data: HP_Change_Data):
+        self.character = ch
+        self.data = data
+
+    def has_changed(self):
+        return self.data.has_changed()
+    
+    def is_over_healed(self):
+        return self.data.is_over_healed()
+    
+    def __str__(self):
+        return self.character.name + " " + str(self.data)
 
 class Character:
     def __init__(self, name, base_atk=0, base_hp=0, base_defence=0):
@@ -196,10 +210,16 @@ class Character:
         actual_cure_hp = round(cure_hp * (1 + healing_bonus + self.get_incoming_healing_bonus()))
         #print("incoming_healing_bonus: ", round(self.get_incoming_healing_bonus(), 1))
         #print("actual_cure_hp: ", round(actual_cure_hp))
-        return self.__hp.modify_cur_hp(actual_cure_hp)
+        return Character_HP_Change_Data(self, self.__hp.modify_cur_hp(actual_cure_hp))
     
     def regenerate_hp_per(self, hp_per, healing_bonus):
         return self.regenerate_hp(self.__hp.get_max_hp() * hp_per, healing_bonus)
+    
+    def consume_hp(self, hp):
+        return Character_HP_Change_Data(self, self.__hp.modify_cur_hp(hp))
+    
+    def consume_hp_per(self, hp_per):
+        return Character_HP_Change_Data(self, self.__hp.modify_cur_hp_per(hp_per))
 
     def get_normal_a_bonus(self):
         return self.__normal_a_bonus
