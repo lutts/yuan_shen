@@ -46,19 +46,6 @@ class Action:
     def debug(self, fmt_str, *args, **kwargs):
         pass
         # self.__debug(fmt_str, *args, **kwargs)
-        
-    def damage_record(self,  prefix, bei_lv_str, bonus, monster: Monster, other_bonus=0):
-        s = [prefix, bei_lv_str]
-        s.append(str(round(bonus, 3)))
-        s.append(str(round(monster.kang_xin_xi_su, 3)))
-        s.append(str(round(monster.fang_yu_xi_shu, 3)))
-        if other_bonus:
-            s.append(str(other_bonus))
-        logging.debug(" * ".join(s))
-
-    def damage_record_hp(self, bei_lv_str, bonus, monster: Monster, other_bonus=0):
-        pass
-        # self.damage_record("damage += cur_hp", bei_lv_str, bonus, monster, other_bonus)
 
     def do(self, plan: ActionPlan):
         if self.done:
@@ -88,7 +75,7 @@ class ActionPlan:
         # self.__has_on_regenerate_hp_callback = False
         # self.__has_on_over_healed_callback = False
 
-        self.total_damage = 0
+        self.__total_damage = 0
 
     @property
     def characters(self):
@@ -105,11 +92,21 @@ class ActionPlan:
     @property
     def monster(self):
         return self.__monster
+    
+    @property
+    def total_damage(self):
+        return self.__total_damage
 
     def get_current_action_time(self):
         return self.__current_action_time
 
     ##################################################
+
+    def add_damage(self, damage):
+        real_damage = self.monster.attacked(damage)
+        #print("add damage:", round(real_damage, 3))
+        self.__total_damage += real_damage
+        return real_damage
 
     def switch_to_forground(self, character_name):
         if self.__forground_character:

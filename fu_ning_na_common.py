@@ -11,16 +11,16 @@ import itertools
 import random
 from collections.abc import Callable
 
-from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine, calc_expect_damage
 from health_point import HealthPoint
 from character import Character, Character_HP_Change_Data
 from monster import Monster
 from ye_lan import YeLanQBonus
 from action import Action, ActionPlan
-from events import EventsException
 
 
 enable_debug = False
+enable_record = False
 MAX_RUN_NUM = 10
 
 HEI_FU_BEI_LV = 18
@@ -116,6 +116,19 @@ class Character_FuFu(Character):
         return min(self.get_hp().get_max_hp() / 1000 * 0.007, 0.28)
 
 
+R_CUR_HP_KEY = "cur_hp"
+R_CUR_A_BONUS_KEY = "cur_a_bonus"
+R_CUR_E_BONUS_KEY = "cur_e_bonus"
+R_SALON_MEMBER_BONUS_KEY = "salon_member_bonus"
+R_CUR_Q_BONUS_KEY = "cur_q_bonus"
+
+R_CUR_HP_INIT = R_CUR_HP_KEY + " = hp"
+R_CUR_A_BONUS_INIT = R_CUR_A_BONUS_KEY + " = 1 + a_bonus"
+R_CUR_E_BONUS_INIT = R_CUR_E_BONUS_KEY + " = 1 + e_bonus"
+R_SALON_MEMBER_BONUS_INIT = R_SALON_MEMBER_BONUS_KEY + " = 1 + e_bonus + 0.28"
+R_CUR_Q_BONUS_INIT = R_CUR_Q_BONUS_KEY + " = 1 + q_bonus"
+
+
 class FuFuActionPlan(ActionPlan):
     def __init__(self, fufu_initial_state: Character_FuFu, teammate_hps: dict[str, HealthPoint]):
         self.__fufu: Character_FuFu = copy.deepcopy(fufu_initial_state)
@@ -146,10 +159,17 @@ class FuFuActionPlan(ActionPlan):
 
         # 以下变量用于预筛选代码录制
         self.ye_lan_e_num = 0
+        self.extra_a_bonus = 0
         self.extra_e_bonus = 0
         self.extra_q_bonus = 0
-        self.extra_a_bonus = 0
-        self.prev_hp_str = None
+        self.recorded_strs = {
+            R_CUR_HP_KEY: R_CUR_HP_INIT,
+            R_CUR_A_BONUS_KEY: R_CUR_A_BONUS_INIT,
+            R_CUR_E_BONUS_KEY: R_CUR_E_BONUS_INIT,
+            R_SALON_MEMBER_BONUS_KEY: R_SALON_MEMBER_BONUS_INIT,
+            R_CUR_Q_BONUS_KEY: R_CUR_Q_BONUS_INIT
+        }
+        self.last_printed_strs = {}
 
     def get_fufu(self) -> Character_FuFu:
         return self.__fufu
@@ -206,13 +226,107 @@ class FuFuActionPlan(ActionPlan):
             s += " + ".join(p)
             s += ") * Character_FuFu.BASE_HP"
 
-        if s != self.prev_hp_str:
-            logging.debug(s)
-            self.prev_hp_str = s
+        if s != self.recorded_strs[R_CUR_HP_KEY]:
+            self.recorded_strs[R_CUR_HP_KEY] = s
 
     def damage_record_hp(self):
-        pass
-        # self.__damage_record_hp()
+        self.__damage_record_hp()
+    
+    def add_all_bonus(self, bonus):
+        self.extra_a_bonus += bonus
+        self.extra_e_bonus += bonus
+        self.extra_q_bonus += bonus
+        self.damage_record_bonus()
+
+    def sub_all_bonus(self, bonus):
+        self.extra_a_bonus -= bonus
+        self.extra_e_bonus -= bonus
+        self.extra_q_bonus -= bonus
+        self.damage_record_bonus()
+
+    def __damage_record_bonus(self):
+        a_lst = []
+        e_lst = []
+        q_lst = []
+
+        if self.extra_a_bonus:
+            a_lst.append(str(round(self.extra_a_bonus, 3)))
+        
+        if self.extra_e_bonus:
+            e_lst.append(str(round(self.extra_e_bonus, 3)))
+
+        if self.extra_q_bonus:
+            q_lst.append(str(round(self.extra_q_bonus, 3)))
+
+        if self.__fufu.BASE_QI_FEN_ZHI:
+            q_lst.append(str(self.__fufu.BASE_QI_FEN_ZHI) + " * " + str(self.__fufu.QI_TO_BONUS_BEI_LV))
+
+        if self.zhuan_wu_supervisor and self.zhuan_wu_supervisor.e_bonus_level:
+            e_lst.append("0.08 * " + str(self.zhuan_wu_supervisor.e_bonus_level))
+
+
+        qi = min(self.__fufu.MAX_QI_FEN_ZHI, self.qi_fen_zhi_supervisor.effective_qi_fen_zhi)
+        qi = round(qi, 3)
+        if qi:
+            qi_str = str(qi) + " * " + str(self.__fufu.QI_TO_BONUS_BEI_LV)
+            a_lst.append(qi_str)
+            e_lst.append(qi_str)
+
+        a_str = R_CUR_A_BONUS_INIT
+        if a_lst:
+            a_str += " + " 
+            a_str += " + ".join(a_lst)
+
+        if a_str != self.recorded_strs[R_CUR_A_BONUS_KEY]:
+            self.recorded_strs[R_CUR_A_BONUS_KEY] = a_str
+
+        salon_member_str = R_SALON_MEMBER_BONUS_INIT
+        e_str = R_CUR_E_BONUS_INIT
+        if e_lst:
+            e_lst_str = " + " + " + ".join(e_lst)
+            e_str += e_lst_str
+            salon_member_str += e_lst_str
+
+        if e_str != self.recorded_strs[R_CUR_E_BONUS_KEY]:
+            self.recorded_strs[R_CUR_E_BONUS_KEY] = e_str
+
+        if salon_member_str != self.recorded_strs[R_SALON_MEMBER_BONUS_KEY]:
+            self.recorded_strs[R_SALON_MEMBER_BONUS_KEY] = salon_member_str
+
+        q_str = R_CUR_Q_BONUS_INIT
+        if q_lst:
+            q_str += " + "
+            q_str += " + ".join(q_lst)
+
+        if q_str != self.recorded_strs[R_CUR_Q_BONUS_KEY]:
+            self.recorded_strs[R_CUR_Q_BONUS_KEY] = q_str
+
+    def damage_record_bonus(self):
+        self.__damage_record_bonus()
+
+    def print_recored_str(self, key, print_empty_line=True):
+        s = self.recorded_strs[key]
+        last_printed = None
+        if key in self.last_printed_strs:
+            last_printed = self.last_printed_strs[key]
+
+        if s != last_printed:
+            if print_empty_line:
+                logging.debug("")
+            logging.debug(s)
+            self.last_printed_strs[key] = s
+            return True
+
+    def print_damage(self, bei_lv_str, bonus_key, others=None):
+        cur_hp_changed = self.print_recored_str(R_CUR_HP_KEY)
+        self.print_recored_str(bonus_key, print_empty_line=not cur_hp_changed)
+        s = ["damage += cur_hp", bei_lv_str]
+        s.append(bonus_key)
+        if others:
+            s.append(str(others))
+        s.append(str(round(self.monster.kang_xin_xi_su, 3)))
+        s.append(str(round(self.monster.fang_yu_xi_shu, 3)))
+        logging.debug(" * ".join(s))
 
     @staticmethod
     def get_effective_delay():
@@ -323,7 +437,8 @@ class Increase_ZhuanWu_Hp_Level_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
         plan.get_fufu().get_hp().modify_max_hp_per(ZHUAN_WU_HP_BEI_LV)
         self.debug("专武生命叠一层，目前层数: %d",  self.supervisor.hp_bonus_level)
-        plan.damage_record_hp()
+        if enable_record:
+            plan.damage_record_hp()
 
 
 class Increase_ZhuanWu_E_Bonus_Level_Action(Action):
@@ -334,6 +449,7 @@ class Increase_ZhuanWu_E_Bonus_Level_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
         plan.get_fufu().add_e_bonus(ZHUAN_WU_E_BONUS_BEI_LV)
         plan.debug("专武战技叠一层，目前层数: %d", self.supervisor.e_bonus_level)
+        plan.damage_record_bonus()
 
 
 class Qi_Fen_Zhi_Supervisor:
@@ -405,7 +521,9 @@ class Qi_Fen_Zhi_Supervisor:
         self.prev_qi_healing_bonus = t[1]
         self.prev_qi_hp_per_bonus = t[2]
 
-        plan.damage_record_hp()
+        if enable_record:
+            plan.damage_record_hp()
+            plan.damage_record_bonus()
 
         return True
 
@@ -493,6 +611,7 @@ class WanYeQAction(Action):
         self.debug("万叶q")
         fufu = plan.get_fufu()
         fufu.add_all_bonus(self.wan_ye.elem_bonus)
+        plan.add_all_bonus(self.wan_ye.elem_bonus)
         fufu.add_energy_recharge(self.wan_ye.energy_recharge)
 
         plan.monster.add_jian_kang(0.4)
@@ -506,6 +625,7 @@ class WanYeBonusStopAction(Action):
     def do_impl(self, plan: FuFuActionPlan):
         self.debug("万叶增伤消失")
         plan.get_fufu().sub_all_bonus(self.wan_ye.elem_bonus)
+        plan.sub_all_bonus(self.wan_ye.elem_bonus)
 
 
 class FengTaoInvalidAction(Action):
@@ -521,37 +641,31 @@ class FuFu_Q_Action(Action):
         self.do_damage(plan)
 
     def do_damage(self, plan: FuFuActionPlan):
-        monster = plan.monster
-
         hp = plan.get_max_hp()
         q_bonus = 1 + plan.get_q_bonus()
 
         q_damage = hp * plan.get_fufu().Q_BEI_LV / 100 * q_bonus
-        q_damage = monster.attacked(q_damage)
-
-        plan.total_damage += q_damage
+        q_damage = plan.add_damage(q_damage)
         self.debug("芙芙q出伤, %d, hp: %s, q_bonus:%s, monster:%s",
-                   round(q_damage), hp, round(q_bonus, 3), monster)
-        self.damage_record_hp(bei_lv_str="fufu.Q_BEI_LV / 100",
-                              bonus=q_bonus, monster=monster)
+                   round(q_damage), hp, round(q_bonus, 3), plan.monster)
+        if enable_record:
+            plan.print_damage(bei_lv_str="fufu.Q_BEI_LV / 100",
+                            bonus_key=R_CUR_Q_BONUS_KEY)
 
 
 class FuFu_E_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
         plan.switch_to_forground(plan.get_fufu().name)
-        monster = plan.monster
-
         hp = plan.get_max_hp()
         e_bonus = 1 + plan.get_e_bonus()
 
         e_damage = hp * plan.get_fufu().E_BEI_LV / 100 * e_bonus
-        damage = monster.attacked(e_damage)
-
-        plan.total_damage += damage
+        e_damage = plan.add_damage(e_damage)
         self.debug("芙芙e出伤, %d, hp: %s, bonus: %s, monster:%s",
-                   round(damage), hp, round(e_bonus, 3), monster)
-        self.damage_record_hp(bei_lv_str="fufu.E_BEI_LV / 100",
-                              bonus=e_bonus, monster=monster)
+                   round(e_damage), hp, round(e_bonus, 3), plan.monster)
+        if enable_record:
+            plan.print_damage(bei_lv_str="fufu.E_BEI_LV / 100",
+                            bonus_key=R_CUR_E_BONUS_KEY)
 
 
 class Hei_Fu_Cure_Supervisor:
@@ -695,14 +809,13 @@ class Mang_Huang_Damage_Action(Action):
         a_bonus = 1 + plan.get_a_bonus()
 
         damage = hp * HEI_FU_BEI_LV / 100 * a_bonus
-        damage = monster.attacked(damage)
-
-        plan.total_damage += damage
+        damage = plan.add_damage(damage)
         plan.full_six_damage += damage
         self.debug("芒/荒刀出伤，%d, hp: %s, bonus: %s, monster:%s",
                    round(damage), hp, round(a_bonus, 3), monster)
-        self.damage_record_hp(bei_lv_str="HEI_FU_BEI_LV / 100",
-                              bonus=a_bonus, monster=monster)
+        if enable_record:
+            plan.print_damage(bei_lv_str="HEI_FU_BEI_LV / 100",
+                            bonus_key=R_CUR_A_BONUS_KEY)
 
 
 class Hei_Fu_Damage_Action(Action):
@@ -713,19 +826,16 @@ class Hei_Fu_Damage_Action(Action):
         plan.call_hei_fu_damage_callback()
 
     def do_damage(self, plan: FuFuActionPlan):
-        monster = plan.monster
-
         hp = plan.get_max_hp()
         a_bonus = 1 + plan.get_a_bonus()
         damage = hp * HEI_FU_BEI_LV / 100 * a_bonus
-        damage = monster.attacked(damage)
-
-        plan.total_damage += damage
+        damage = plan.add_damage(damage)
         plan.full_six_damage += damage
         self.debug("%s出伤, %d, hp: %s, bonus:%s, monster:%s",
-                   self.name, round(damage), hp, round(a_bonus, 3), monster)
-        self.damage_record_hp(bei_lv_str="HEI_FU_BEI_LV / 100",
-                              bonus=a_bonus, monster=monster)
+                   self.name, round(damage), hp, round(a_bonus, 3), plan.monster)
+        if enable_record:
+            plan.print_damage(bei_lv_str="HEI_FU_BEI_LV / 100",
+                            bonus_key=R_CUR_A_BONUS_KEY)
 
 
 class Bai_Dao_Kou_Xue_Action(Action):
@@ -738,19 +848,17 @@ class Bai_Dao_Kou_Xue_Action(Action):
 class Bai_Fu_Damage_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
         plan.switch_to_forground(plan.get_fufu().name)
-        monster = plan.monster
 
         hp = plan.get_max_hp()
         bonus = 1 + plan.get_a_bonus()
         damage = hp * BAI_FU_BEI_LV / 100 * bonus
-        damage = monster.attacked(damage)
-
-        plan.total_damage += damage
+        damage = plan.add_damage(damage)
         plan.full_six_damage += damage
         self.debug("%s出伤，%d, hp: %s, bonus:%s, monster:%s",
-                   self.name, round(damage), hp, round(bonus,  3), monster)
-        self.damage_record_hp(
-            bei_lv_str="BAI_FU_BEI_LV / 100", bonus=bonus, monster=monster)
+                   self.name, round(damage), hp, round(bonus,  3), plan.monster)
+        if enable_record:
+            plan.print_damage(bei_lv_str="BAI_FU_BEI_LV / 100",
+                            bonus_key=R_CUR_A_BONUS_KEY)
 
 
 class Switch_To_Character_Action(Action):
@@ -789,7 +897,8 @@ class Ye_Lan_4_Ming_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
         plan.ye_lan_e_num += 1
         self.debug("夜兰四命生效一层")
-        plan.damage_record_hp()
+        if enable_record:
+            plan.damage_record_hp()
         plan.get_fufu().get_hp().modify_max_hp_per(0.1)
         for t in plan.get_teammates():
             t.get_hp().modify_max_hp_per(0.1)
@@ -848,16 +957,15 @@ class Salon_Member_Damage_Action(Action):
                 e_extra_bonus += 0.1
         
         damage = hp * bei_lv / 100 * e_bonus * e_extra_bonus
-        damage = plan.monster.attacked(damage)
-
-        plan.total_damage += damage
+        damage = plan.add_damage(damage)
 
         self.debug("%s出伤, damage: %s, hp:%s bonus:%s, monster:%s",
-                   fufu.bei_lv_to_salon_member_name[bei_lv], round(
-                       damage), hp, round(e_bonus, 3),
-                   plan.monster)
-        self.damage_record_hp(bei_lv_str=fufu.bei_lv_to_str[bei_lv],
-                              bonus=e_bonus, monster=plan.monster, other_bonus=e_extra_bonus)
+                   fufu.bei_lv_to_salon_member_name[bei_lv], round(damage), 
+                   hp, round(e_bonus, 3), plan.monster)
+        if enable_record:
+            plan.print_damage(bei_lv_str=fufu.bei_lv_to_str[bei_lv],
+                            bonus_key=R_SALON_MEMBER_BONUS_KEY, 
+                            others=round(e_extra_bonus, 1))
 
 
 class Fu_Ren_Kou_Xue_Action(Action):
@@ -1010,6 +1118,11 @@ def calc_score(fufu_initial_state: Character_FuFu,
     for _ in range(0, run_num):
         plan = aciton_plan_creator_func(fufu_initial_state)
         plan.run()
+        if enable_record:
+            expect_score = calc_expect_damage(plan.total_damage, fufu_initial_state.get_crit_rate(), 1 + fufu_initial_state.get_crit_damage())
+            crit_score = round(plan.total_damage * (1 + fufu_initial_state.get_crit_damage()))
+            logging.debug("damage: %d, expect_score:%s, crit_score:%s",
+                          round(plan.total_damage), round(expect_score), round(crit_score))
         all_damage += plan.total_damage
         full_six_zhan_bi += plan.full_six_damage / plan.total_damage
 
@@ -1076,12 +1189,10 @@ def qualify_syw(score_data: ShengYiWu_Score, fufu_creator_func, qualify_func):
     # ”录制“一次计算过程，作为快速筛选的依据
     # 录制方法：
     # 0. 在get_debug_raw_score_list设置好用于录制的圣遗物组合，选那种80分的，不要选最好的，也不要选太差的
-    # 1. 找到本文件开头处的 enable_debug，置为 True
-    # 2. 找到本文件以入action.py中的 damage_record_hp，恢复被注释的代码
-    # 3. 在calculate_score_common中，去掉四行Logging相关的注释，你可能需要修改logging的输出文件路径
+    # 1. 找到本文件开头处的 enable_debug和enable_record，均置为 True
     # 然后执行，在logging的输出文件里能找到录制好的计算过程，稍作处理去掉一些冗余即可，也可不处理
     # 后面会打印出这个计算的结果(需要把后面的 logging.debug注释去掉)，记得运行一下确认伤害量是正常的
-    # 可多录制几次，找接近于平均值的
+    # 可多录制几次(默认10次)，找接近于平均值的
 
     damage = qualify_func(fufu)
 
@@ -1114,10 +1225,11 @@ def calculate_score_common(score_data: ShengYiWu_Score,
     score_data.damage_to_score(
         damage, fufu.get_crit_rate(), 1 + fufu.get_crit_damage())
 
-    # logging.debug("finished: damage: %d, full_six_zhan_bi: %s, expect_score:%s, crit_score:%s, crit_rate: %s, crit_damage: %s",
-    #                 round(damage), round(full_six_zhan_bi, 3),
-    #                 round(score_data.expect_score), round(score_data.crit_score),
-    #                 round(fufu.get_crit_rate(), 3), round(fufu.get_crit_damage(), 3))
+    if enable_record:
+        logging.debug("finished: damage: %d, full_six_zhan_bi: %s, expect_score:%s, crit_score:%s, crit_rate: %s, crit_damage: %s",
+                        round(damage), round(full_six_zhan_bi, 3),
+                        round(score_data.expect_score), round(score_data.crit_score),
+                        round(fufu.get_crit_rate(), 3), round(fufu.get_crit_damage(), 3))
     
     panel_hp = fufu.get_hp().get_max_hp()
     score_data.custom_data = [full_six_zhan_bi, int(panel_hp),

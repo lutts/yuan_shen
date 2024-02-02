@@ -10,7 +10,7 @@ import copy
 import itertools
 import random
 
-from base_syw import ShengYiWu_Score
+from base_syw import ShengYiWu_Score, set_qualifier_threshold
 from health_point import HealthPoint
 from character import Character
 from fu_ning_na_common import *
@@ -52,63 +52,83 @@ def ye_fu_wan_zhong_team_qualifier(fufu: Character_FuFu):
     e_bonus = fufu.get_e_bonus()
     q_bonus = fufu.get_q_bonus()
     
+
+    # 这个固定过程的模拟计算忽略了不同初始生命值上限的芙芙的奶量对气氛值叠层速度的影响
+    # 这是因为：芙芙的满命治疗在不被怪物打掉血的情况下，一般都是治疗溢出的，所以奶量对气氛值的影响很小
     damage = 0
+
     cur_hp = hp
-    damage += cur_hp * fufu.Q_BEI_LV / 100 * 1.615 * 1.05 * 0.487
-    damage += cur_hp * fufu.E_BEI_LV / 100 * 2.013 * 1.25 * 0.487
-    damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.013 * 1.25 * 0.487
+    cur_q_bonus = 1 + q_bonus + 150 * 0.0031
+    damage += cur_hp * fufu.Q_BEI_LV / 100 * cur_q_bonus * 1.05 * 0.487
+
+    cur_e_bonus = 1 + e_bonus + 0.398 + 150 * 0.0031
+    damage += cur_hp * fufu.E_BEI_LV / 100 * cur_e_bonus * 1.25 * 0.487
+
+    cur_a_bonus = 1 + a_bonus + 0.398 + 150 * 0.0031
+    damage += cur_hp * HEI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
 
     cur_hp = hp + (0.14 * 1) * Character_FuFu.BASE_HP
-    damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.082 * 1.25 * 0.487
-    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * 2.442 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.082 * 1.25 * 0.487
-    damage += cur_hp * fufu.PANG_XIE_BEI_LV / 100 * 2.702 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * 2.702 * 1.25 * 0.487 * 1.4
+    cur_a_bonus = 1 + a_bonus + 0.398 + 200.401 * 0.0031
+    damage += cur_hp * HEI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
+    damage += cur_hp * HEI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
+
+    salon_member_bonus = 1 + e_bonus + 0.28 + 0.398 + 0.08 * 1 + 256.396 * 0.0031
+    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
+    damage += cur_hp * fufu.PANG_XIE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
+    damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
     cur_hp = hp + (0.14 * 2 + 0.1 * 1) * Character_FuFu.BASE_HP
-    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * 3.185 * 1.25 * 0.487 * 1.4
+    salon_member_bonus = 1 + e_bonus + 0.28 + 0.398 + 0.08 * 3 + 383.981 * 0.0031
+    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 1 + (435.583 - 400) * 0.0035) * Character_FuFu.BASE_HP
-    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+    cur_hp = hp + (0.14 * 2 + 0.1 * 1 + (429.993 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    salon_member_bonus = 1 + e_bonus + 0.28 + 0.398 + 0.08 * 3 + 400 * 0.0031
+    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (469.181 - 400) * 0.0035) * Character_FuFu.BASE_HP
-    damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (466.397 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (519.571 - 400) * 0.0035) * Character_FuFu.BASE_HP
-    damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.868 * 1.25 * 0.487
-    damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.868 * 1.25 * 0.487
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (508.39 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    cur_a_bonus = 1 + a_bonus + 0.398 + 400 * 0.0031
+    damage += cur_hp * HEI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
+    damage += cur_hp * BAI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (537.08 - 400) * 0.0035) * Character_FuFu.BASE_HP
-    damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
-    damage += cur_hp * HEI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (522.398 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    damage += cur_hp * BAI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
+    damage += cur_hp * HEI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (551.085 - 400) * 0.0035) * Character_FuFu.BASE_HP
-    damage += cur_hp * BAI_FU_BEI_LV / 100 * 2.903 * 1.25 * 0.487
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (553.908 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    damage += cur_hp * BAI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (768.799 - 400) * 0.0035) * Character_FuFu.BASE_HP
-    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * fufu.PANG_XIE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (698.822 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
+    damage += cur_hp * fufu.PANG_XIE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (791.207 - 400) * 0.0035) * Character_FuFu.BASE_HP
-    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (799.895 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
     cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (800 - 400) * 0.0035) * Character_FuFu.BASE_HP
-    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
+    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
+    damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
     cur_hp = hp + (0.14 * 2 + 0.1 * 3 + (800 - 400) * 0.0035) * Character_FuFu.BASE_HP
-    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * fufu.PANG_XIE_BEI_LV / 100 * 3.308 * 1.25 * 0.487 * 1.4
+    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
+    damage += cur_hp * fufu.PANG_XIE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
     cur_hp = hp + (0.14 * 2 + 0.1 * 3) * Character_FuFu.BASE_HP
-    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * 2.068 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * 2.068 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * 2.068 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * 1.67 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * 1.67 * 1.25 * 0.487 * 1.4
-    damage += cur_hp * fufu.PANG_XIE_BEI_LV / 100 * 1.67 * 1.05 * 0.487 * 1.4
-    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * 1.67 * 1.05 * 0.487 * 1.4
+    salon_member_bonus = 1 + e_bonus + 0.28 + 0.398 + 0.08 * 3
+    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
+    damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
+    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
+
+    salon_member_bonus = 1 + e_bonus + 0.28 + 0.08 * 3
+    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
+    damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
+    damage += cur_hp * fufu.PANG_XIE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.05 * 0.487
+    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.05 * 0.487
+
+    # print(damage)
 
     return damage
 
@@ -287,6 +307,7 @@ if __name__ == '__main__':
     # logging.basicConfig(filename='D:\\logs\\fufu.log', encoding='utf-8', filemode='w', level=logging.DEBUG)
     # logging.basicConfig(level=logging.DEBUG)
     print("默认算法复杂，圣遗物多的话需要执行0.5~1小时多")
+    #set_qualifier_threshold(1.7)
     find_syw_for_fu_ning_na(calculate_score_callback=calculate_score_callback,
                             result_txt_file="fu_ning_na_syw.txt",
                             calculate_score_qualifier=calculate_score_qualifier
