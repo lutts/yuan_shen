@@ -130,14 +130,25 @@ class FuFuActionPlan(ActionPlan):
         
         self.qi_fen_zhi_supervisor = Qi_Fen_Zhi_Supervisor()
 
+        if self.__fufu.ming_zuo_num >= 6:
+            self.add_hei_fu_damage_callback(Hei_Fu_Cure_Supervisor().on_hei_fu_damage)
+
+        if self.__fufu.has_zhuan_wu:
+            self.zhuan_wu_supervisor = Zhuan_Wu_Supervisor()
+            self.add_consume_hp_callback(self.zhuan_wu_supervisor.on_hp_changed)
+            self.add_regenerate_hp_callback(self.zhuan_wu_supervisor.on_hp_changed)
+        else:
+            self.zhuan_wu_supervisor = None
+
         self.ye_lan_q_bonus = YeLanQBonus()
 
         self.full_six_damage = 0
 
-        # 用于预筛选代码录制
+        # 以下变量用于预筛选代码录制
         self.ye_lan_e_num = 0
-        self.zhuan_wu_hp_level = 0
-        self.effective_qi_fen_zhi = 0
+        self.extra_e_bonus = 0
+        self.extra_q_bonus = 0
+        self.extra_a_bonus = 0
         self.prev_hp_str = None
 
     def get_fufu(self) -> Character_FuFu:
@@ -180,15 +191,15 @@ class FuFuActionPlan(ActionPlan):
         # for damage record
         s = "cur_hp = hp"
         p = []
-        if self.zhuan_wu_hp_level:
-            p.append("0.14 * " + str(self.zhuan_wu_hp_level))
+        if self.zhuan_wu_supervisor and self.zhuan_wu_supervisor.hp_bonus_level:
+            p.append("0.14 * " + str(self.zhuan_wu_supervisor.hp_bonus_level))
 
         if self.ye_lan_e_num:
             p.append("0.1 * " + str(self.ye_lan_e_num))
 
-        if self.effective_qi_fen_zhi > self.__fufu.MAX_QI_FEN_ZHI and self.__fufu.ming_zuo_num >= 2:
+        if self.qi_fen_zhi_supervisor.effective_qi_fen_zhi > self.__fufu.MAX_QI_FEN_ZHI and self.__fufu.ming_zuo_num >= 2:
             p.append(
-                "(" + str(min(800, round(self.__qi_fen_zhi, 3))) + " - 400) * 0.0035")
+                "(" + str(min(800, round(self.qi_fen_zhi_supervisor.effective_qi_fen_zhi, 3))) + " - 400) * 0.0035")
 
         if p:
             s += " + ("
@@ -265,6 +276,10 @@ class Zhuan_Wu_Supervisor:
                 self.increase_e_bonus_level(plan)
             else:
                 self.increase_hp_bonus_level(plan)
+
+        if self.__hp_bonus_level >= 2 and self.__e_bonus_level >= 3:
+            plan.remove_consume_hp_callback(self.on_hp_changed)
+            plan.remove_regenerate_hp_callback(self.on_hp_changed)
                       
     def increase_e_bonus_level(self, plan: FuFuActionPlan):
         if self.__e_bonus_level >= 3:
@@ -308,7 +323,6 @@ class Increase_ZhuanWu_Hp_Level_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
         plan.get_fufu().get_hp().modify_max_hp_per(ZHUAN_WU_HP_BEI_LV)
         self.debug("专武生命叠一层，目前层数: %d",  self.supervisor.hp_bonus_level)
-        plan.zhuan_wu_hp_level = self.supervisor.hp_bonus_level
         plan.damage_record_hp()
 
 
@@ -391,7 +405,6 @@ class Qi_Fen_Zhi_Supervisor:
         self.prev_qi_healing_bonus = t[1]
         self.prev_qi_hp_per_bonus = t[2]
 
-        plan.effective_qi_fen_zhi = self.effective_qi_fen_zhi
         plan.damage_record_hp()
 
         return True
@@ -821,7 +834,7 @@ class Salon_Member_Damage_Action(Action):
         fufu = plan.get_fufu()
         e_bonus = 1 + plan.get_e_bonus() + fufu.gu_you_tian_fu_2_bonus(hp)
 
-        if plan.effective_qi_fen_zhi == 0 and self.force_add_fufu_q_bonus:
+        if plan.qi_fen_zhi_supervisor.effective_qi_fen_zhi == 0 and self.force_add_fufu_q_bonus:
             # print("force add q bonus")
             hp += round(fufu.MAX_QI_FEN_ZHI * fufu.QI_HP_BEI_LV * Character_FuFu.BASE_HP)
             e_bonus += fufu.MAX_QI_FEN_ZHI * fufu.QI_TO_BONUS_BEI_LV
@@ -994,18 +1007,8 @@ def calc_score(fufu_initial_state: Character_FuFu,
     full_six_zhan_bi = 0
     run_num = MAX_RUN_NUM
 
-    if enable_debug:
-        run_num = 1
-
     for _ in range(0, run_num):
         plan = aciton_plan_creator_func(fufu_initial_state)
-        plan.add_hei_fu_damage_callback(Hei_Fu_Cure_Supervisor().on_hei_fu_damage)
-
-        if fufu_initial_state.has_zhuan_wu:
-            zhuan_wu_supervisor = Zhuan_Wu_Supervisor()
-            plan.add_consume_hp_callback(zhuan_wu_supervisor.on_hp_changed)
-            plan.add_regenerate_hp_callback(zhuan_wu_supervisor.on_hp_changed)
-
         plan.run()
         all_damage += plan.total_damage
         full_six_zhan_bi += plan.full_six_damage / plan.total_damage

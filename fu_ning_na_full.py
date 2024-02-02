@@ -48,6 +48,10 @@ def create_fufu():
 
 def ye_fu_wan_zhong_team_qualifier(fufu: Character_FuFu):
     hp = fufu.get_hp().get_max_hp()
+    a_bonus = fufu.get_a_bonus()
+    e_bonus = fufu.get_e_bonus()
+    q_bonus = fufu.get_q_bonus()
+    
     damage = 0
     cur_hp = hp
     damage += cur_hp * fufu.Q_BEI_LV / 100 * 1.615 * 1.05 * 0.487
