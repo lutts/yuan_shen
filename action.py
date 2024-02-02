@@ -154,14 +154,12 @@ class ActionPlan:
         if hasattr(self.events, "on_over_healed"):
             self.events.on_over_healed(self, source, targets_with_data)
 
-    def modify_cur_hp(self, targets: list[Character]=None, hp=0, hp_per=0, source=None) -> tuple[Character|None, list[Character_HP_Change_Data]]:
+    def modify_cur_hp(self, targets: list[Character]=None, hp=0, hp_per=0, source=None):
         if not targets:
             targets = self.__characters
 
-        targets_with_change_data = []
-
-        has_changed = False
-        has_over_healed = False
+        hp_changed_targets: list[Character_HP_Change_Data] = []
+        over_healed_targets: list[Character_HP_Change_Data] = []
 
         healing_bonus = 0
         source_ch = source
@@ -185,23 +183,28 @@ class ActionPlan:
 
             # self.debug(str(change_data))
             if change_data.has_changed():
-                has_changed = True
+                hp_changed_targets.append(change_data)
 
             if change_data.is_over_healed():
-                has_over_healed = True
+                over_healed_targets.append(change_data)
 
-            targets_with_change_data.append(change_data)
-
-        if has_changed:
+        if hp_changed_targets:
+            self.debug("当前生命值变化的角色: %s", ",".join(
+                [c.character.name for c in hp_changed_targets]))
+            
             if hp < 0 or hp_per < 0:
-                self.call_consume_hp_callback(source=source_ch, targets_with_data=targets_with_change_data)
+                self.call_consume_hp_callback(source=source_ch, targets_with_data=hp_changed_targets)
             else:
-                self.call_regenerate_hp_callback(source=source_ch, targets_with_data=targets_with_change_data)
+                self.call_regenerate_hp_callback(source=source_ch, targets_with_data=hp_changed_targets)
 
-        if has_over_healed:
-            self.call_over_healed_callback(source_ch, targets_with_change_data)
+        if over_healed_targets:
+            self.debug("治疗溢出的角色: %s", ",".join(
+                [c.character.name for c in over_healed_targets]))
+            self.call_over_healed_callback(source_ch, over_healed_targets)
 
-        return (source_ch, targets_with_change_data)
+        return (source_ch, hp_changed_targets, over_healed_targets)
+
+    regenerate_hp = modify_cur_hp
 
     def __debug(self, fmt_str, *args, **kwargs):
         fmt_str = str(round(self.get_current_action_time(), 3)) + ": " + fmt_str

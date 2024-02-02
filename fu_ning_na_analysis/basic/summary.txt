@@ -2521,53 +2521,7 @@ BYTD6620："00:00:01.384", "00:00:02.351", "00:00:02.634", "00:00:03.534", "00:0
 
 
 TODO: 夜兰的算法2再优化一下
-TODO: 奶刀的时间刷新算法似乎有问题，只要没超过end_time都应该延时吧？
-			action ------- action  ------- end time 	-------  (TODO: 在end time之后安排一个action，检测到end_time < cur_time就不执行)
-													 ^
-													刷新 -- action ------- new end time
-										^
-										现在的做法是在action.do()里安排下一个action，超过end_time就算作终止，但实际上这样是不对的
-										
-										blocking机制如何实现？
-										黑芙砍一刀也是事件？
-										
-奶刀治疗是单独一个类：
-class Hei_Fu_Cure_Supervisor:
-	end_time
-	on_hei_fu_damage：奶刀砍一下的callback，如果cur_time < end_time，则延长end_time，否则创建一个新的cure_teammate_action，开启新一轮治疗(is_cure_fufu_sync = True)
-	on_consume_hp:  治疗芙芙被阻塞的回调，检查被扣血的是否有芙芙，没有则return，如果有芙芙，将自身从回调列表中移除，如果cur_time < end_time，则创建一个cure_fufu_action， add_action，
-	is_cure_fufu_sync
-
-
-plan.hei_fu_damage_events += supervisor.on_hei_fu_damage
-
-class cure_teammate_action:
-	def do():
-		if get_timestamp > end_time:
-			return
-			
-		cure teammate,  create new cure teammate action, add_aciton
-		if is_cure_fufu_sync:
-			create cure_fufu_action, add_action
-			
-class cure_fufu_action:
-	def do():
-		if get_timestamp > end_time:
-			return
-			
-		if fufu不是满血
-			cure fufu
-			
-			if not is_cure_fufu_sync:
-				 重新调度自已
-		else:
-			is_cure_fufu_sync = False
-			plan.consume_hp_events = supervisor.on_consume_hp
-		
-	
-治疗芙芙和治疗队友一开始是同步的，芙芙满命后治疗芙芙会阻塞，这个如何实现？
-	
-
+FIXME: 录制里直接用bonus是有问题的！！！2生+2生没有bonus！！！
 
 会刷新持续时间的治疗如何实现？plan如何知道Healer是有刷新机制的？
 
