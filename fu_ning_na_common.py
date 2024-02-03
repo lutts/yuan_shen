@@ -1121,13 +1121,14 @@ def calc_score(fufu_initial_state: Character_FuFu,
     for _ in range(0, run_num):
         plan = aciton_plan_creator_func(fufu_initial_state)
         plan.run()
+        all_damage += plan.total_damage
+        full_six_zhan_bi += plan.full_six_damage / plan.total_damage
+
         if enable_record:
             expect_score = calc_expect_damage(plan.total_damage, fufu_initial_state.get_crit_rate(), 1 + fufu_initial_state.get_crit_damage())
             crit_score = round(plan.total_damage * (1 + fufu_initial_state.get_crit_damage()))
             logging.debug("damage: %d, expect_score:%s, crit_score:%s",
                           round(plan.total_damage), round(expect_score), round(crit_score))
-        all_damage += plan.total_damage
-        full_six_zhan_bi += plan.full_six_damage / plan.total_damage
 
     all_damage /= run_num
     full_six_zhan_bi /= run_num
