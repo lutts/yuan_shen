@@ -51,7 +51,6 @@ def ye_fu_wan_zhong_team_qualifier(fufu: Character_FuFu):
     a_bonus = fufu.get_a_bonus()
     e_bonus = fufu.get_e_bonus()
     q_bonus = fufu.get_q_bonus()
-    
 
     # 这个固定过程的模拟计算忽略了不同初始生命值上限的芙芙的奶量对气氛值叠层速度的影响
     # 这是因为：芙芙的满命治疗在不被怪物打掉血的情况下，一般都是治疗溢出的，所以奶量对气氛值的影响很小
@@ -68,7 +67,7 @@ def ye_fu_wan_zhong_team_qualifier(fufu: Character_FuFu):
     damage += cur_hp * HEI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
 
     cur_hp = hp + (0.14 * 1) * Character_FuFu.BASE_HP
-    cur_a_bonus = 1 + a_bonus + 0.398 + 200.401 * 0.0031
+    cur_a_bonus = 1 + a_bonus + 0.398 + 172.395 * 0.0031
     damage += cur_hp * HEI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
     damage += cur_hp * HEI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
 
@@ -78,37 +77,39 @@ def ye_fu_wan_zhong_team_qualifier(fufu: Character_FuFu):
     damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
     cur_hp = hp + (0.14 * 2 + 0.1 * 1) * Character_FuFu.BASE_HP
-    salon_member_bonus = 1 + e_bonus + 0.28 + 0.398 + 0.08 * 3 + 383.981 * 0.0031
+    salon_member_bonus = 1 + e_bonus + 0.28 + 0.398 + 0.08 * 3 + 360.463 * 0.0031
     damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 1 + (429.993 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    cur_hp = hp + (0.14 * 2 + 0.1 * 1 + (429.971 - 400) * 0.0035) * Character_FuFu.BASE_HP
     salon_member_bonus = 1 + e_bonus + 0.28 + 0.398 + 0.08 * 3 + 400 * 0.0031
     damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (466.397 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (469.173 - 400) * 0.0035) * Character_FuFu.BASE_HP
     damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (508.39 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (519.565 - 400) * 0.0035) * Character_FuFu.BASE_HP
     cur_a_bonus = 1 + a_bonus + 0.398 + 400 * 0.0031
     damage += cur_hp * HEI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
     damage += cur_hp * BAI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (522.398 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (533.572 - 400) * 0.0035) * Character_FuFu.BASE_HP
     damage += cur_hp * BAI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
     damage += cur_hp * HEI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (553.908 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (561.584 - 400) * 0.0035) * Character_FuFu.BASE_HP
     damage += cur_hp * BAI_FU_BEI_LV / 100 * cur_a_bonus * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (698.822 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (662.386 - 400) * 0.0035) * Character_FuFu.BASE_HP
     damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
+
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (756.469 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
     damage += cur_hp * fufu.PANG_XIE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
-    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (799.895 - 400) * 0.0035) * Character_FuFu.BASE_HP
-    damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
+    cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (778.875 - 400) * 0.0035) * Character_FuFu.BASE_HP
+    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
     cur_hp = hp + (0.14 * 2 + 0.1 * 2 + (800 - 400) * 0.0035) * Character_FuFu.BASE_HP
-    damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
     damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
     damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
 
@@ -127,7 +128,6 @@ def ye_fu_wan_zhong_team_qualifier(fufu: Character_FuFu):
     damage += cur_hp * fufu.XUN_JUE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.25 * 0.487
     damage += cur_hp * fufu.PANG_XIE_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.05 * 0.487
     damage += cur_hp * fufu.FU_REN_BEI_LV / 100 * salon_member_bonus * 1.4 * 1.05 * 0.487
-
     # print(damage)
 
     return damage
