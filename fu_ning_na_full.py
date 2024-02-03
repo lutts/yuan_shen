@@ -303,12 +303,29 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
     return calculate_score_common(score_data, create_fufu, create_action_plan)
 
 # Main body
-if __name__ == '__main__':
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--fast", action="store_true", help="fast mode, qualifier threshold will set to 1.7")
+    parser.add_argument("-F", "--no_qualifier", action="store_true", help="no qualifier, maybe extremely slow")
+    args = parser.parse_args()
     # logging.basicConfig(filename='D:\\logs\\fufu.log', encoding='utf-8', filemode='w', level=logging.DEBUG)
     # logging.basicConfig(level=logging.DEBUG)
     print("默认算法复杂，圣遗物多的话需要执行0.5~1小时多")
-    #set_qualifier_threshold(1.7)
+
+    qualifier = calculate_score_qualifier
+    if args.no_qualifier:
+        qualifier = None
+        print("no qualifier, maybe extremely slow")
+    elif args.fast:
+        print("fast mode, set threshold to 1.7")
+        set_qualifier_threshold(1.7)
+    
     find_syw_for_fu_ning_na(calculate_score_callback=calculate_score_callback,
                             result_txt_file="fu_ning_na_syw.txt",
-                            calculate_score_qualifier=calculate_score_qualifier
+                            calculate_score_qualifier=qualifier
                             )
+
+if __name__ == '__main__':
+    main()
