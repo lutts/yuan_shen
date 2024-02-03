@@ -11,7 +11,7 @@ import itertools
 import random
 from collections.abc import Callable
 
-from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine, calc_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine, calc_expect_damage, set_qualifier_threshold
 from health_point import HealthPoint
 from character import Character, Character_HP_Change_Data
 from monster import Monster
@@ -48,7 +48,7 @@ class Character_FuFu(Character):
         四命及以上: 双水120, 单水160
         有雷神、西福斯的月光等其他充能手段酌情调整
         """
-        super().__init__(name=Character_FuFu.NAME, base_hp=Character_FuFu.BASE_HP)
+        super().__init__(name=Character_FuFu.NAME, base_hp=Character_FuFu.BASE_HP, q_energy=60)
         self.ming_zuo_num = ming_zuo_num
         self.has_zhuan_wu = has_zhuan_wu
 
@@ -467,6 +467,7 @@ class Qi_Fen_Zhi_Supervisor:
         plan.add_regenerate_hp_callback(self.on_hp_changed)
 
     def stop_supervise(self, plan: FuFuActionPlan):
+        plan.debug("气氛值调整线程终止")
         plan.remove_consume_hp_callback(self.on_hp_changed)
         plan.remove_regenerate_hp_callback(self.on_hp_changed)
 
@@ -478,9 +479,6 @@ class Qi_Fen_Zhi_Supervisor:
             qi_fen_zhi += abs(tdata.data.hp_per) * fufu.QI_INCREASE_BEI_LV * 100
 
         self.add_qi_fen_zhi(plan, qi_fen_zhi)
-
-        if self.__qi_fen_zhi >= fufu.MAX_TOTAL_QI_FEN_ZHI:
-            self.stop_supervise(plan)
 
     def add_qi_fen_zhi(self, plan: FuFuActionPlan, qi):
         fufu = plan.get_fufu()
@@ -520,6 +518,9 @@ class Qi_Fen_Zhi_Supervisor:
         self.prev_qi_elem_bonus = t[0]
         self.prev_qi_healing_bonus = t[1]
         self.prev_qi_hp_per_bonus = t[2]
+
+        if self.__qi_fen_zhi >= plan.get_fufu().MAX_TOTAL_QI_FEN_ZHI:
+            self.stop_supervise(plan)
 
         if enable_record:
             plan.damage_record_hp()
@@ -584,7 +585,8 @@ class FuFu_GuYouTianFu_1_Supervisor:
         if self.end_time is None:
             self.start_cure(plan, cur_time)
         elif cur_time <= self.end_time:
-            self.end_time += 4
+            self.end_time = cur_time + 4
+            plan.debug("芙芙固有天赋1效果延长到%s", self.end_time)
         else:
             plan.remove_over_healed_callback(self.on_over_healed)
             new_supervisor = FuFu_GuYouTianFu_1_Supervisor()
@@ -602,6 +604,7 @@ class FuFu_GuYouTianFu_1_Supervisor:
 
     def start_cure(self, plan: FuFuActionPlan, cur_time):
         self.end_time = cur_time + 4
+        plan.debug("芙芙固有天赋1治疗启动, end_time=%s", self.end_time)
         # 至少保证治疗两次
         self.min_cure_num = 2
         self.insert_action(plan, cur_time + self.get_first_cure_interval())
@@ -622,6 +625,7 @@ class FuFu_GuYouTianFu_1_Supervisor:
         if not can_cure:
             return
         
+        plan.debug("芙芙固有天赋1治疗")
         plan.regenerate_hp(plan.characters, hp_per=0.02)
 
         next_time = cur_time + self.get_cure_interval()
@@ -693,6 +697,10 @@ class WanYeBonusStopAction(Action):
         plan.get_fufu().sub_all_bonus(self.wan_ye.elem_bonus)
         plan.sub_all_bonus(self.wan_ye.elem_bonus)
 
+class FengTaoEffectiveAction(Action):
+    def do_impl(self, plan: ActionPlan):
+        self.debug("风套减抗开始")
+        plan.monster.add_jian_kang(0.4)
 
 class FengTaoInvalidAction(Action):
     def do_impl(self, plan: FuFuActionPlan):
@@ -1106,11 +1114,33 @@ chu_shang_kou_xue_interval_dict = {
     PANG_XIE_NAME: (745, 1018)
 }
 
+# for debug only
+salon_member_min_k_num = {
+    FU_REN_NAME: 0,
+    XUN_JUE_NAME: 0,
+    PANG_XIE_NAME: 0,
+}
+
+salon_member_min_c_num = {
+    FU_REN_NAME: 0,
+    XUN_JUE_NAME: 0,
+    PANG_XIE_NAME: 0,
+}
+
 
 def schedule_little_three(plan: FuFuActionPlan, name,
                           start_time, end_time,
                           kou_xue_cls, chu_shang_cls,
                           kou_xue_num=None, chu_shang_num=None):
+    """
+    关于kou_xue_num和chu_shang_num:
+    
+    为了使每次运行的结果更稳定，这两个参数在最终版本是一定要指定具体数值，不能为 None 的，这个数值的确定方法如下:
+    
+    * 首先：将文件开头的enable_debug置为true，将MAX_RUN_NUM设置为一个比较大的值，例如 10000
+    * 配置好 logging 模块的输出文件并启用
+    * 执行程序，在Logging的输出里会有建议值
+    """
     kou_xue_interval_min, kou_xue_interval_max = kou_xue_interval_dict[name]
     chu_shang_interval_min, chu_shang_interval_max = chu_shang_interval_dict[name]
     chu_kou_interval_min, chu_kou_interval_max = chu_shang_kou_xue_interval_dict[name]
@@ -1132,7 +1162,7 @@ def schedule_little_three(plan: FuFuActionPlan, name,
         k_action_lst.append(kou_xue_action)
         k_num += 1
 
-        if chu_shang_num and c_num < chu_shang_num:
+        if not chu_shang_num or c_num < chu_shang_num:
             if last_chu_shang_time:
                 c_min = last_chu_shang_time + chu_shang_interval_min / 1000
                 c_max = last_chu_shang_time + chu_shang_interval_max / 1000
@@ -1144,8 +1174,8 @@ def schedule_little_three(plan: FuFuActionPlan, name,
                     randtime(chu_shang_interval_min, chu_shang_interval_max)
                 if k_min > c_max or k_max < c_min:
                     # 没有交集，以出伤间隔为准
-                    logging.debug("以出伤间隔为准 kou_xue_time: %s, last_chu_shang_time: %s, c_min: %s, c_max:%s, k_min:%s, k_max:%s",
-                                kou_xue_time, last_chu_shang_time, c_min, c_max, k_min, k_max)
+                    # logging.debug("以出伤间隔为准 kou_xue_time: %s, last_chu_shang_time: %s, c_min: %s, c_max:%s, k_min:%s, k_max:%s",
+                    #             kou_xue_time, last_chu_shang_time, c_min, c_max, k_min, k_max)
                     pass
                 else:
                     # 有交集，需要同时满足两者的要求
@@ -1180,7 +1210,15 @@ def schedule_little_three(plan: FuFuActionPlan, name,
         print("Warning: chu_shang_num specified, but not fullfilled:" + str(c_num) + " < " + str(chu_shang_num))
 
     if enable_debug:
-        logging.debug(f"{start_time:.3f} to {end_time:.3f}: k_num = {k_num} c_num = {c_num}")
+        # logging.debug(f"{name}: {start_time:.3f} to {end_time:.3f}: k_num = {k_num} c_num = {c_num}")
+        cur_min_k_num = salon_member_min_k_num[name]
+        cur_min_c_num = salon_member_min_c_num[name]
+        if cur_min_k_num == 0 or k_num <  cur_min_k_num:
+            salon_member_min_k_num[name] = k_num
+
+        if cur_min_c_num == 0 or c_num < cur_min_c_num:
+            salon_member_min_c_num[name] = c_num
+
 
     return (k_action_lst, c_action_lst)
 
@@ -1205,6 +1243,11 @@ def calc_score(fufu_initial_state: Character_FuFu,
 
     all_damage /= run_num
     full_six_zhan_bi /= run_num
+
+    if enable_debug:
+        logging.debug("min_k_num: %s", salon_member_min_k_num)
+        logging.debug("min_c_num: %s", salon_member_min_c_num)
+        
 
     return (all_damage, round(full_six_zhan_bi, 3))
 
@@ -1353,10 +1396,29 @@ def match_bei_callback(syw: ShengYiWu):
 def match_tou_callback(syw: ShengYiWu):
     return syw.crit_rate == ShengYiWu.CRIT_RATE_MAIN or syw.crit_damage == ShengYiWu.CRIT_DAMAGE_MAIN or syw.hp_percent == ShengYiWu.BONUS_MAX
 
+def check_sys_args():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--fast", action="store_true", help="fast mode, qualifier threshold will set to 1.7")
+    parser.add_argument("-n", "--no_qualifier", action="store_true", help="no qualifier, maybe extremely slow")
+    args = parser.parse_args()
+
+    enable_qualifier = True
+    if args.no_qualifier:
+        enable_qualifier = False
+        print("no qualifier, maybe extremely slow")
+    elif args.fast:
+        print("fast mode, set threshold to 1.7")
+        set_qualifier_threshold(1.7)
+
+    return enable_qualifier
 
 def find_syw_for_fu_ning_na(calculate_score_callback, 
                             result_txt_file,
                             calculate_score_qualifier=None):
+    enable_qualifier = check_sys_args()
+
     if enable_debug:
         raw_score_list = get_debug_raw_score_list()
     else:
@@ -1379,17 +1441,14 @@ def find_syw_for_fu_ning_na(calculate_score_callback,
                                     "战技元素伤害加成", "满命六刀元素伤害加成",
                                     "暴击率", "暴击伤害", "充能效率"])
     
+    if enable_qualifier:
+        qualifier = calculate_score_qualifier
+    else:
+        qualifier = None
+
     return calculate_score(raw_score_list,
                            calculate_score_callbak=calculate_score_callback,
                            result_txt_file=result_txt_file,
                            result_description=result_description,
-                           calculate_score_qualifier=calculate_score_qualifier
+                           calculate_score_qualifier=qualifier
                            )
-
-
-# Main body
-if __name__ == '__main__':
-    logging.basicConfig(filename='D:\\logs\\fufu.log', encoding='utf-8', filemode='w', level=logging.DEBUG)
-    logging.basicConfig(level=logging.DEBUG)
-    print("默认算法复杂，圣遗物多的话需要执行0.5~1小时多")
-    find_syw_for_fu_ning_na()

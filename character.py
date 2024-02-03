@@ -22,7 +22,9 @@ class Character_HP_Change_Data:
         return self.character.name + " " + str(self.data)
 
 class Character:
-    def __init__(self, name, base_atk=0, all_atk=0, 
+    def __init__(self, name, 
+                 a_level=1, e_level=1, q_level=1, q_energy=80, 
+                 base_atk=0, all_atk=0, 
                  base_hp=0, max_hp=0, 
                  base_defence=0, all_defence=0,
                  crit_rate=0.05, crit_damage=0.5,
@@ -30,7 +32,14 @@ class Character:
                  energy_recharge=100.0, elem_mastery=0,
                  normal_a_bonus=0, charged_a_bonus=0, plunging_bonus=0,
                  e_bonus=0, q_bonus=0, base_bonus=0):
+        """
+        q_energy: 大招能量
+        """
         self.name = name
+        self.a_level = a_level
+        self.e_level = e_level
+        self.q_level = q_level
+        self.q_energy = q_energy
         # 基础攻击力：角色基础攻击力 + 武器基础攻击力
         self.__base_atk = base_atk
         # 总攻击力
