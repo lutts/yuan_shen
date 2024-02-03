@@ -29,7 +29,7 @@ python版本要求：3.10及以上版本
 * 然后，分析视频：选取较为理想的一遍，逐帧分析视频，记录下角色打出了哪些伤害，打出伤害时的状态(比如二命芙芙的血量变化，夜兰大招增伤量等等)
 * 以此分析的结果为基准编写程序，原神的不同的伤害计算有不同的乘区，一般我们只需要关注攻击力乘区、伤害加成乘区、夜兰胡桃芙芙的生命乘区，芙芙固有天赋的独立乘区等等，至于抗性乘区之类的都是固定的，不影响圣遗物不同组合之间的比较
 
-视频分析结果可以参考 ye_lan_readme.md 、lei_shen_readme.md、fu_ning_na_readme.md 这三个文件
+视频分析结果可以参考 ye_lan_readme.md 、lei_shen_readme.md、fu_ning_na_analysis目录下的相关分析文件
 
 某些角色的输出手段比较单一，比如胡桃就是一直az，菲谢尔主要是奥兹， 香菱主要是大招，纳西妲e，这些角色就没必要录制视频来分析了
 
@@ -48,46 +48,3 @@ python版本要求：3.10及以上版本
 * 各个角色的输出结果在各自的txt文件里，例如ye_lan_syw.txt是夜兰圣遗物组合的输出结果，从最差到最好排序，因此需要打开这个txt后拉到文件最后面，从最好的里面选取你觉得合适的
 
 目前还处于开发阶段，使用上不那么灵活，因为我只是用于自用开发的，无法做得非常全面，如果有clone我这些代码的朋友，需要根据你实际的角色池与配队对参数进行调整，因此要求你至少稍微懂一些python
-
-以下面的芙宁娜部分代码片断为例
-
-* 将ming_zuo_num修改为你的芙宁娜命座数
-* 根据你的常用配队将include_extra置为True或False
-* 如果和那维莱特组队，将has_na_wei_lai_te置为True
-* 如果和夜兰组队，将has_ye_lan置为True
-* 如果用的不是专武，和专武相关的参数也需要删除，并添加你自已的武器的相关参数
-
-```python
-ming_zuo_num = 6
-include_extra = False    # 某些配队，在芙芙大招结束后还继续输出，不切芙芙出来续大，此时将include_extra置为True
-has_na_wei_lai_te = False
-has_ye_lan = True
-
-.......
-
-extra_crit_damage = {
-    "专武": 0.882
-}
-
-common_elem_bonus = {
-    "万叶": 0.4,
-}
-
-extra_e_bonus = {
-    "固有天赋2": 0.28,  # 基本是能吃满的，操作得当，生命基本能保持在50%以上
-}
-
-variable_e_bonus = {
-    "专武": zhuan_wu_e_bonus_bei_lv * 3
-}
-
-extra_hp_bonus = {
-    "双水": 0.25,
-}
-
-variable_hp_bonus = {
-    "专武叠满两层": zhuan_wu_hp_bei_lv * 2,
-    "夜兰四命保底两个e": 0.2,
-}
-
-```
