@@ -1107,7 +1107,7 @@ def schedule_little_three(plan: FuFuActionPlan, name,
         print("Warning: chu_shang_num specified, but not fullfilled:" + str(c_num) + " < " + str(chu_shang_num))
 
     if enable_debug:
-        print(f"{start_time:.3f} to {end_time:.3f}: k_num = {k_num} c_num = {c_num}")
+        logging.debug(f"{start_time:.3f} to {end_time:.3f}: k_num = {k_num} c_num = {c_num}")
 
     return (k_action_lst, c_action_lst)
 
