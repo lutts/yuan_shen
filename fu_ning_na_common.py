@@ -130,14 +130,9 @@ R_CUR_Q_BONUS_INIT = R_CUR_Q_BONUS_KEY + " = 1 + q_bonus"
 
 
 class FuFuActionPlan(ActionPlan):
-    def __init__(self, fufu_initial_state: Character_FuFu, teammate_hps: dict[str, HealthPoint]):
+    def __init__(self, fufu_initial_state: Character_FuFu, teammates: list[Character]):
         self.__fufu: Character_FuFu = copy.deepcopy(fufu_initial_state)
-        self.__teammates: list[Character] = []
-        for name, hp in teammate_hps.items():
-            c = Character(name)
-            c.set_hp(copy.deepcopy(hp))
-            self.__teammates.append(c)
-
+        self.__teammates: list[Character] = copy.deepcopy(teammates)
         super().__init__(characters=[self.__fufu] + self.__teammates,
                          monster=Monster())
         
@@ -145,6 +140,8 @@ class FuFuActionPlan(ActionPlan):
 
         if self.__fufu.ming_zuo_num >= 6:
             self.add_hei_fu_damage_callback(Hei_Fu_Cure_Supervisor().on_hei_fu_damage)
+
+        self.add_over_healed_callback(FuFu_GuYouTianFu_1_Supervisor().on_over_healed)
 
         if self.__fufu.has_zhuan_wu:
             self.zhuan_wu_supervisor = Zhuan_Wu_Supervisor()
@@ -361,6 +358,9 @@ class FuFuActionPlan(ActionPlan):
 
     def add_hei_fu_damage_callback(self, callback):
         self.events.on_hei_fu_damage += callback
+
+    def remove_hei_fu_damage_callback(self, callback):
+        self.events.on_hei_fu_damage -= callback
     
     def call_hei_fu_damage_callback(self):
         if hasattr(self.events, "on_hei_fu_damage"):
@@ -558,7 +558,6 @@ class Apply_Qi_Fen_Zhi_Action(Action):
     def __init__(self, supervisor: Qi_Fen_Zhi_Supervisor):
         super().__init__("气氛值生效线程")
         self.supervisor = supervisor
-        self.blocking = False
 
     def do_impl(self, plan: FuFuActionPlan):
         changed = self.supervisor.apply_qi_fen_zhi(plan)
@@ -569,6 +568,73 @@ class Apply_Qi_Fen_Zhi_Action(Action):
         next_time = self.get_timestamp() + random.randint(429, 587) / 1000
         action.set_timestamp(next_time)
         plan.insert_action_runtime(action)
+
+
+class FuFu_GuYouTianFu_1_Supervisor:
+    def __init__(self):
+        self.min_cure_num = 0
+        self.end_time = None
+
+    def on_over_healed(self, plan: FuFuActionPlan, source: Character, targets_with_data: list[Character_HP_Change_Data]):
+        if source is None or source is plan.get_fufu():
+            return
+
+        cur_time = plan.get_current_action_time()
+
+        if self.end_time is None:
+            self.start_cure(plan, cur_time)
+        elif cur_time <= self.end_time:
+            self.end_time += 4
+        else:
+            plan.remove_over_healed_callback(self.on_over_healed)
+            new_supervisor = FuFu_GuYouTianFu_1_Supervisor()
+            plan.add_over_healed_callback(new_supervisor.on_over_healed)
+            new_supervisor.start_cure(plan, cur_time)
+
+    def insert_action(self, plan: FuFuActionPlan, t):
+        action = FuFu_GuYouTianFu_1_Action(self)
+        action.set_timestamp(t)
+        plan.insert_action_runtime(action)
+
+    @staticmethod
+    def get_first_cure_interval():
+        return randtime(int(2.078 * 1000), int(2.16 * 1000))
+
+    def start_cure(self, plan: FuFuActionPlan, cur_time):
+        self.end_time = cur_time + 4
+        # 至少保证治疗两次
+        self.min_cure_num = 2
+        self.insert_action(plan, cur_time + self.get_first_cure_interval())
+        
+    @staticmethod
+    def get_cure_interval():
+        return randtime(int(1.952 * 1000), int(2.047 * 1000))
+
+    def do_cure(self, plan: FuFuActionPlan):
+        cur_time = plan.get_current_action_time()
+        can_cure = False
+        if self.min_cure_num > 0:
+            self.min_cure_num -= 1
+            can_cure = True
+        elif cur_time <= self.end_time:
+            can_cure = True
+
+        if not can_cure:
+            return
+        
+        plan.regenerate_hp(plan.characters, hp_per=0.02)
+
+        next_time = cur_time + self.get_cure_interval()
+        self.insert_action(plan, next_time)    
+
+
+class FuFu_GuYouTianFu_1_Action(Action):
+    def __init__(self, supervisor: FuFu_GuYouTianFu_1_Supervisor):
+        super().__init__("固有天赋1治疗")
+        self.supervisor = supervisor
+
+    def do_impl(self, plan: FuFuActionPlan):
+        self.supervisor.do_cure(plan)
 
 
 class ZhongLiAction(Action):
@@ -670,18 +736,25 @@ class FuFu_E_Action(Action):
 
 class Hei_Fu_Cure_Supervisor:
     def __init__(self):
-        self.end_time = 0
+        self.end_time = None
         self.is_cure_fufu_sync = True
         self.last_cure_teammate_actual_time = 0
         self.last_cure_teammate_effective_time = 0
 
     def on_hei_fu_damage(self, plan: FuFuActionPlan):
         cur_action_time = plan.get_current_action_time()
+        if self.end_time is None:
+            self.start_cure_teammate(plan, cur_action_time)
+            return
+        
         if cur_action_time <= self.end_time:
             self.end_time += 2.9
             plan.debug("adjust end_time to %s", round(self.end_time, 3))
         else:
-            self.start_cure_teammate(plan, cur_action_time)
+            plan.remove_hei_fu_damage_callback(self.on_hei_fu_damage)
+            new_supervisor = Hei_Fu_Cure_Supervisor()
+            plan.add_hei_fu_damage_callback(new_supervisor.on_hei_fu_damage)
+            new_supervisor.start_cure_teammate(plan, cur_action_time)
 
     def start_cure_teammate(self, plan: FuFuActionPlan, cur_action_time):
         actual_cure_time = cur_action_time + plan.get_hei_fu_first_cure_delay()
@@ -736,7 +809,7 @@ class Hei_Fu_Cure_Action(Action):
         return round(fufu.get_hp().get_max_hp() * 0.04)
     
     def do_impl(self, plan: FuFuActionPlan):
-        if self.get_timestamp() > self.supervisor.end_time:
+        if self.actual_cure_time > self.supervisor.end_time:
             self.debug("%s超时，不执行", self.name)
             return
         

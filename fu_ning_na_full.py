@@ -29,14 +29,14 @@ WAN_YE_NAME = "wan ye"
 # 夜兰是这个手法模式下最好的副C
 #
 # 不修改算法的情况下，只允许改变各个角色的生命值上限
-g_teammate_hps = {
+g_teammates = [
     # 夜兰
-    YE_LAN_NAME: HealthPoint(14450, 46461),
+    Character(YE_LAN_NAME, base_hp=14450, max_hp=46461),
     # 钟离
-    ZHONG_LI_NAME: HealthPoint(14695, 50567),
+    Character(ZHONG_LI_NAME, base_hp=14695, max_hp=50567),
     # 万叶
-    WAN_YE_NAME: HealthPoint(13348, 23505),
-}
+    Character(WAN_YE_NAME, base_hp=13348, max_hp=23505),
+]
 
 def create_fufu():
     fufu = Character_FuFu(required_energy_recharge=110)
@@ -138,7 +138,7 @@ def calculate_score_qualifier(score_data: ShengYiWu_Score):
 
 
 def create_action_plan(fufu_initial_state: Character):
-    plan = FuFuActionPlan(fufu_initial_state, g_teammate_hps)
+    plan = FuFuActionPlan(fufu_initial_state, g_teammates)
 
     # 这个 plan 有几个比较大的变数：
     # 1. 第三刀重击切白芙前，夫人有小概率的会扣血，使得气氛值叠层加快，后续伤害变高，实际操作4次出了一次，自动计算的概率好像更大些
@@ -308,7 +308,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--fast", action="store_true", help="fast mode, qualifier threshold will set to 1.7")
-    parser.add_argument("-F", "--no_qualifier", action="store_true", help="no qualifier, maybe extremely slow")
+    parser.add_argument("-n", "--no_qualifier", action="store_true", help="no qualifier, maybe extremely slow")
     args = parser.parse_args()
     # logging.basicConfig(filename='D:\\logs\\fufu.log', encoding='utf-8', filemode='w', level=logging.DEBUG)
     # logging.basicConfig(level=logging.DEBUG)

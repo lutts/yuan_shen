@@ -22,44 +22,51 @@ class Character_HP_Change_Data:
         return self.character.name + " " + str(self.data)
 
 class Character:
-    def __init__(self, name, base_atk=0, base_hp=0, base_defence=0):
+    def __init__(self, name, base_atk=0, all_atk=0, 
+                 base_hp=0, max_hp=0, 
+                 base_defence=0, all_defence=0,
+                 crit_rate=0.05, crit_damage=0.5,
+                 healing_bonus=0, incoming_healing_bonus=0,
+                 energy_recharge=100.0, elem_mastery=0,
+                 normal_a_bonus=0, charged_a_bonus=0, plunging_bonus=0,
+                 e_bonus=0, q_bonus=0, base_bonus=0):
         self.name = name
         # 基础攻击力：角色基础攻击力 + 武器基础攻击力
         self.__base_atk = base_atk
         # 总攻击力
-        self.__all_atk = 0
+        self.__all_atk = all_atk
 
         # 基础防御力
         self.__base_defence = base_defence
         # 总防御力
-        self.__all_defence = 0
+        self.__all_defence = all_defence
 
         # 元素精通
-        self.__elem_mastery = 0
+        self.__elem_mastery = elem_mastery
 
-        self.__crit_rate = 0.05
-        self.__crit_damage = 0.5
+        self.__crit_rate = crit_rate
+        self.__crit_damage = crit_damage
 
         # 治疗加成
-        self.__healing_bonus = 0
+        self.__healing_bonus = healing_bonus
         # 受治疗加成
-        self.__incomming_healing_bonus = 0
+        self.__incomming_healing_bonus = incoming_healing_bonus
 
-        self.__energy_recharge = 100.0
+        self.__energy_recharge = energy_recharge
 
-        self.__hp: HealthPoint = HealthPoint(base_hp, 0)
+        self.__hp: HealthPoint = HealthPoint(base_hp, max_hp)
 
         # 普通攻击
-        self.__normal_a_bonus = 0
+        self.__normal_a_bonus = base_bonus + normal_a_bonus
         # 重击
-        self.__charged_a_bonus = 0
+        self.__charged_a_bonus = base_bonus + charged_a_bonus
         # 下落攻击
-        self.__plunging_bonus = 0
+        self.__plunging_bonus = base_bonus + plunging_bonus
 
-        self.__e_bonus = 0
-        self.__q_bonus = 0
+        self.__e_bonus = base_bonus + e_bonus
+        self.__q_bonus = base_bonus + q_bonus
 
-        self.__in_foreground = 0
+        self.__in_foreground = False
         self.__swy_names = None
 
     def get_base_atk(self):
