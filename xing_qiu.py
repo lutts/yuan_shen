@@ -83,8 +83,9 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
     if is_4_jue_yuan:
         extra_q_bonus += min(energy_recharge / 4 / 100, 0.75)
 
+    # 手法: eqe，第二个e有四命加成
     e_damage_1 = all_atk * (336 + 382) / 100 * elem_bonus
-    e_damage_2 = all_atk * (336 + 382) / 100 * (elem_bonus + 0.5)  # 四命
+    e_damage_2 = all_atk * (336 + 382) / 100 * elem_bonus * 1.5  # 四命
     e_damage = e_damage_1 + e_damage_2
 
     q_num = 2 + 3 + 5 + 2 + 3 + 5 + 2 + 3 + 5 + 2 + 3 + 5
