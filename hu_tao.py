@@ -8,6 +8,8 @@ import sys
 import os
 import logging
 import itertools
+
+from ys_basic import Ys_Elem_Type
 from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
 use_lie_ren = False
@@ -111,7 +113,7 @@ def match_sha_callback(syw: ShengYiWu):
 
 
 def match_bei_callback(syw: ShengYiWu):
-    return syw.elem_type == ShengYiWu.ELEM_TYPE_HUO or syw.hp_percent == ShengYiWu.BONUS_MAX
+    return syw.elem_type == Ys_Elem_Type.HUO or syw.hp_percent == ShengYiWu.BONUS_MAX
 
 def match_tou_callback(syw: ShengYiWu):
     return syw.crit_rate == ShengYiWu.CRIT_RATE_MAIN or syw.crit_damage == ShengYiWu.CRIT_DAMAGE_MAIN

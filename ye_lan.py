@@ -8,6 +8,8 @@ import sys
 import os
 import logging
 import itertools
+
+from ys_basic import Ys_Elem_Type
 from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine, calc_expect_damage
 
 ming_zuo_num = 6
@@ -427,7 +429,7 @@ def match_sha_callback(syw: ShengYiWu):
 
 
 def match_bei_callback(syw: ShengYiWu):
-    return syw.hp_percent == ShengYiWu.BONUS_MAX or syw.elem_type == ShengYiWu.ELEM_TYPE_SHUI
+    return syw.hp_percent == ShengYiWu.BONUS_MAX or syw.elem_type == Ys_Elem_Type.SHUI
 
 
 def match_tou_callback(syw: ShengYiWu):

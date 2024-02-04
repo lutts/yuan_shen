@@ -22,6 +22,8 @@ class Monster:
 
         
         self.jian_fang = 0
+        # 影宝的无视防御
+        self.ignore_defence_ratio = 0
         self.fang_yu_xi_shu = self.get_fang_yu_xi_shu()
 
         # 减抗
@@ -30,7 +32,11 @@ class Monster:
         self.kang_xin_xi_su  = self.get_jian_kang_bonus()
 
     def get_fang_yu_xi_shu(self):
-        return (90 + 100) / ( (90 + 100) + (self.level + 100) * (1 - self.jian_fang))
+        return (90 + 100) / ( (90 + 100) + (self.level + 100) * (1 - self.jian_fang) * (1 - self.ignore_defence_ratio))
+    
+    def set_ignore_defence(self, ignore_ratio):
+        self.ignore_defence_ratio = ignore_ratio
+        self.fang_yu_xi_shu = self.get_fang_yu_xi_shu()
 
     def set_jian_fang(self, jian_fang):
         self.jian_fang = jian_fang

@@ -5,6 +5,7 @@ Module documentation.
 """
 
 import logging
+from ys_basic import Ys_Elem_Type
 from health_point import HealthPoint, HP_Change_Data
 
 class Character_HP_Change_Data:
@@ -22,7 +23,7 @@ class Character_HP_Change_Data:
         return self.character.name + " " + str(self.data)
 
 class Character:
-    def __init__(self, name, 
+    def __init__(self, name, elem_type: Ys_Elem_Type=None,
                  a_level=1, e_level=1, q_level=1, q_energy=80, 
                  base_atk=0, all_atk=0, 
                  base_hp=0, max_hp=0, 
@@ -36,6 +37,7 @@ class Character:
         q_energy: 大招能量
         """
         self.name = name
+        self.elem_type = elem_type
         self.a_level = a_level
         self.e_level = e_level
         self.q_level = q_level
