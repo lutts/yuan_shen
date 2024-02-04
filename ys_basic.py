@@ -7,14 +7,14 @@ Module documentation.
 from enum import Enum
 
 class Ys_Elem_Type(Enum):
-    HUO = ""
+    HUO = "Pyro"
     SHUI = "Hydro"
-    LEI = ""
-    BING = ""
+    LEI = "Electro"
+    BING = "Cryo"
 
-    CAO = ""
+    CAO = "Dendro"
 
-    FENG = ""
+    FENG = "Anemo"
 
-    YAN = ""
-    WU_LI = ""
+    YAN = "Geo"
+    WU_LI = "wu li"
