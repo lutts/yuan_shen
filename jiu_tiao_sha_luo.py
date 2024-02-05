@@ -72,7 +72,7 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
     q_damage = all_atk * (778.2 + 64.8 * 6) / 100 * elem_bonus
 
     all_damage = e_damage + q_damage
-    score_data.damage_to_score(all_damage, crit_rate, crit_damage)
+    score_data.damage_to_score(all_damage, crit_rate, crit_damage - 1)
 
     panel_atk = all_atk - sum(extra_atk.values())
     panel_crit_damage = crit_damage - 1 - sum(extra_crit_damage.values()) + extra_crit_damage["天空之翼"]

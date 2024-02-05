@@ -99,7 +99,7 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
 
     # 11次az
     az_damage = all_atk * (69.3 + 200.9) / 100 * elem_bonus * 11
-    score_data.damage_to_score(az_damage, crit_rate, crit_damage)
+    score_data.damage_to_score(az_damage, crit_rate, crit_damage - 1)
     score_data.custom_data = [panel_hp, elem_mastery, int(all_atk), round(crit_rate, 3), round(crit_damage - 1, 3)]
 
     return True

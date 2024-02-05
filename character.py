@@ -23,7 +23,7 @@ class Character_HP_Change_Data:
         return self.character.name + " " + str(self.data)
 
 class Character:
-    def __init__(self, name, elem_type: Ys_Elem_Type=None,
+    def __init__(self, name, elem_type: Ys_Elem_Type=None, ming_zuo_num=0,
                  a_level=1, e_level=1, q_level=1, q_energy=80, 
                  base_atk=0, all_atk=0, 
                  base_hp=0, max_hp=0, 
@@ -38,6 +38,7 @@ class Character:
         """
         self.name = name
         self.elem_type = elem_type
+        self.ming_zuo_num = ming_zuo_num
         self.a_level = a_level
         self.e_level = e_level
         self.q_level = q_level
@@ -45,11 +46,16 @@ class Character:
         # 基础攻击力：角色基础攻击力 + 武器基础攻击力
         self.__base_atk = base_atk
         # 总攻击力
+        if not all_atk:
+            # 最少为白字攻击力 + 圣遗物羽毛
+            all_atk = base_atk + 311
         self.__all_atk = all_atk
 
         # 基础防御力
         self.__base_defence = base_defence
         # 总防御力
+        if not all_defence:
+            all_defence = base_defence
         self.__all_defence = all_defence
 
         # 元素精通

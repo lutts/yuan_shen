@@ -119,7 +119,7 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
 
     non_crit_score = (all_atk * atk_bei_lv + real_elem_mastery * elem_mastery_bei_lv) * elem_bonus
 
-    score_data.damage_to_score(non_crit_score, crit_rate, crit_damage)
+    score_data.damage_to_score(non_crit_score, crit_rate, crit_damage - 1)
     score_data.custom_data = [ elem_mastery, background_elem_mastery, int(all_atk), 
                               round(panel_crit_rate, 3), round(crit_rate, 3), round(crit_damage - 1, 3), 
                               round(energy_recharge, 3)]

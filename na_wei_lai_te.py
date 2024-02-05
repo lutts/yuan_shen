@@ -80,7 +80,7 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
 
     non_crit_score = all_hp * 14.47 / 100 * elem_bonus
 
-    score_data.damage_to_score(non_crit_score, crit_rate, crit_damage)
+    score_data.damage_to_score(non_crit_score, crit_rate, crit_damage - 1)
 
     score_data.custom_data = [all_hp, panel_crit_rate, crit_rate, round(crit_damage - 1, 3), energy_recharge]
 

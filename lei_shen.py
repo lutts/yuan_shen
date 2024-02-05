@@ -193,7 +193,7 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
                 bonus_with_ye_lan = elem_bonus + ye_lan_bonus.bonus(t)
                 all_damage += all_atk * bei_lv / 100 * bonus_with_ye_lan
     
-    score_data.damage_to_score(all_damage, crit_rate, crit_damage)
+    score_data.damage_to_score(all_damage, crit_rate, crit_damage - 1)
 
     panel_crit_damage = crit_damage - sum(extra_crit_damage.values())
     panel_crit_damage = round(panel_crit_damage - 1, 3)

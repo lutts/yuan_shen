@@ -9,8 +9,8 @@ import os
 import logging
 import itertools
 
-from ys_basic import Ys_Elem_Type
-from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine, calc_expect_damage
+from ys_basic import Ys_Elem_Type, ys_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
 ming_zuo_num = 6
 
@@ -169,7 +169,7 @@ def calc_score_with_fu_fu_2(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_r
                                                po_ju_shi_timestamps, ye_lan_q_bonus, e3_timestamp)
 
     crit_score = all_damage * crit_damage
-    expect_score = calc_expect_damage(all_damage, crit_rate, crit_damage)
+    expect_score = ys_expect_damage(all_damage, crit_rate, crit_damage - 1)
 
     return (expect_score, crit_score)
     
@@ -377,7 +377,7 @@ def calculate_score_qualifier(score_data: ShengYiWu_Score, has_fu_fu=True, has_l
     hp = all_hp + 0.1 * 2 * ye_lan_base_hp
     damage = hp * 20.84 / 100 * 1.56 * po_ju_shi_bonus
 
-    score_data.damage_to_score(damage, crit_rate, crit_damage)
+    score_data.damage_to_score(damage, crit_rate, crit_damage - 1)
     score_data.custom_data = scan_result
 
     return True
@@ -401,7 +401,7 @@ def calculate_score_callback(score_data: ShengYiWu_Score, has_fu_fu=True, has_le
         damage = calc_score_with_lei_shen(
             all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage)
 
-    score_data.damage_to_score(damage, crit_rate, crit_damage)
+    score_data.damage_to_score(damage, crit_rate, crit_damage - 1)
     score_data.custom_data = [int(all_hp), round(e_po_ju_shi_elem_bonus, 3), 
                               round(crit_rate, 3), round(crit_damage - 1, 3), 
                               round(energy_recharge, 1)]

@@ -95,7 +95,7 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
 
     all_damage = e_damage + q_damage
 
-    score_data.damage_to_score(all_damage, crit_rate, crit_damage)
+    score_data.damage_to_score(all_damage, crit_rate, crit_damage - 1)
 
     q_bonus = elem_bonus + extra_q_bonus
     score_data.custom_data = [int(all_atk), round(elem_bonus, 3), round(q_bonus, 3), int(e_damage), int(q_damage),

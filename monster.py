@@ -72,9 +72,9 @@ class Monster:
         else:
             return 1 - cur_kang_xin / 2
         
-    def attacked(self, damage_before_jian_kang):
+    def attacked(self, raw_damage):
         # logging.debug("jian kang bonus: %s", self.get_jian_kang_bonus())
-        return damage_before_jian_kang * self.kang_xin_xi_su * self.fang_yu_xi_shu
+        return raw_damage * self.kang_xin_xi_su * self.fang_yu_xi_shu
     
     def __str__(self):
         return "kang:" + str(round(self.kang_xin_xi_su, 3)) + ", fang:" + str(round(self.fang_yu_xi_shu, 3))

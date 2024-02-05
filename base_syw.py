@@ -15,7 +15,7 @@ import traceback
 from math import ceil
 from collections.abc import Callable
 
-from ys_basic import Ys_Elem_Type
+from ys_basic import Ys_Elem_Type, ys_expect_damage, ys_crit_damage
 
 
 def chunk_into_n(lst, n):
@@ -773,12 +773,6 @@ def find_syw(match_syw_callback):
                 matched_syw.append(s)
     return matched_syw
 
-
-def calc_expect_damage(non_crit_damage, crit_rate, crit_damage):
-    c = min(crit_rate, 1)
-    return round(non_crit_damage * (1 + c * (crit_damage - 1)))
-
-
 qualifier_threshold = 1.5
 score_threshold = 1.8
 
@@ -804,8 +798,8 @@ class ShengYiWu_Score:
         self.__syw_combine: list[ShengYiWu] = syw_combine
 
     def damage_to_score(self, damage, crit_rate, crit_damage):
-        self.__expect_score = calc_expect_damage(damage, crit_rate, crit_damage)
-        self.__crit_score = round(damage * crit_damage)
+        self.__expect_score = ys_expect_damage(damage, crit_rate, crit_damage)
+        self.__crit_score = ys_crit_damage(damage, crit_damage)
 
     @property
     def expect_score(self):

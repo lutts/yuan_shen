@@ -9,8 +9,8 @@ import os
 import logging
 import itertools
 
-from ys_basic import Ys_Elem_Type
-from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine, calc_expect_damage
+from ys_basic import Ys_Elem_Type, ys_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
 
 def calculate_score_callback(score_data: ShengYiWu_Score):
@@ -75,7 +75,7 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
     non_crit_score = all_atk / base_atk * elem_bonus / base_elem_bonus
 
     score_data.crit_score = non_crit_score * crit_damage / base_crit_damage
-    score_data.expect_score = calc_expect_damage(non_crit_score, real_crit_rate, crit_damage)
+    score_data.expect_score = ys_expect_damage(non_crit_score, real_crit_rate, crit_damage - 1)
     score_data.custom_data = [int(panel_atk), round(crit_rate, 3), round(crit_damage - 1, 3), round(energy_recharge, 1)]
 
     return True

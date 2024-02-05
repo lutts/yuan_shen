@@ -29,7 +29,8 @@ class HealthPoint:
 
         self.__base_hp: int = base_hp
         if not max_hp:
-            max_hp = base_hp
+            # 最少为白字生命值 + 圣遗物花
+            max_hp = base_hp + 4780
         
         self.__max_hp: int = max_hp
         self.__prev_max_hp: int = max_hp

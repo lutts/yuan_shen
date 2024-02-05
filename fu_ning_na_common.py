@@ -11,8 +11,8 @@ import itertools
 import random
 from collections.abc import Callable
 
-from ys_basic import Ys_Elem_Type
-from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine, calc_expect_damage, set_qualifier_threshold
+from ys_basic import Ys_Elem_Type, ys_expect_damage
+from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine, set_qualifier_threshold
 from health_point import HealthPoint
 from character import Character, Character_HP_Change_Data
 from monster import Monster
@@ -49,8 +49,8 @@ class Character_FuFu(Character):
         四命及以上: 双水120, 单水160
         有雷神、西福斯的月光等其他充能手段酌情调整
         """
-        super().__init__(name=Character_FuFu.NAME, base_hp=Character_FuFu.BASE_HP, q_energy=60)
-        self.ming_zuo_num = ming_zuo_num
+        super().__init__(name=Character_FuFu.NAME, ming_zuo_num=ming_zuo_num,
+                         base_hp=Character_FuFu.BASE_HP, q_energy=60)
         self.has_zhuan_wu = has_zhuan_wu
 
 
@@ -1237,7 +1237,7 @@ def calc_score(fufu_initial_state: Character_FuFu,
         full_six_zhan_bi += plan.full_six_damage / plan.total_damage
 
         if enable_record:
-            expect_score = calc_expect_damage(plan.total_damage, fufu_initial_state.get_crit_rate(), 1 + fufu_initial_state.get_crit_damage())
+            expect_score = ys_expect_damage(plan.total_damage, fufu_initial_state.get_crit_rate(), fufu_initial_state.get_crit_damage())
             crit_score = round(plan.total_damage * (1 + fufu_initial_state.get_crit_damage()))
             logging.debug("damage: %d, expect_score:%s, crit_score:%s",
                           round(plan.total_damage), round(expect_score), round(crit_score))
@@ -1257,7 +1257,6 @@ def scan_syw_combine(combine: list[ShengYiWu],
                      fufu_creator_func: Callable[[], Character_FuFu]) -> Character_FuFu:
     fufu = fufu_creator_func()
     fufu.add_crit_rate(0.242 - 0.05)  # 突破加成
-    fufu.get_hp().modify_max_hp(4780)  # 花
 
     for p in combine:
         fufu.add_crit_rate(p.crit_rate)
@@ -1317,8 +1316,7 @@ def qualify_syw(score_data: ShengYiWu_Score, fufu_creator_func, qualify_func):
 
     damage = qualify_func(fufu)
 
-    score_data.damage_to_score(
-        damage, fufu.get_crit_rate(), 1 + fufu.get_crit_damage())
+    score_data.damage_to_score(damage, fufu.get_crit_rate(), fufu.get_crit_damage())
     score_data.custom_data = fufu
 
     # logging.debug("damage:%s, expect_score:%s, crit_score:%s",
@@ -1343,8 +1341,7 @@ def calculate_score_common(score_data: ShengYiWu_Score,
     if not damage:
         return False
 
-    score_data.damage_to_score(
-        damage, fufu.get_crit_rate(), 1 + fufu.get_crit_damage())
+    score_data.damage_to_score(damage, fufu.get_crit_rate(), fufu.get_crit_damage())
 
     if enable_record:
         logging.debug("finished: damage: %d, full_six_zhan_bi: %s, expect_score:%s, crit_score:%s, crit_rate: %s, crit_damage: %s",

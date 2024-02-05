@@ -126,7 +126,7 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
         e_damage + z_damage + a_with_extra_bonus_num * \
         aaa_damage * a_elem_bonus + guang_mu_damage
     
-    score_data.damage_to_score(non_crit_score, crit_rate, crit_damage)
+    score_data.damage_to_score(non_crit_score, crit_rate, crit_damage - 1)
     score_data.custom_data = [elem_mastery, panel_elem_mastery, int(panel_atk), round(crit_rate, 3), round(crit_damage - 1, 3)]
 
     return True
