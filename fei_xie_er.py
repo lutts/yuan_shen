@@ -148,8 +148,9 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
 
     # 以下是以一轮循环中刻晴打6次平A，协同攻击六次，其中2次触发超激化
     # TODO: 满命的协同攻击是和刻晴有关的，需要再仔细测试6命的效果
-    ao_zi_damage += no_reaction.do_damage(all_atk * 30 / 100, e_bonus) * 4
-    ao_zi_damage += chao_ji_hua.do_damage(all_atk * 30 / 100, e_bonus) * 2
+    if fei_xie_er.ming_zuo_num >= 6:
+        ao_zi_damage += no_reaction.do_damage(all_atk * 30 / 100, e_bonus) * 4
+        ao_zi_damage += chao_ji_hua.do_damage(all_atk * 30 / 100, e_bonus) * 2
 
     duan_zui_lei_ying_damage = chao_ji_hua.do_damage(all_atk * 80 / 100, e_bonus) * 9
 
