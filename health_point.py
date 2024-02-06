@@ -80,14 +80,22 @@ class HealthPoint:
     def set_max_hp(self, max_hp):
         self.__max_hp = max_hp
         self.__update_cur_hp_after_max_hp_changed()
+        if self.__max_hp > self.__maxest_hp_ever:
+            self.__maxest_hp_ever = self.__max_hp
 
     def modify_max_hp(self, hp):
+        if hp == 0:
+            return
+        
         self.__max_hp += hp
         self.__update_cur_hp_after_max_hp_changed()
         if self.__max_hp > self.__maxest_hp_ever:
             self.__maxest_hp_ever = self.__max_hp
 
     def modify_max_hp_per(self, hp_per):
+        if hp_per == 0:
+            return
+        
         self.modify_max_hp(round(self.__base_hp * hp_per))
 
     def modify_cur_hp(self, hp_changed) -> HP_Change_Data:

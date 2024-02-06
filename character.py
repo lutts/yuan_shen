@@ -7,6 +7,7 @@ Module documentation.
 import logging
 from ys_basic import Ys_Elem_Type
 from health_point import HealthPoint, HP_Change_Data
+from base_syw import ShengYiWu
 
 class Character_HP_Change_Data:
     def __init__(self, ch, data: HP_Change_Data):
@@ -84,7 +85,38 @@ class Character:
         self.__q_bonus = base_bonus + q_bonus
 
         self.__in_foreground = False
-        self.__swy_names = None
+        self.__syw_combine: list[ShengYiWu] = None
+        self.__syw_name_count: dict[str, int] = None
+
+    def get_elem_type(self):
+        return self.elem_type
+    
+    def set_elem_type(self, et: Ys_Elem_Type):
+        self.elem_type = et
+    
+    def get_ming_zuo_num(self):
+        return self.ming_zuo_num
+    
+    def set_ming_zuo_num(self, num):
+        self.ming_zuo_num = num
+    
+    def get_a_level(self):
+        return self.a_level
+    
+    def set_a_level(self, level):
+        self.a_level = level
+
+    def get_e_level(self):
+        return self.e_level
+    
+    def set_e_level(self, level):
+        self.e_level = level
+
+    def get_q_level(self):
+        return self.q_level
+    
+    def set_q_level(self, level):
+        self.q_level = level
 
     def get_base_atk(self):
         return self.__base_atk
@@ -373,11 +405,34 @@ class Character:
     def switch_to_background(self):
         self.__in_foreground = False
 
-    def set_syw_names(self, syw_names):
-        self.__swy_names = syw_names
+    def get_syw_combine(self):
+        return self.__syw_combine
+    
+    def get_syw_name_count(self):
+        return self.__syw_name_count
 
-    def get_syw_names(self, syw_names):
-        return self.__swy_names
+    def set_syw_combine(self, syw_combine: list[ShengYiWu]):
+        self.__syw_combine = syw_combine
+        self.__syw_name_count = {}
+        for syw in syw_combine:
+            if syw.name in self.__syw_name_count:
+                self.__syw_name_count[syw.name] += 1
+            else:
+                self.__syw_name_count[syw.name] = 1
+
+            self.add_crit_rate(syw.crit_rate)
+            self.add_crit_damage(syw.crit_damage)
+            self.__hp.modify_max_hp_per(syw.hp_percent)
+            self.__hp.modify_cur_hp(syw.hp)
+            self.add_energy_recharge(syw.energy_recharge)
+            self.add_atk_per(syw.atk_per)
+            self.add_atk(syw.atk)
+            self.add_defence_per(syw.def_per)
+            self.add_defence(syw.def_v)
+            self.add_elem_mastery(syw.elem_mastery)
+            self.add_all_bonus(syw.elem_bonus)
+
+        # TODO: 圣遗物套装效果是否在此处理？
 
     def __str__(self):
         s = ""
