@@ -31,6 +31,10 @@ class Monster:
         self.kang_xin = kang_xin
         self.kang_xin_xi_su  = self.get_jian_kang_bonus()
 
+    def set_level(self, lv):
+        self.level = lv
+        self.fang_yu_xi_shu = self.get_fang_yu_xi_shu()
+
     def get_fang_yu_xi_shu(self):
         return (90 + 100) / ( (90 + 100) + (self.level + 100) * (1 - self.jian_fang) * (1 - self.ignore_defence_ratio))
     
@@ -60,6 +64,10 @@ class Monster:
 
     def sub_jian_kang(self, jian_kang):
         self.jian_kang -= jian_kang
+        self.kang_xin_xi_su = self.get_jian_kang_bonus()
+
+    def set_kang_xin(self, kx):
+        self.kang_xin = kx
         self.kang_xin_xi_su = self.get_jian_kang_bonus()
 
     def get_jian_kang_bonus(self):

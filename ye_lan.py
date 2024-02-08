@@ -10,6 +10,7 @@ import logging
 import itertools
 
 from ys_basic import Ys_Elem_Type, ys_expect_damage
+from monster import Monster
 from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
 ming_zuo_num = 6
@@ -394,13 +395,17 @@ def calculate_score_callback(score_data: ShengYiWu_Score, has_fu_fu=True, has_le
     
     all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energy_recharge = scan_result
 
+    monster = Monster()
+
     if has_fu_fu:
+        monster.add_jian_kang(0.2) # 钟离
         damage = calc_score_with_fu_fu(
             all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage)
     else:
         damage = calc_score_with_lei_shen(
             all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage)
 
+    damage = monster.attacked(damage)
     score_data.damage_to_score(damage, crit_rate, crit_damage - 1)
     score_data.custom_data = [int(all_hp), round(e_po_ju_shi_elem_bonus, 3), 
                               round(crit_rate, 3), round(crit_damage - 1, 3), 
@@ -472,4 +477,4 @@ def find_syw_for_ye_lan_with_lei_shen():
 
 # Main body
 if __name__ == '__main__':
-    find_syw_for_ye_lan_with_fu_fu()
+    find_syw_for_ye_lan_with_lei_shen()

@@ -122,7 +122,10 @@ class Character:
         return self.__base_atk
 
     def get_atk(self):
-        return round(self.__all_atk)
+        return self.__all_atk
+    
+    def set_atk(self, atk):
+        self.__all_atk = atk
     
     def modify_atk(self, atk):
         self.__all_atk += atk

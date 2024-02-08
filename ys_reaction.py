@@ -101,8 +101,7 @@ class Ys_Reaction_JiHua(Ys_Reaction):
 
         ji_hua_damage = level_multiplier * type_multiplier * (1 + em_bonus + self.extra_multiplier)
 
-        damage = base_damage + ji_hua_damage
-        damage *= (1 + bonus)
+        damage = (base_damage + ji_hua_damage) * (1 + bonus)
         damage = self.monster.attacked(damage)
 
         return damage
