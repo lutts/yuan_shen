@@ -289,17 +289,14 @@ class Na_Xi_Da_Ch(Character):
             elif n == ShengYiWu.YUE_TUAN:
                 self.add_elem_mastery(80)
 
+    def is_syw_ok(self):
+        crit_rate = self.get_real_crit_rate()
+        crit_rate = round(crit_rate, 3)
+        if crit_rate < 0.64:
+            return False
+        
+        return True
 
-def na_xi_da_in_cao_xing_jiu_yao() -> Na_Xi_Da_Ch:
-    nxd = Na_Xi_Da_Ch.get_instance(teammate_types=[Ys_Elem_Type.LEI, Ys_Elem_Type.SHUI, Ys_Elem_Type.CAO])
-    nxd.add_elem_mastery(sheng_xian_elem_mastery)
-    # 草行久瑶队里作为站场主C
-    nxd.set_as_main_carrier(max_elem_mastery_in_team=jiu_qi_ren_elem_mastery)
-    nxd.add_all_bonus(0.15) # 瑶瑶一命
-    # 瑶瑶带千岩4件套，因为纳西妲一般是帖着怪输出的，覆盖率不错
-    nxd.add_atk_per(0.2)
-
-    return nxd
 
 def print_damage(nxd: Na_Xi_Da_Ch, prefix, damage):
     print(prefix + ": 不暴 {}, 暴击 {}".format(round(damage), round(damage * (1 + nxd.get_crit_damage()))))
@@ -444,26 +441,7 @@ def print_cao_xing_jiu_zhong_damages(nxd_init: Na_Xi_Da_Ch):
     monster.sub_jian_kang(0.2)
     print_na_xi_da_in_front(nxd, no_reaction, man_ji_hua)
 
-def get_damage_of_cao_xin_jiu_zhong(syw_combine: list[ShengYiWu]) -> Na_Xi_Da_Ch:
-    nxd = Na_Xi_Da_Ch.get_instance(teammate_types=[Ys_Elem_Type.LEI, Ys_Elem_Type.SHUI, Ys_Elem_Type.YAN])
-    # 作为前台站场主C使用
-    nxd.scan_syw_combine(syw_combine=syw_combine, in_front=True)
-
-    crit_rate = nxd.get_real_crit_rate()
-    crit_rate = round(crit_rate, 3)
-    if crit_rate < 0.64:
-        return None
-    
-    if enable_debug:
-        print_cao_xing_jiu_zhong_damages(nxd)
-
-    monster = Monster()
-
-    # 钟离 e
-    monster.add_jian_kang(0.2)
-    # 钟离四千岩，不过钟离柱子的覆盖率不高
-    # nxd.add_atk_per(0.2)
-
+def calc_na_xi_da_damage_in_front(nxd: Na_Xi_Da_Ch, monster: Monster):
     # 下面的计算统一按吃到以下 buff 计算，虽然第一轮时，有些伤害是吃不到这些 buff 的
     # 默认大招都在
     nxd.q_exist = True
@@ -505,10 +483,50 @@ def get_damage_of_cao_xin_jiu_zhong(syw_combine: list[ShengYiWu]) -> Na_Xi_Da_Ch
         nxd.total_damage += nxd.get_6_ming_damage(no_reaction) * 4
         nxd.total_damage += nxd.get_6_ming_damage(man_ji_hua) * 2
 
+
+def calc_damage_of_cao_xin_jiu_zhong(syw_combine: list[ShengYiWu]) -> Na_Xi_Da_Ch:
+    nxd = Na_Xi_Da_Ch.get_instance(teammate_types=[Ys_Elem_Type.LEI, Ys_Elem_Type.SHUI, Ys_Elem_Type.YAN])
+    # 作为前台站场主C使用
+    nxd.scan_syw_combine(syw_combine=syw_combine, in_front=True)
+    if not nxd.is_syw_ok():
+        return None
+    
+    if enable_debug:
+        print_cao_xing_jiu_zhong_damages(nxd)
+
+    monster = Monster()
+
+    # 钟离 e
+    monster.add_jian_kang(0.2)
+    # 钟离四千岩，不过钟离柱子的覆盖率不高
+    # nxd.add_atk_per(0.2)
+
+    calc_na_xi_da_damage_in_front(nxd, monster)
+
+    return nxd
+
+
+def calc_damage_of_cao_xing_jiu_yao(syw_combine: list[ShengYiWu]) -> Na_Xi_Da_Ch:
+    nxd = Na_Xi_Da_Ch.get_instance(teammate_types=[Ys_Elem_Type.LEI, Ys_Elem_Type.SHUI, Ys_Elem_Type.CAO])
+    # 作为前台站场主C使用
+    nxd.scan_syw_combine(syw_combine=syw_combine, in_front=True)
+    if not nxd.is_syw_ok():
+        return None
+
+    monster = Monster()
+
+    # 瑶瑶 e
+    nxd.add_all_bonus(0.15) # 瑶瑶一命
+    # 瑶瑶带千岩4件套，因为纳西妲一般是帖着怪输出的，覆盖率不错
+    nxd.add_atk_per(0.2)
+
+    calc_na_xi_da_damage_in_front(nxd, monster)
+
     return nxd
 
 def calculate_score_callback(score_data: ShengYiWu_Score):
-    nxd = get_damage_of_cao_xin_jiu_zhong(score_data.syw_combine)
+    nxd = calc_damage_of_cao_xin_jiu_zhong(score_data.syw_combine)
+    #nxd = calc_damage_of_cao_xing_jiu_yao(score_data.syw_combine)
     if not nxd:
         return False
 
