@@ -462,9 +462,9 @@ def calc_na_xi_da_damage_in_front(nxd: Na_Xi_Da_Ch, monster: Monster):
     nxd.add_elem_mastery(sheng_xian_elem_mastery)
     
     # 一轮伤害构成：
-    # 2个短e: 1 次直伤，1 次蔓激化
     # 纳西妲不在前台：灭净三业直伤3次
     # 纳西妲在前台：
+    #   2个短e: 1 次直伤，1 次蔓激化
     #   普攻：三轮四段普攻，其中 3 次蔓激化
     #   灭净三业：共计 6 次，其中 3 次蔓激化
     #   满命业障除：共计 6 次，其中 2 次蔓激化
@@ -479,6 +479,9 @@ def calc_na_xi_da_damage_in_front(nxd: Na_Xi_Da_Ch, monster: Monster):
     # 纳西妲站场
     gu_you_tian_fu_1 = min(250, round(jiu_qi_ren_elem_mastery * 0.25))
     nxd.add_elem_mastery(gu_you_tian_fu_1)
+
+    nxd.total_damage += nxd.get_short_e_damage(no_reaction)
+    nxd.total_damage += nxd.get_short_e_damage(man_ji_hua)
 
     # 普攻本身伤害不计算，只计算蔓激化，这里都按第一段来
     nxd.total_damage += nxd.get_a_damage(1, man_ji_hua) * 3
