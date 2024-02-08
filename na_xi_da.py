@@ -367,10 +367,17 @@ def print_cao_xing_jiu_zhong_damages(nxd_init: Na_Xi_Da_Ch):
     #   缺点：纳西妲开q时，阿忍才829精通，q的精通加成会少37左右，蔓激化伤害会少1.8%左右
     # 默认的算法没有小数，为了伤害数字更准确些，这里都写死了
     #（注：需配合get_debug_raw_score_list里的圣遗物组合、阿忍的面板、纳西妲命座进行调整)
-    nxd.set_atk(1352.58)
-    init_elem_mastery = 668.75
-    e_with_sheng_xian_mastery = 847.29
-    full_elem_mastery =  1092
+
+    # 对应：get_debug_raw_score_list_1
+    # nxd.set_atk(1352.58)
+    # init_elem_mastery = 668.75
+    # e_with_sheng_xian_mastery = 847.29
+    # full_elem_mastery =  1092
+
+    # 对应： get_debug_raw_score_list_2
+    init_elem_mastery = 713
+    e_with_sheng_xian_mastery = 713 + 100 + jiu_qi_ren_max_hp * 0.002 
+    full_elem_mastery =  713 + 100 +  jiu_qi_ren_max_hp * 0.002 + jiu_qi_ren_elem_mastery * 0.25
     
     nxd.set_elem_mastery(init_elem_mastery)
 
@@ -550,7 +557,28 @@ def match_bei_callback(syw: ShengYiWu):
 def match_tou_callback(syw: ShengYiWu):
     return syw.crit_rate == ShengYiWu.CRIT_RATE_MAIN or syw.crit_damage == ShengYiWu.CRIT_DAMAGE_MAIN
 
-def get_debug_raw_score_list():
+def get_debug_raw_score_list_2():
+    # [(shen_lin, h, cc:0.078, cd:0.225, atkp:0.087, elem:37), 
+    #  (ru_lei, y, cc:0.066, cd:0.218, re:0.065, elem:63), 
+    #  (shen_lin, s, cc:0.128, cd:0.117, hp:538, re:0.045, elem:187), 
+    #  (shen_lin, b, cc:0.113, hpp:0.087, re:0.123, atk:19, bonus:0.466), 
+    #  (shen_lin, t, cc:0.066, cd:0.622, atkp:0.152, def:32, elem:47)]
+    syw_combine = [
+        ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_HUA,
+                  crit_rate=0.078, crit_damage=0.225, atk_per=0.087, elem_mastery=37),
+        ShengYiWu(ShengYiWu.RU_LEI, ShengYiWu.PART_YU,
+                  crit_rate=0.066, crit_damage=0.218, energy_recharge=0.065, elem_mastery=63),
+        ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_SHA, elem_mastery=ShengYiWu.ELEM_MASTERY_MAIN,
+                  crit_rate=0.128, crit_damage=0.117, hp=538, energy_recharge=0.045),
+        ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_BEI, elem_bonus=ShengYiWu.BONUS_MAX, elem_type=Ys_Elem_Type.CAO,
+                  crit_rate=0.113, hp_percent=0.087, energy_recharge=0.123, atk=19),
+        ShengYiWu(ShengYiWu.SHEN_LIN, ShengYiWu.PART_TOU, crit_damage=ShengYiWu.CRIT_DAMAGE_MAIN,
+                  crit_rate=0.066, atk_per=0.152, def_v=332, elem_mastery=47)
+    ]
+
+    return [ShengYiWu_Score(syw_combine)]
+
+def get_debug_raw_score_list_1():
     # [(shen_lin, h, cc:0.078, cd:0.225, atkp:0.087, elem:37), 
     #  (shen_lin, y, cc:0.07, cd:0.272, hp:239, def:21), 
     #  (shen_lin, s, cc:0.128, cd:0.117, hp:538, re:0.045, elem:187), 
@@ -572,7 +600,7 @@ def get_debug_raw_score_list():
 
 def get_raw_score_list(only_shen_lin=True):
     if enable_debug:
-        return get_debug_raw_score_list()
+        return get_debug_raw_score_list_2()
     
     combine_desc_lst = []
 
