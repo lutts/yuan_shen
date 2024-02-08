@@ -457,7 +457,7 @@ def get_damage_of_cao_xin_jiu_zhong(syw_combine: list[ShengYiWu]) -> Na_Xi_Da_Ch
     if enable_debug:
         print_cao_xing_jiu_zhong_damages(nxd)
 
-    monster = Monster(level=93)
+    monster = Monster()
 
     # 钟离 e
     monster.add_jian_kang(0.2)
