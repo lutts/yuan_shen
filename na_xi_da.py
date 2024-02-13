@@ -136,10 +136,9 @@ class Na_Xi_Da_Ch(Character):
         (7.11, 10.66), # 13
     ]
 
-    @classmethod
-    def get_instance(cls, teammate_types: list[Ys_Elem_Type], 
-                     base_atk = 841, has_zhuan_wu=True,
-                     ming_zuo_num=6, e_level=13, q_level=13) -> Self:
+    def __init__(self, teammate_types: list[Ys_Elem_Type],
+                 base_atk=841, has_zhuan_wu=True,
+                 ming_zuo_num=6, e_level=13, q_level=13):
         if len(teammate_types) > 3:
             raise Exception("队友不能超过3个")
         
@@ -181,35 +180,33 @@ class Na_Xi_Da_Ch(Character):
             # 双草共鸣
             elem_mastery += (50 + 30 + 20)
         
-        nxd = cls("纳西妲", elem_type=Ys_Elem_Type.CAO, ming_zuo_num=ming_zuo_num, 
-                           e_level=e_level, q_level=q_level, base_atk=base_atk,
-                           elem_mastery=elem_mastery, base_bonus=bonus)
+        super().__init__("纳西妲", elem_type=Ys_Elem_Type.CAO, ming_zuo_num=ming_zuo_num,
+                         e_level=e_level, q_level=q_level, base_atk=base_atk,
+                         elem_mastery=elem_mastery, base_bonus=bonus)
         
-        nxd.teammate_types = teammate_types
+        self.teammate_types = teammate_types
         
-        nxd.q_exist = False
-        nxd.extra_mie_jing_san_ye_bonus = 0
+        self.q_exist = False
+        self.extra_mie_jing_san_ye_bonus = 0
         if huo_num > 0:
             if huo_num > 2:
                 huo_num = 2
         
-            nxd.extra_mie_jing_san_ye_bonus += Na_Xi_Da_Ch.q_huo_bonus[q_level - 1][huo_num - 1]
+            self.extra_mie_jing_san_ye_bonus += Na_Xi_Da_Ch.q_huo_bonus[q_level - 1][huo_num - 1]
         
-        # nxd.mie_jing_san_ye_interval = 2.5
+        # self.mie_jing_san_ye_interval = 2.5
         # if lei_num > 0:
         #     if lei_num > 2:
         #         lei_num = 2
 
-        #     nxd.mie_jing_san_ye_interval -= Na_Xi_Da_Ch.q_lei_intervals[q_level - 1][lei_num - 1]
+        #     self.mie_jing_san_ye_interval -= Na_Xi_Da_Ch.q_lei_intervals[q_level - 1][lei_num - 1]
 
-        # nxd.q_duration = 15
+        # self.q_duration = 15
         # if shui_num > 0:
         #     if shui_num > 2:
         #         shui_num = 2
 
-        #     nxd.q_duration += Na_Xi_Da_Ch.q_shui_durations[q_level - 1][shui_num - 1]
-        
-        return nxd
+        #     self.q_duration += Na_Xi_Da_Ch.q_shui_durations[q_level - 1][shui_num - 1]
 
     def get_real_crit_rate(self):
         return self.get_crit_rate() + min((self.get_elem_mastery() - 200) * 0.0003, 0.24)
@@ -495,7 +492,7 @@ def calc_na_xi_da_damage_in_front(nxd: Na_Xi_Da_Ch, monster: Monster):
 
 
 def calc_damage_of_cao_xin_jiu_zhong(syw_combine: list[ShengYiWu]) -> Na_Xi_Da_Ch:
-    nxd = Na_Xi_Da_Ch.get_instance(teammate_types=[Ys_Elem_Type.LEI, Ys_Elem_Type.SHUI, Ys_Elem_Type.YAN])
+    nxd = Na_Xi_Da_Ch(teammate_types=[Ys_Elem_Type.LEI, Ys_Elem_Type.SHUI, Ys_Elem_Type.YAN])
     # 作为前台站场主C使用
     nxd.scan_syw_combine(syw_combine=syw_combine, in_front=True)
     if not nxd.is_syw_ok():
@@ -517,7 +514,7 @@ def calc_damage_of_cao_xin_jiu_zhong(syw_combine: list[ShengYiWu]) -> Na_Xi_Da_C
 
 
 def calc_damage_of_cao_xing_jiu_yao(syw_combine: list[ShengYiWu]) -> Na_Xi_Da_Ch:
-    nxd = Na_Xi_Da_Ch.get_instance(teammate_types=[Ys_Elem_Type.LEI, Ys_Elem_Type.SHUI, Ys_Elem_Type.CAO])
+    nxd = Na_Xi_Da_Ch(teammate_types=[Ys_Elem_Type.LEI, Ys_Elem_Type.SHUI, Ys_Elem_Type.CAO])
     # 作为前台站场主C使用
     nxd.scan_syw_combine(syw_combine=syw_combine, in_front=True)
     if not nxd.is_syw_ok():
