@@ -2,7 +2,7 @@ import math
 import numpy
 import itertools
 from datetime import datetime
-from base_syw import all_syw
+from ys_syw import all_syw
 
 time_format_data = "%H:%M:%S.%f"
 def time_diff(t1_str, t2_str):

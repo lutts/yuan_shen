@@ -11,7 +11,7 @@ import itertools
 
 from ys_basic import Ys_Elem_Type, ys_expect_damage
 from monster import Monster
-from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
+from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
 ming_zuo_num = 6
 

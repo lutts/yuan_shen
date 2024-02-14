@@ -8,7 +8,7 @@ import sys
 import os
 import logging
 
-from base_syw import find_syw, set_score_threshold, ShengYiWu_Score, Score_List
+from ys_syw import find_syw, set_score_threshold, ShengYiWu_Score, Score_List
 from ye_lan import find_syw_for_ye_lan_with_fu_fu, find_syw_for_ye_lan_with_lei_shen
 from fu_ning_na import find_syw_for_fu_ning_na
 from lei_shen import find_syw_for_lei_shen

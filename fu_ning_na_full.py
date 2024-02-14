@@ -10,7 +10,7 @@ import copy
 import itertools
 import random
 
-from base_syw import ShengYiWu_Score
+from ys_syw import ShengYiWu_Score
 from health_point import HealthPoint
 from character import Character
 from fu_ning_na_common import *

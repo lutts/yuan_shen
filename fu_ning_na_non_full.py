@@ -4,7 +4,7 @@
 Module documentation.
 """
 
-from base_syw import ShengYiWu_Score
+from ys_syw import ShengYiWu_Score
 from health_point import HealthPoint
 from character import Character
 from healer import Qin_Heal_Action

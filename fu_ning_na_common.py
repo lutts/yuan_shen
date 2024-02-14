@@ -12,7 +12,7 @@ import random
 from collections.abc import Callable
 
 from ys_basic import Ys_Elem_Type, ys_expect_damage
-from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine, set_qualifier_threshold
+from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine, set_qualifier_threshold
 from health_point import HealthPoint
 from character import Character, Character_HP_Change_Data
 from monster import Monster

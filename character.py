@@ -7,7 +7,7 @@ Module documentation.
 import logging
 from ys_basic import Ys_Elem_Type
 from health_point import HealthPoint, HP_Change_Data
-from base_syw import ShengYiWu
+from ys_syw import ShengYiWu
 
 class Character_HP_Change_Data:
     def __init__(self, ch, data: HP_Change_Data):
@@ -25,25 +25,34 @@ class Character_HP_Change_Data:
 
 class Character:
     def __init__(self, name, elem_type: Ys_Elem_Type=None, ming_zuo_num=0,
-                 a_level=1, e_level=1, q_level=1, q_energy=80, 
-                 base_atk=0, all_atk=0, 
-                 base_hp=0, max_hp=0, 
+                 a_level=1, e_level=1, q_level=1, q_energy=80,
+
+                 base_hp=0, max_hp=0,
+                 base_atk=0, all_atk=0,
                  base_defence=0, all_defence=0,
+                 elem_mastery=0,
+
                  crit_rate=0.05, crit_damage=0.5,
                  healing_bonus=0, incoming_healing_bonus=0,
-                 energy_recharge=100.0, elem_mastery=0,
+                 energy_recharge=100.0, 
+
                  normal_a_bonus=0, charged_a_bonus=0, plunging_bonus=0,
-                 e_bonus=0, q_bonus=0, base_bonus=0):
+                 e_bonus=0, q_bonus=0, 
+                 base_bonus=0):
         """
         q_energy: 大招能量
         """
         self.name = name
         self.elem_type = elem_type
         self.ming_zuo_num = ming_zuo_num
+
         self.a_level = a_level
         self.e_level = e_level
         self.q_level = q_level
         self.q_energy = q_energy
+
+        self.__hp: HealthPoint = HealthPoint(base_hp, max_hp)
+
         # 基础攻击力：角色基础攻击力 + 武器基础攻击力
         self.__base_atk = base_atk
         # 总攻击力
@@ -70,9 +79,7 @@ class Character:
         # 受治疗加成
         self.__incomming_healing_bonus = incoming_healing_bonus
 
-        self.__energy_recharge = energy_recharge
-
-        self.__hp: HealthPoint = HealthPoint(base_hp, max_hp)
+        self.__energy_recharge = energy_recharge        
 
         # 普通攻击
         self.__normal_a_bonus = base_bonus + normal_a_bonus
@@ -114,6 +121,9 @@ class Character:
 
     def get_q_level(self):
         return self.q_level
+    
+    def get_q_energy(self):
+        return self.q_energy
     
     def set_q_level(self, level):
         self.q_level = level

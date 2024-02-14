@@ -12,7 +12,7 @@ from ys_basic import Ys_Elem_Type
 from ys_reaction import *
 from character import Character
 from monster import Monster
-from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
+from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
 enable_debug = False
 

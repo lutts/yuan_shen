@@ -10,7 +10,7 @@ import logging
 import itertools
 
 from ys_basic import Ys_Elem_Type, ys_expect_damage
-from base_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
+from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
 
 def calculate_score_callback(score_data: ShengYiWu_Score):

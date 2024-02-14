@@ -15,7 +15,7 @@ import traceback
 from math import ceil
 from collections.abc import Callable
 
-from ys_basic import Ys_Elem_Type, ys_expect_damage, ys_crit_damage
+from ys_basic import Ys_Elem_Type, Ys_Attributes, ys_expect_damage, ys_crit_damage
 
 
 def chunk_into_n(lst, n):
@@ -25,7 +25,7 @@ def chunk_into_n(lst, n):
             list(range(n)))
     )
 
-class ShengYiWu:
+class ShengYiWu(Ys_Attributes):
     ALL_PARTS = ['h', 'y', 's', 'b', 't']
     PART_HUA = 'h'
     PART_YU = 'y'
@@ -75,60 +75,18 @@ class ShengYiWu:
         self.part = part
         self.position = ShengYiWu.PART_TO_POSITION[part]
         # TODO: 圣遗物属性有隐藏小数点，有空的时候可以研究一下，不过影响不大，不急
-        self.crit_rate = crit_rate
-        self.crit_damage = crit_damage
-        self.hp_percent = hp_percent
-        self.hp = hp
-        self.energy_recharge = energy_recharge
-        self.atk_per = atk_per
-        self.atk = atk
-        self.def_per = def_per
-        self.def_v = def_v
-        self.elem_mastery = elem_mastery
-        self.elem_bonus = elem_bonus
+
+        super().__init__(crit_rate=crit_rate, crit_damage=crit_damage, hp_percent=hp_percent, hp=hp,
+                         atk_per=atk_per, atk=atk, def_per=def_per, def_v=def_v,
+                         elem_mastery=elem_mastery, elem_bonus=elem_bonus,
+                         energy_recharge=energy_recharge)
         self.elem_type: Ys_Elem_Type = elem_type
 
-    def to_str(self):
-        s = '(' + self.name + ', ' + self.part
-        if self.crit_rate:
-            s += ', cc:' + str(self.crit_rate)
-
-        if self.crit_damage:
-            s += ', cd:' + str(self.crit_damage)
-
-        if self.hp_percent:
-            s += ', hpp:' + str(self.hp_percent)
-
-        if self.hp:
-            s += ', hp:' + str(self.hp)
-
-        if self.energy_recharge:
-            s += ', re:' + str(self.energy_recharge)
-
-        if self.atk_per:
-            s += ', atkp:' + str(self.atk_per)
-
-        if self.atk:
-            s += ', atk:' + str(self.atk)
-
-        if self.def_per:
-            s += ', defp:' + str(self.def_per)
-
-        if self.def_v:
-            s += ', def:' + str(self.def_v)
-
-        if self.elem_mastery:
-            s += ', elem:' + str(self.elem_mastery)
-
-        if self.elem_bonus:
-            s += ', bonus:' + str(self.elem_bonus)
-
-        s += ')'
-
-        return s
-
     def __str__(self):
-        return self.to_str()
+        s = '(' + self.name + ', ' + self.part + ", "
+        s += super().__str__()
+        s += ')'
+        return s
 
     def __repr__(self) -> str:
         return self.__str__()
