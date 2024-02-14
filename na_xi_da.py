@@ -5,7 +5,6 @@ Module documentation.
 """
 
 import copy
-from typing import Self
 from ys_basic import Ys_Elem_Type
 from character import Character
 from monster import Monster
@@ -207,6 +206,8 @@ class Na_Xi_Da_Ch(Character):
         #         shui_num = 2
 
         #     self.q_duration += Na_Xi_Da_Ch.q_shui_durations[q_level - 1][shui_num - 1]
+
+        self.total_damage = 0
 
     def get_real_crit_rate(self):
         return self.get_crit_rate() + min((self.get_elem_mastery() - 200) * 0.0003, 0.24)

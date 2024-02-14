@@ -477,4 +477,4 @@ def find_syw_for_ye_lan_with_lei_shen():
 
 # Main body
 if __name__ == '__main__':
-    find_syw_for_ye_lan_with_lei_shen()
+    find_syw_for_ye_lan_with_fu_fu()

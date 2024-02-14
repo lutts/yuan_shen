@@ -31,7 +31,7 @@ WAN_YE_NAME = "wan ye"
 # 不修改算法的情况下，只允许改变各个角色的生命值上限
 g_teammates = [
     # 夜兰
-    Character(YE_LAN_NAME, base_hp=14450, max_hp=46461),
+    Character(YE_LAN_NAME, base_hp=14450, max_hp=43779),
     # 钟离
     Character(ZHONG_LI_NAME, base_hp=14695, max_hp=50567),
     # 万叶
