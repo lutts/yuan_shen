@@ -7,6 +7,7 @@ Module documentation.
 import logging
 import typing
 import random
+import weakref
 
 from monster import Monster
 from character import Character, Character_HP_Change_Data
@@ -19,8 +20,9 @@ class ActionTimestampException(Exception):
 
 
 class Action:
-    def __init__(self, name):
+    def __init__(self, name, owner:Character = None):
         self.name = name
+        self.owner: Character = owner
         self.done = False
         # timestamp是动态计算出来的，这里只是放一个占位符
         self.__timestamp = 0
@@ -59,6 +61,64 @@ class Action:
         """
         pass
 
+class ActionPlanAttributes:
+    def get_crit_rate(self, plan):
+        return 0
+        
+    def get_crit_damage(self, plan):
+        return 0
+        
+    def get_hp_percent(self, plan):
+        return 0
+        
+    def get_hp(self, plan):
+        return 0
+        
+    def get_atk_per(self, plan):
+        return 0
+    
+    def get_atk(self, plan):
+        return 0
+        
+    def get_def_per(self, plan):
+        return 0
+        
+    def get_def(self, plan):
+        return 0
+        
+    def get_elem_mastery(self, plan):
+        return 0
+    
+    def get_elem_bonus(self, plan):
+        return 0
+    
+    def get_energy_recharge(self, plan):
+        return 0
+    
+    def get_normal_a_bonus(self, plan):
+        return 0
+
+    def get_charged_a_bonus(self, plan):
+        return 0
+    
+    def get_plunging_bonus(self, plan):
+        return 0
+    
+    def get_e_bonus(self, plan):
+        return 0
+    
+    def get_q_bonus(self, plan):
+        return 0
+    
+    def get_jian_kang(self, plan):
+        return 0
+    
+    def get_jian_fang(self, plan):
+        return 0
+    
+    def get_ignore_fang(self, plan):
+        return 0
+        
 
 class ActionPlan:
     def __init__(self, characters: list[Character], monster: Monster):
@@ -69,6 +129,8 @@ class ActionPlan:
         self.__current_index = 0
         self.__current_action_time = 0
         self.action_list: list[Action] = []
+
+        self.__extra_attrs: list[ActionPlanAttributes] = []
 
         self.events = Events()
         # self.__has_on_consume_hp_callback = False
@@ -99,11 +161,85 @@ class ActionPlan:
 
     def get_current_action_time(self):
         return self.__current_action_time
+    
+    def add_extra_attr(self, attr: ActionPlanAttributes):
+        if attr not in self.__extra_attrs:
+            self.__extra_attrs.append(attr)
+
+    def remove_extra_attr(self, attr: ActionPlanAttributes):
+        self.__extra_attrs.remove(attr)
+
+    def get_crit_rate(self, ch: Character):
+        extra_crit_rate = sum([attr.get_crit_rate(self) for attr in self.__extra_attrs])
+        return ch.get_crit_rate() + extra_crit_rate
+    
+    def get_crit_damage(self, ch: Character):
+        extra_crit_damage = sum([attr.get_crit_damage(self) for attr in self.__extra_attrs])
+        return ch.get_crit_damage() + extra_crit_damage
+    
+    def get_max_hp(self, ch: Character):
+        extra_hp_per = sum([attr.get_hp_percent(self) for attr in self.__extra_attrs])
+        extra_hp = sum([attr.get_hp(self) for attr in self.__extra_attrs])
+
+        return ch.get_max_hp() + extra_hp + round(ch.get_hp().get_base_hp() * extra_hp_per)
+    
+    def get_atk(self, ch: Character):
+        extra_atk_per = sum([attr.get_atk_per(self) for attr in self.__extra_attrs])
+        extra_atk = sum([attr.get_atk(self) for attr in self.__extra_attrs])
+
+        return ch.get_atk() + extra_atk + round(ch.get_base_atk() * extra_atk_per)
+    
+    def get_defence(self, ch: Character):
+        extra_def_per = sum([attr.get_def_per(self) for attr in self.__extra_attrs])
+        extra_def = sum([attr.get_def(self) for attr in self.__extra_attrs])
+
+        return ch.get_defence() + extra_def + round(ch.get_base_defence() * extra_def_per)
+    
+    def get_elem_mastery(self, ch: Character):
+        return ch.get_elem_mastery() + sum([attr.get_elem_mastery(self) for attr in self.__extra_attrs])
+    
+    def get_energy_recharge(self, ch: Character):
+        extra = sum([attr.get_energy_recharge(self) for attr in self.__extra_attrs])
+        return ch.get_energy_recharge() + extra
+    
+    def get_normal_a_bonus(self, ch: Character):
+        extra = sum([attr.get_elem_bonus(self) + attr.get_normal_a_bonus(self) for attr in self.__extra_attrs])
+        return ch.get_normal_a_bonus() + extra
+    
+    def get_charged_a_bonus(self, ch: Character):
+        extra = sum([attr.get_elem_bonus(self) + attr.get_charged_a_bonus(self) for attr in self.__extra_attrs])
+        return ch.get_charged_a_bonus() + extra
+    
+    def get_plunging_bonus(self, ch: Character):
+        extra = sum([attr.get_elem_bonus(self) + attr.get_plunging_bonus(self) for attr in self.__extra_attrs])
+        return ch.get_plunging_bonus() + extra
+    
+    def get_e_bonus(self, ch: Character):
+        extra = sum([attr.get_elem_bonus(self) + attr.get_e_bonus(self) for attr in self.__extra_attrs])
+        return ch.get_e_bonus() + extra
+    
+    def get_q_bonus(self, ch: Character):
+        extra = sum([attr.get_elem_bonus(self) + attr.get_q_bonus(self) for attr in self.__extra_attrs])
+        return ch.get_q_bonus() + extra
+    
+    def get_kang_xin_multiplier(self):
+        extra_jian_kang = sum([attr.get_jian_kang(self) for attr in self.__extra_attrs])
+        return self.monster.get_jian_kang_bonus(extra_jian_kang)
+    
+    def get_fang_yu_multiplier(self):
+        extra_jian_fang = sum([attr.get_jian_fang(self) for attr in self.__extra_attrs])
+        extra_ignore_def = sum([attr.get_ignore_fang(self) for attr in self.__extra_attrs])
+        return self.monster.get_fang_yu_xi_shu(extra_jian_fang=extra_jian_fang, 
+                                                extra_ignore_defence_ratio=extra_ignore_def)
+
 
     ##################################################
 
     def add_damage(self, damage):
-        real_damage = self.monster.attacked(damage)
+        if self.__extra_attrs:
+            real_damage = damage * self.get_kang_xin_multiplier() * self.get_fang_yu_multiplier()
+        else:
+            real_damage = self.monster.attacked(damage)
         #print("add damage:", round(real_damage, 3))
         self.__total_damage += real_damage
         return real_damage
@@ -214,15 +350,8 @@ class ActionPlan:
     def sort_action(self):
         self.action_list.sort(key=lambda a: a.get_timestamp())
 
-    def add_action(self, name, cls, min_t, max_t, base_action=None, negative=False, effective_delay=0, **kwargs):
-        action = cls(name, **kwargs)
-        base_time = 0
-        if base_action:
-            ba = self.find_action(base_action)
-            if not ba:
-                raise Exception("base action " + base_action + " not found!")
-            
-            base_time = ba.get_timestamp()
+    def add_action_obj(self, action:Action, min_t, max_t, base_action: Action = None, negative=False, effective_delay=0):
+        base_time = 0 if base_action is None else base_action.get_timestamp()
 
         t = random.randint(round(min_t * 1000), round(max_t * 1000)) / 1000
         if negative:
@@ -232,6 +361,19 @@ class ActionPlan:
         action.set_timestamp(timestamp + effective_delay)
 
         self.action_list.append(action)
+
+        return action
+
+    def add_action(self, name, cls, min_t, max_t, base_action=None, negative=False, effective_delay=0, **kwargs):
+        action = cls(name, **kwargs)
+
+        ba = None
+        if base_action:
+            ba = self.find_action(base_action)
+            if not ba:
+                raise Exception("base action " + base_action + " not found!")
+            
+        return self.add_action_obj(action, min_t, max_t, base_action=ba, negative=negative, effective_delay=effective_delay)
 
     def find_action(self, action_name) -> Action:
         for a in reversed(self.action_list):
@@ -258,6 +400,11 @@ class ActionPlan:
             
         self.action_list.append(action)
 
+    def check_duplicate_action(self):
+        action_names = [a.name for a in self.action_list]
+        action_name_set = set(action_names)
+        if len(action_names) != len(action_name_set):
+            raise Exception("action name duplicated!")
 
     def run(self):
         self.sort_action()

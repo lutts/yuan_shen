@@ -316,5 +316,5 @@ def ying_ye_fu_qing():
 
 # Main body
 if __name__ == '__main__':
-    #avg_min_max()
+    avg_min_max([7.135, 6.855, 7.834,  6.885,  7.935,  7.385,  7.169,  6.268])
     pass

@@ -5,9 +5,10 @@ Module documentation.
 """
 
 import logging
-from ys_basic import Ys_Elem_Type
+from ys_basic import Ys_Elem_Type, Ys_Weapon
 from health_point import HealthPoint, HP_Change_Data
 from ys_syw import ShengYiWu
+
 
 class Character_HP_Change_Data:
     def __init__(self, ch, data: HP_Change_Data):
@@ -16,28 +17,29 @@ class Character_HP_Change_Data:
 
     def has_changed(self):
         return self.data.has_changed()
-    
+
     def is_over_healed(self):
         return self.data.is_over_healed()
-    
+
     def __str__(self):
         return self.character.name + " " + str(self.data)
 
+
 class Character:
-    def __init__(self, name, elem_type: Ys_Elem_Type=None, ming_zuo_num=0,
+    def __init__(self, name, elem_type: Ys_Elem_Type = None, ming_zuo_num=0,
                  a_level=1, e_level=1, q_level=1, q_energy=80,
 
                  base_hp=0, max_hp=0,
-                 base_atk=0, all_atk=0,
+                 base_atk=0, all_atk=0, weapon: Ys_Weapon = None,
                  base_defence=0, all_defence=0,
                  elem_mastery=0,
 
                  crit_rate=0.05, crit_damage=0.5,
                  healing_bonus=0, incoming_healing_bonus=0,
-                 energy_recharge=100.0, 
+                 energy_recharge=100.0,
 
                  normal_a_bonus=0, charged_a_bonus=0, plunging_bonus=0,
-                 e_bonus=0, q_bonus=0, 
+                 e_bonus=0, q_bonus=0,
                  base_bonus=0):
         """
         q_energy: 大招能量
@@ -54,6 +56,8 @@ class Character:
         self.__hp: HealthPoint = HealthPoint(base_hp, max_hp)
 
         # 基础攻击力：角色基础攻击力 + 武器基础攻击力
+        if weapon:
+            base_atk += weapon.base_atk
         self.__base_atk = base_atk
         # 总攻击力
         if not all_atk:
@@ -79,7 +83,7 @@ class Character:
         # 受治疗加成
         self.__incomming_healing_bonus = incoming_healing_bonus
 
-        self.__energy_recharge = energy_recharge        
+        self.__energy_recharge = energy_recharge
 
         # 普通攻击
         self.__normal_a_bonus = base_bonus + normal_a_bonus
@@ -92,39 +96,45 @@ class Character:
         self.__q_bonus = base_bonus + q_bonus
 
         self.__in_foreground = False
+
+        self.__weapon: Ys_Weapon = weapon
+
         self.__syw_combine: list[ShengYiWu] = None
         self.__syw_name_count: dict[str, int] = None
 
+        if weapon:
+            weapon.apply_static_attributes(self)
+
     def get_elem_type(self):
         return self.elem_type
-    
+
     def set_elem_type(self, et: Ys_Elem_Type):
         self.elem_type = et
-    
+
     def get_ming_zuo_num(self):
         return self.ming_zuo_num
-    
+
     def set_ming_zuo_num(self, num):
         self.ming_zuo_num = num
-    
+
     def get_a_level(self):
         return self.a_level
-    
+
     def set_a_level(self, level):
         self.a_level = level
 
     def get_e_level(self):
         return self.e_level
-    
+
     def set_e_level(self, level):
         self.e_level = level
 
     def get_q_level(self):
         return self.q_level
-    
+
     def get_q_energy(self):
         return self.q_energy
-    
+
     def set_q_level(self, level):
         self.q_level = level
 
@@ -132,11 +142,11 @@ class Character:
         return self.__base_atk
 
     def get_atk(self):
-        return self.__all_atk
-    
+        return round(self.__all_atk)
+
     def set_atk(self, atk):
         self.__all_atk = atk
-    
+
     def modify_atk(self, atk):
         self.__all_atk += atk
 
@@ -160,7 +170,7 @@ class Character:
 
     def get_defence(self):
         return round(self.__all_defence)
-    
+
     def modify_defence(self, defence):
         self.__all_defence += defence
 
@@ -268,25 +278,26 @@ class Character:
 
     def sub_energy_recharge(self, er):
         self.modify_energy_recharge(0 - er)
-    
+
     def set_hp(self, hp: HealthPoint):
         self.__hp = hp
 
     def get_hp(self) -> HealthPoint:
         return self.__hp
-    
+
     def regenerate_hp(self, cure_hp, healing_bonus):
-        actual_cure_hp = round(cure_hp * (1 + healing_bonus + self.get_incoming_healing_bonus()))
-        #print("incoming_healing_bonus: ", round(self.get_incoming_healing_bonus(), 1))
-        #print("actual_cure_hp: ", round(actual_cure_hp))
+        actual_cure_hp = round(
+            cure_hp * (1 + healing_bonus + self.get_incoming_healing_bonus()))
+        # print("incoming_healing_bonus: ", round(self.get_incoming_healing_bonus(), 1))
+        # print("actual_cure_hp: ", round(actual_cure_hp))
         return Character_HP_Change_Data(self, self.__hp.modify_cur_hp(actual_cure_hp))
-    
+
     def regenerate_hp_per(self, hp_per, healing_bonus):
         return self.regenerate_hp(self.__hp.get_max_hp() * hp_per, healing_bonus)
-    
+
     def consume_hp(self, hp):
         return Character_HP_Change_Data(self, self.__hp.modify_cur_hp(hp))
-    
+
     def consume_hp_per(self, hp_per):
         return Character_HP_Change_Data(self, self.__hp.modify_cur_hp_per(hp_per))
 
@@ -380,31 +391,31 @@ class Character:
         self.__q_bonus = bonus
 
     def modify_q_bonus(self, bonus):
-        #logging.debug("modify q bonus: %s", round(bonus, 3))
+        # logging.debug("modify q bonus: %s", round(bonus, 3))
         self.__q_bonus += bonus
 
     def add_q_bonus(self, bonus):
-        #logging.debug("add q bonus, %s", round(bonus, 3))
+        # logging.debug("add q bonus, %s", round(bonus, 3))
         self.__q_bonus += bonus
 
     def sub_q_bonus(self, bonus):
-        #logging.debug("sub q bonus, %s", round(bonus, 3))
+        # logging.debug("sub q bonus, %s", round(bonus, 3))
         self.__q_bonus -= bonus
 
     def modify_all_elem_bonus(self, bonus):
-        #logging.debug("modify all elem bonus: %s", round(bonus, 3))
+        # logging.debug("modify all elem bonus: %s", round(bonus, 3))
         self.modify_a_bonus(bonus)
         self.modify_e_bonus(bonus)
         self.modify_q_bonus(bonus)
 
     def add_all_bonus(self, bonus):
-        #logging.debug("add all elem bonus: %s", round(bonus, 3))
+        # logging.debug("add all elem bonus: %s", round(bonus, 3))
         self.add_a_bonus(bonus)
         self.add_e_bonus(bonus)
         self.add_q_bonus(bonus)
 
     def sub_all_bonus(self, bonus):
-        #logging.debug("sub all elem bonus: %s", round(bonus, 3))
+        # logging.debug("sub all elem bonus: %s", round(bonus, 3))
         self.sub_a_bonus(bonus)
         self.sub_e_bonus(bonus)
         self.sub_q_bonus(bonus)
@@ -420,7 +431,7 @@ class Character:
 
     def get_syw_combine(self):
         return self.__syw_combine
-    
+
     def get_syw_name_count(self):
         return self.__syw_name_count
 
@@ -446,6 +457,16 @@ class Character:
             self.add_all_bonus(syw.elem_bonus)
 
         # TODO: 圣遗物套装效果是否在此处理？
+
+    def get_weapon(self) -> Ys_Weapon:
+        return self.__weapon
+
+    def set_weapon(self, weapon: Ys_Weapon):
+        if self.__weapon:
+            raise Exception("原神不支持战斗时切换武器")
+        
+        weapon.apply_static_attributes(self)
+        self.__weapon = weapon
 
     def __str__(self):
         s = ""
@@ -473,13 +494,13 @@ class Character:
 
         if self.__charged_a_bonus != 0 and self.__charged_a_bonus != self.__normal_a_bonus:
             s += "cab:" + str(round(self.__charged_a_bonus, 3)) + ", "
-            
+
         if self.__plunging_bonus != 0 and self.__plunging_bonus != self.__plunging_bonus:
             s += "pb:" + str(round(self.__plunging_bonus, 3)) + ", "
 
         if self.__e_bonus:
             s += "eb:" + str(round(self.__e_bonus, 3)) + ", "
-        
+
         if self.__q_bonus:
             s += "qb:" + str(round(self.__q_bonus, 3)) + ", "
 
@@ -495,5 +516,3 @@ class Character:
             s += "b, "
 
         return s
-
-       

@@ -35,8 +35,10 @@ class Monster:
         self.level = lv
         self.fang_yu_xi_shu = self.get_fang_yu_xi_shu()
 
-    def get_fang_yu_xi_shu(self):
-        return (90 + 100) / ( (90 + 100) + (self.level + 100) * (1 - self.jian_fang) * (1 - self.ignore_defence_ratio))
+    def get_fang_yu_xi_shu(self, extra_jian_fang=0, extra_ignore_defence_ratio=0):
+        jian_fang = self.jian_fang + extra_jian_fang
+        ignore_defence_ratio = self.ignore_defence_ratio + extra_ignore_defence_ratio
+        return (90 + 100) / ( (90 + 100) + (self.level + 100) * (1 - jian_fang) * (1 - ignore_defence_ratio))
     
     def set_ignore_defence(self, ignore_ratio):
         self.ignore_defence_ratio = ignore_ratio
@@ -70,8 +72,8 @@ class Monster:
         self.kang_xin = kx
         self.kang_xin_xi_su = self.get_jian_kang_bonus()
 
-    def get_jian_kang_bonus(self):
-        cur_kang_xin = self.kang_xin - self.jian_kang
+    def get_jian_kang_bonus(self, extra_jian_kang=0):
+        cur_kang_xin = self.kang_xin - self.jian_kang - extra_jian_kang
         if cur_kang_xin >= 0:
             if cur_kang_xin > 0.75:
                 return 1 / (1 + cur_kang_xin * 4)

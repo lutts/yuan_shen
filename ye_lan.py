@@ -8,10 +8,12 @@ import sys
 import os
 import logging
 import itertools
+from character import Character
 
 from ys_basic import Ys_Elem_Type, ys_expect_damage
 from monster import Monster
 from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
+from action import Action, ActionPlan, ActionPlanAttributes
 
 ming_zuo_num = 6
 
@@ -37,6 +39,22 @@ fu_fu_q_bonus = 1.24
 wan_ye_bonus = 0.4
 
 ye_lan_base_hp = 14450.0
+
+class YeLan_Q_Bonus_Action(Action, ActionPlanAttributes):
+    def do_impl(self, plan: ActionPlan):
+        plan.add_extra_attr(self)
+
+    def get_elem_bonus(self, plan: ActionPlan):
+        cur_time = plan.get_current_action_time()
+        dur = cur_time - self.get_timestamp()
+        if dur <= 0:
+            return 0
+        
+        if dur >= 15:
+            return 0
+        
+        return (1 + int(dur) * 3.5) / 100
+
 
 class YeLanQBonus:
     def __init__(self):

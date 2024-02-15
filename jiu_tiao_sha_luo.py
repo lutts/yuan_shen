@@ -13,6 +13,12 @@ from ys_basic import Ys_Elem_Type
 from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, set_score_threshold, Syw_Combine_Desc, find_syw_combine
 
 
+def get_jiu_tiao_atk_bonus():
+    return round(858 * 0.86)
+
+def get_jiu_tiao_crit_damage_bonus():
+    return 0.6
+
 def calculate_score_callback(score_data: ShengYiWu_Score):
     base_atk = 184  # 81级
     wu_qi_atk = 674
