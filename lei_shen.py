@@ -9,7 +9,7 @@ import os
 import logging
 import itertools
 
-from ys_basic import Ys_Elem_Type, Ys_Weapon
+from ys_basic import Ys_Elem_Type, Ys_Weapon, ys_crit_damage
 from monster import Monster
 from character import Character
 from ys_weapon import Ti_Cao_Zhi_Dao_Guang
@@ -116,6 +116,7 @@ class Ying_Bao_Ch(Character):
                          base_atk=337, weapon=weapon,
                          energy_recharge=energy_recharge
                          )
+        self.meng_xiang_yi_dao_damage = 0
         
     def do_post_set_syw_combine(self):
         self.panel_energy_recharge = self.get_energy_recharge()
@@ -188,6 +189,7 @@ class YingBao_Q_Action(Action):
         q_damage = all_atk * multiplier * bonus
         # print("q_bonus=", ying_bao.get_q_bonus())
         q_damage = plan.add_damage(q_damage)
+        ying_bao.meng_xiang_yi_dao_damage = ys_crit_damage(q_damage, ying_bao.get_crit_damage())
 
         if enable_debug:
             print(plan.monster)
@@ -456,14 +458,16 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
     plan.run()
 
     score_data.damage_to_score(plan.total_damage, ying_bao.get_crit_rate(), ying_bao.get_crit_damage())
-    score_data.custom_data = [int(plan.get_atk(ying_bao)), int(ying_bao.panel_atk), round(ying_bao.panel_bonus, 3), 
+    score_data.extra_score = ying_bao.meng_xiang_yi_dao_damage
+    score_data.custom_data = [ying_bao.meng_xiang_yi_dao_damage, int(plan.get_atk(ying_bao)), int(ying_bao.panel_atk),
+                              round(ying_bao.panel_bonus, 3), 
                               round(ying_bao.get_crit_rate(), 3), round(ying_bao.get_crit_damage(), 3), 
                               round(ying_bao.panel_energy_recharge, 1)]
     
     return True
 
 
-result_description = ["实战攻击力", "面板攻击力", "实战最大伤害加成", "暴击率", "暴击伤害", "面板充能效率"]
+result_description = ["梦想一刀暴击伤害", "实战攻击力", "面板攻击力", "实战最大伤害加成", "暴击率", "暴击伤害", "面板充能效率"]
 
 def match_sha_callback(syw: ShengYiWu):
     return syw.energy_recharge == ShengYiWu.ENERGY_RECHARGE_MAX

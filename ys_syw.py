@@ -774,6 +774,7 @@ class ShengYiWu_Score:
 
         self.__overall_score = 0
 
+        self.__extra_score = 0
         self.__custom_data = None
         self.__syw_combine: list[ShengYiWu] = syw_combine
 
@@ -806,6 +807,14 @@ class ShengYiWu_Score:
         self.__overall_score = score
 
     @property
+    def extra_score(self):
+        return self.__extra_score
+    
+    @extra_score.setter
+    def extra_score(self, score):
+        self.__extra_score = score
+
+    @property
     def custom_data(self):
         return self.__custom_data
 
@@ -826,6 +835,7 @@ class Score_List:
     def __init__(self):
         self.__max_expect_score = 0
         self.__max_crit_score = 0
+        self.__max_extra_score = 0
         self.__score_list: list[ShengYiWu_Score] = []
 
     @property
@@ -843,6 +853,14 @@ class Score_List:
     @max_crit_score.setter
     def max_crit_score(self, score):
         self.__max_crit_score = score
+
+    @property
+    def max_extra_score(self):
+        return self.__max_extra_score
+    
+    @max_extra_score.setter
+    def max_extra_score(self, score):
+        self.__max_extra_score = score
 
     @property
     def score_list(self):
@@ -863,6 +881,9 @@ class Score_List:
 
         if score.crit_score > self.__max_crit_score:
             self.__max_crit_score = score.crit_score
+
+        if score.extra_score > self.__max_extra_score:
+            self.__max_extra_score = score.extra_score
 
     def discard_below_threshold(self, threshold, min_remain=30):
         above_list: list[ShengYiWu_Score] = []
@@ -911,6 +932,8 @@ class Score_List:
             f.write("最大期望伤害: " + str(self.__max_expect_score))
             f.write('\n')
             f.write("最大暴击伤害: " + str(self.__max_crit_score))
+            f.write('\n')
+            f.write("max_extra_score: " + str(self.__max_extra_score))
             f.write('\n')
 
 # 各种套装组合的模式，分别有四件套，2+2，2件套+3散件
@@ -1171,6 +1194,9 @@ def calc_score_multi_proc(raw_score_list, calculate_score_callbak, threshold) ->
                 if score_list.max_crit_score > final_score_list.max_crit_score:
                     final_score_list.max_crit_score = score_list.max_crit_score
 
+                if score_list.max_extra_score > final_score_list.max_extra_score:
+                    final_score_list.max_extra_score = score_list.max_extra_score
+
                 score_list_lst.append(score_list)
             except Exception as exc:
                 print('1st generated an exception: %s' % (exc))
@@ -1179,6 +1205,7 @@ def calc_score_multi_proc(raw_score_list, calculate_score_callbak, threshold) ->
         for score_list in score_list_lst:
             score_list.max_expect_score = final_score_list.max_expect_score
             score_list.max_crit_score = final_score_list.max_crit_score
+            score_list.max_extra_score = final_score_list.max_extra_score
 
         futures = [executor.submit(calc_score_2nd_phrase, lst, threshold) for lst in score_list_lst]
         for future in concurrent.futures.as_completed(futures):
