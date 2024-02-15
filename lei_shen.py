@@ -121,6 +121,7 @@ class Ying_Bao_Ch(Character):
     def do_post_set_syw_combine(self):
         self.panel_energy_recharge = self.get_energy_recharge()
         self.panel_bonus = (self.panel_energy_recharge - 100) * 0.004
+        self.panel_crit_damage = self.get_crit_damage()
 
         self.get_weapon().apply_combat_attributes(self)
         self.panel_atk = self.get_atk()
@@ -461,7 +462,7 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
     score_data.extra_score = ying_bao.meng_xiang_yi_dao_damage
     score_data.custom_data = [ying_bao.meng_xiang_yi_dao_damage, int(plan.get_atk(ying_bao)), int(ying_bao.panel_atk),
                               round(ying_bao.panel_bonus, 3), 
-                              round(ying_bao.get_crit_rate(), 3), round(ying_bao.get_crit_damage(), 3), 
+                              round(ying_bao.get_crit_rate(), 3), round(ying_bao.panel_crit_damage, 3), 
                               round(ying_bao.panel_energy_recharge, 1)]
     
     return True
