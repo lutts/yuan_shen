@@ -44,7 +44,7 @@ class YeLan_Q_Bonus_Action(Action, ActionPlanAttributes):
     def do_impl(self, plan: ActionPlan):
         plan.add_extra_attr(self)
 
-    def get_elem_bonus(self, plan: ActionPlan):
+    def get_elem_bonus(self, plan: ActionPlan, target_character):
         cur_time = plan.get_current_action_time()
         dur = cur_time - self.get_timestamp()
         if dur <= 0:

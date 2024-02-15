@@ -50,7 +50,7 @@ class WanYeAttributes(ActionPlanAttributes):
     def set_q_end_time(self, et):
         self.q_end_time = et
 
-    def get_elem_bonus(self, plan: ActionPlan):
+    def get_elem_bonus(self, plan: ActionPlan, target_character):
         cur_time = plan.get_current_action_time()
         if cur_time > self.bonus_end_time:
             return 0

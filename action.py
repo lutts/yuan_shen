@@ -62,52 +62,52 @@ class Action:
         pass
 
 class ActionPlanAttributes:
-    def get_crit_rate(self, plan):
+    def get_crit_rate(self, plan, target_character):
         return 0
         
-    def get_crit_damage(self, plan):
+    def get_crit_damage(self, plan, target_character):
         return 0
         
-    def get_hp_percent(self, plan):
+    def get_hp_percent(self, plan, target_character):
         return 0
         
-    def get_hp(self, plan):
+    def get_hp(self, plan, target_character):
         return 0
         
-    def get_atk_per(self, plan):
+    def get_atk_per(self, plan, target_character):
         return 0
     
-    def get_atk(self, plan):
+    def get_atk(self, plan, target_character):
         return 0
         
-    def get_def_per(self, plan):
+    def get_def_per(self, plan, target_character):
         return 0
         
-    def get_def(self, plan):
+    def get_def(self, plan, target_character):
         return 0
         
-    def get_elem_mastery(self, plan):
+    def get_elem_mastery(self, plan, target_character):
         return 0
     
-    def get_elem_bonus(self, plan):
+    def get_elem_bonus(self, plan, target_character):
         return 0
     
-    def get_energy_recharge(self, plan):
+    def get_energy_recharge(self, plan, target_character):
         return 0
     
-    def get_normal_a_bonus(self, plan):
+    def get_normal_a_bonus(self, plan, target_character):
         return 0
 
-    def get_charged_a_bonus(self, plan):
+    def get_charged_a_bonus(self, plan, target_character):
         return 0
     
-    def get_plunging_bonus(self, plan):
+    def get_plunging_bonus(self, plan, target_character):
         return 0
     
-    def get_e_bonus(self, plan):
+    def get_e_bonus(self, plan, target_character):
         return 0
     
-    def get_q_bonus(self, plan):
+    def get_q_bonus(self, plan, target_character):
         return 0
     
     def get_jian_kang(self, plan):
@@ -170,56 +170,56 @@ class ActionPlan:
         self.__extra_attrs.remove(attr)
 
     def get_crit_rate(self, ch: Character):
-        extra_crit_rate = sum([attr.get_crit_rate(self) for attr in self.__extra_attrs])
+        extra_crit_rate = sum([attr.get_crit_rate(self, ch) for attr in self.__extra_attrs])
         return ch.get_crit_rate() + extra_crit_rate
     
     def get_crit_damage(self, ch: Character):
-        extra_crit_damage = sum([attr.get_crit_damage(self) for attr in self.__extra_attrs])
+        extra_crit_damage = sum([attr.get_crit_damage(self, ch) for attr in self.__extra_attrs])
         return ch.get_crit_damage() + extra_crit_damage
     
     def get_max_hp(self, ch: Character):
-        extra_hp_per = sum([attr.get_hp_percent(self) for attr in self.__extra_attrs])
-        extra_hp = sum([attr.get_hp(self) for attr in self.__extra_attrs])
+        extra_hp_per = sum([attr.get_hp_percent(self, ch) for attr in self.__extra_attrs])
+        extra_hp = sum([attr.get_hp(self, ch) for attr in self.__extra_attrs])
 
         return ch.get_max_hp() + extra_hp + round(ch.get_hp().get_base_hp() * extra_hp_per)
     
     def get_atk(self, ch: Character):
-        extra_atk_per = sum([attr.get_atk_per(self) for attr in self.__extra_attrs])
-        extra_atk = sum([attr.get_atk(self) for attr in self.__extra_attrs])
+        extra_atk_per = sum([attr.get_atk_per(self, ch) for attr in self.__extra_attrs])
+        extra_atk = sum([attr.get_atk(self, ch) for attr in self.__extra_attrs])
 
         return ch.get_atk() + extra_atk + round(ch.get_base_atk() * extra_atk_per)
     
     def get_defence(self, ch: Character):
-        extra_def_per = sum([attr.get_def_per(self) for attr in self.__extra_attrs])
-        extra_def = sum([attr.get_def(self) for attr in self.__extra_attrs])
+        extra_def_per = sum([attr.get_def_per(self, ch) for attr in self.__extra_attrs])
+        extra_def = sum([attr.get_def(self, ch) for attr in self.__extra_attrs])
 
         return ch.get_defence() + extra_def + round(ch.get_base_defence() * extra_def_per)
     
     def get_elem_mastery(self, ch: Character):
-        return ch.get_elem_mastery() + sum([attr.get_elem_mastery(self) for attr in self.__extra_attrs])
+        return ch.get_elem_mastery() + sum([attr.get_elem_mastery(self, ch) for attr in self.__extra_attrs])
     
     def get_energy_recharge(self, ch: Character):
-        extra = sum([attr.get_energy_recharge(self) for attr in self.__extra_attrs])
+        extra = sum([attr.get_energy_recharge(self, ch) for attr in self.__extra_attrs])
         return ch.get_energy_recharge() + extra
     
     def get_normal_a_bonus(self, ch: Character):
-        extra = sum([attr.get_elem_bonus(self) + attr.get_normal_a_bonus(self) for attr in self.__extra_attrs])
+        extra = sum([attr.get_elem_bonus(self, ch) + attr.get_normal_a_bonus(self, ch) for attr in self.__extra_attrs])
         return ch.get_normal_a_bonus() + extra
     
     def get_charged_a_bonus(self, ch: Character):
-        extra = sum([attr.get_elem_bonus(self) + attr.get_charged_a_bonus(self) for attr in self.__extra_attrs])
+        extra = sum([attr.get_elem_bonus(self, ch) + attr.get_charged_a_bonus(self, ch) for attr in self.__extra_attrs])
         return ch.get_charged_a_bonus() + extra
     
     def get_plunging_bonus(self, ch: Character):
-        extra = sum([attr.get_elem_bonus(self) + attr.get_plunging_bonus(self) for attr in self.__extra_attrs])
+        extra = sum([attr.get_elem_bonus(self, ch) + attr.get_plunging_bonus(self, ch) for attr in self.__extra_attrs])
         return ch.get_plunging_bonus() + extra
     
     def get_e_bonus(self, ch: Character):
-        extra = sum([attr.get_elem_bonus(self) + attr.get_e_bonus(self) for attr in self.__extra_attrs])
+        extra = sum([attr.get_elem_bonus(self, ch) + attr.get_e_bonus(self, ch) for attr in self.__extra_attrs])
         return ch.get_e_bonus() + extra
     
     def get_q_bonus(self, ch: Character):
-        extra = sum([attr.get_elem_bonus(self) + attr.get_q_bonus(self) for attr in self.__extra_attrs])
+        extra = sum([attr.get_elem_bonus(self, ch) + attr.get_q_bonus(self, ch) for attr in self.__extra_attrs])
         return ch.get_q_bonus() + extra
     
     def get_kang_xin_multiplier(self):

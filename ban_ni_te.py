@@ -38,14 +38,14 @@ class BanNiTe_Q_Action(Action, ActionPlanAttributes):
     def do_impl(self, plan: ActionPlan):
         plan.add_extra_attr(self)
 
-    def get_atk_per(self, plan: ActionPlan):
+    def get_atk_per(self, plan: ActionPlan, target_character):
         cur_time = plan.get_current_action_time()
         if cur_time - self.get_timestamp() > 12:
             return 0
         
         return self.atk_per_bonus
     
-    def get_atk(self, plan: ActionPlan):
+    def get_atk(self, plan: ActionPlan, target_character):
         cur_time = plan.get_current_action_time()
         if cur_time - self.get_timestamp() > 12:
             return 0
