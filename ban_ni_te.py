@@ -52,5 +52,6 @@ class BanNiTe_Q_Action(Action, ActionPlanAttributes):
         
         return self.atk_bonus
     
-def create_ban_ni_te_q_action():
-    return BanNiTe_Q_Action(base_atk=756, q_level=13, ming_zuo_num=5)
+    @classmethod
+    def create_instance(cls):
+        return BanNiTe_Q_Action(base_atk=756, q_level=13, ming_zuo_num=5)

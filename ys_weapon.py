@@ -50,3 +50,19 @@ class Ti_Cao_Zhi_Dao_Guang(Ys_Weapon, name="薙草之稻光"):
         if new_atk_per > old_atk_per:
             character.add_atk_per(new_atk_per - old_atk_per)
         
+
+class Yu_Huo(Ys_Weapon, name="渔获"):
+    pass
+
+class Tian_Kong_Zhi_Yi(Ys_Weapon, name="天空之翼"):
+    crit_damage_bonus = [
+        20/100, # 1
+        25/100, # 2
+        30/100, # 3
+        35/100, # 4
+        40/100, # 5
+    ]
+
+    def apply_static_attributes(self, character: Character, teammates=None):
+        character.add_crit_rate(self.crit_rate)
+        character.add_crit_damage(Tian_Kong_Zhi_Yi.crit_damage_bonus[self.jing_lian_rank - 1])

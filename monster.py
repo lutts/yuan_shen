@@ -7,7 +7,7 @@ Module documentation.
 import logging
 
 class Monster:
-    def __init__(self, level = 100, kang_xin = 0.1):
+    def __init__(self, level = 100, kang_xin = 0.1, character_level=90):
         """
         * level: 怪物等级
         * kang_xin: 默认参数为10%抗性
@@ -20,7 +20,7 @@ class Monster:
 
         self.level = level
 
-        
+        self.character_level = character_level
         self.jian_fang = 0
         # 影宝的无视防御
         self.ignore_defence_ratio = 0
@@ -38,7 +38,7 @@ class Monster:
     def get_fang_yu_xi_shu(self, extra_jian_fang=0, extra_ignore_defence_ratio=0):
         jian_fang = self.jian_fang + extra_jian_fang
         ignore_defence_ratio = self.ignore_defence_ratio + extra_ignore_defence_ratio
-        return (90 + 100) / ( (90 + 100) + (self.level + 100) * (1 - jian_fang) * (1 - ignore_defence_ratio))
+        return (self.character_level + 100) / ( (self.character_level + 100) + (self.level + 100) * (1 - jian_fang) * (1 - ignore_defence_ratio))
     
     def set_ignore_defence(self, ignore_ratio):
         self.ignore_defence_ratio = ignore_ratio

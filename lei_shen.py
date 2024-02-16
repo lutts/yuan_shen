@@ -16,10 +16,9 @@ from ys_weapon import Ti_Cao_Zhi_Dao_Guang
 from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 from ye_lan import YeLan_Q_Bonus_Action
 from action import Action, ActionPlan, ActionPlanAttributes
-from ban_ni_te import create_ban_ni_te_q_action
+from ban_ni_te import BanNiTe_Q_Action
 from wan_ye import get_wan_ye_q_bonus
-from jiu_tiao_sha_luo import get_jiu_tiao_atk_bonus, get_jiu_tiao_crit_damage_bonus
-from characters import Ying_Bao_Ch
+from characters import Ying_Bao_Ch, Jiu_Tiao_Sha_Luo_Ch
 
 enable_debug = False
 use_5az = False
@@ -119,7 +118,7 @@ def create_plan_for_lei_ye_wan_ban(ying_bao: Ying_Bao_Ch, monster: Monster) -> A
 
     if ye_lan_ming_zuo_num == 6:
         plan.add_action("夜兰Q增伤开始", YeLan_Q_Bonus_Action, 3.567, 3.567)
-        plan.add_action_obj(create_ban_ni_te_q_action(), 11.319 - 1.883, 11.319 - 1.883)
+        plan.add_action_obj(BanNiTe_Q_Action.create_instance(), 11.319 - 1.883, 11.319 - 1.883)
 
         # 和满命夜兰配队不能采用az打法，因为时间只够打2次az，虽然2次az比5a伤害还高些，但只能触发两次回能，5a能触发3次
         # 和满命夜兰配队本来就因为影宝砍不满导致充能压力大，所以5a是最理想的
@@ -140,12 +139,12 @@ def create_plan_for_lei_ye_wan_ban(ying_bao: Ying_Bao_Ch, monster: Monster) -> A
     else:
         if use_5az:
             plan.add_action("夜兰Q增伤开始", YeLan_Q_Bonus_Action, 4.369, 4.369)
-            plan.add_action_obj(create_ban_ni_te_q_action(), 12.104 - 1.883, 12.104 - 1.883)
+            plan.add_action_obj(BanNiTe_Q_Action.create_instance(), 12.104 - 1.883, 12.104 - 1.883)
 
             add_action_for_5az(plan, ying_bao)
         else: # 全程普攻
             plan.add_action("夜兰Q增伤开始", YeLan_Q_Bonus_Action, 3.884, 3.884)
-            plan.add_action_obj(create_ban_ni_te_q_action(), 11.686 - 1.883, 11.686 - 1.883)
+            plan.add_action_obj(BanNiTe_Q_Action.create_instance(), 11.686 - 1.883, 11.686 - 1.883)
 
             add_action_for_only_normal_a(plan, ying_bao)
 
@@ -156,11 +155,12 @@ def create_plan_for_lei_jiu_wan_ban(ying_bao: Ying_Bao_Ch, monster: Monster):
     monster.add_jian_kang(0.4)
     ying_bao.add_all_bonus(get_wan_ye_q_bonus())
 
-    ying_bao.add_atk(get_jiu_tiao_atk_bonus())
-    ying_bao.add_crit_damage(get_jiu_tiao_crit_damage_bonus())
+    jiu_tiao = Jiu_Tiao_Sha_Luo_Ch.create_instance([])
+    ying_bao.add_atk(jiu_tiao.get_atk_bonus())
+    ying_bao.add_crit_damage(jiu_tiao.get_crit_damage_bonus())
 
     plan = ActionPlan(None, monster=monster)
-    plan.add_action_obj(create_ban_ni_te_q_action(), 0, 0)
+    plan.add_action_obj(BanNiTe_Q_Action.create_instance(), 0, 0)
 
     if use_5az:
         add_action_for_5az(plan, ying_bao)
@@ -179,7 +179,7 @@ def create_plan_for_lei_xia_xiang_ban(ying_bao: Ying_Bao_Ch, monster: Monster):
     # TODO：没满命，满命数据待补充
 
     plan = ActionPlan(None, monster=monster)
-    plan.add_action_obj(create_ban_ni_te_q_action(), 0, 0)
+    plan.add_action_obj(BanNiTe_Q_Action.create_instance(), 0, 0)
 
     if use_5az:
         add_action_for_5az(plan, ying_bao)
@@ -194,7 +194,7 @@ def create_plan_for_lei_guo(ying_bao: Ying_Bao_Ch, monster: Monster):
     ying_bao.add_atk_per(0.25)
 
     plan = ActionPlan(None, monster=monster)
-    plan.add_action_obj(create_ban_ni_te_q_action(), 0, 0)
+    plan.add_action_obj(BanNiTe_Q_Action.create_instance(), 0, 0)
 
     if use_5az:
         add_action_for_5az(plan, ying_bao)

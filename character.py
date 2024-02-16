@@ -496,7 +496,7 @@ class Character(CharacterBase, name="通用角色"):
     def __str__(self):
         s = ""
         if self.__all_atk:
-            s += "atk:" + str(self.get_all_atk()) + ", "
+            s += "atk:" + str(self.get_atk()) + ", "
 
         if self.__all_defence:
             s += "def:" + str(self.get_all_defence()) + ", "
