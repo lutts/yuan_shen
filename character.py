@@ -25,33 +25,58 @@ class Character_HP_Change_Data:
         return self.character.name + " " + str(self.data)
 
 
-class Character:
-    def __init__(self, name, elem_type: Ys_Elem_Type = None, ming_zuo_num=0,
-                 a_level=1, e_level=1, q_level=1, q_energy=80,
+class CharacterBase:
+    def __init_subclass__(cls, name, elem_type: Ys_Elem_Type=None, ming_zuo_num=0, a_level=1, e_level=1, q_level=1, q_energy=80,
+                          **kwargs):
+        """
+        初始化一些固定不变的属性
+        """
+        super().__init_subclass__(**kwargs)
 
+        cls.name = name
+        cls.elem_type = elem_type
+        cls.ming_zuo_num = ming_zuo_num
+        cls.a_level = a_level
+        cls.e_level = e_level
+        cls.q_level = q_level
+        cls.q_energy = q_energy
+
+    def __init__(self, name=None, elem_type: Ys_Elem_Type = None, ming_zuo_num=0,
+                 a_level=1, e_level=1, q_level=1, q_energy=80):
+        if name:
+            self.name = name
+        if elem_type:
+            self.elem_type = elem_type
+        if ming_zuo_num:
+            self.ming_zuo_num = ming_zuo_num
+        if a_level > 1:
+            self.a_level = a_level
+        if e_level > 1:
+            self.e_level = e_level
+        if q_level > 1:
+            self.q_level = q_level
+        if q_energy != 80:
+            self.q_energy = q_energy
+        
+
+class Character(CharacterBase, name="通用角色"):
+    def __init__(self, 
                  base_hp=0, max_hp=0,
                  base_atk=0, all_atk=0, weapon: Ys_Weapon = None,
                  base_defence=0, all_defence=0,
                  elem_mastery=0,
 
-                 crit_rate=0.05, crit_damage=0.5,
+                 crit_rate=0.05, crit_damage=0.5, 
                  healing_bonus=0, incoming_healing_bonus=0,
                  energy_recharge=100.0,
-
+                 
                  normal_a_bonus=0, charged_a_bonus=0, plunging_bonus=0,
                  e_bonus=0, q_bonus=0,
-                 base_bonus=0):
-        """
-        q_energy: 大招能量
-        """
-        self.name = name
-        self.elem_type = elem_type
-        self.ming_zuo_num = ming_zuo_num
-
-        self.a_level = a_level
-        self.e_level = e_level
-        self.q_level = q_level
-        self.q_energy = q_energy
+                 base_bonus=0,
+                 **kwargs):
+        
+        if kwargs:
+            super().__init__(**kwargs)
 
         self.__hp: HealthPoint = HealthPoint(base_hp, max_hp)
 

@@ -38,7 +38,8 @@ sheng_xian_elem_mastery = round(jiu_qi_ren_max_hp * 0.002)
 #
 # TODO：是否需要考虑以下对群时的圣遗物组合方案？ 对群时多少目标会被激化？让阿忍尽量扫到更多目标？
 
-class Na_Xi_Da_Ch(Character):
+class Na_Xi_Da_Ch(Character, name="纳西妲", elem_type=Ys_Elem_Type.CAO, ming_zuo_num=6,
+                  e_level=13, q_level=13):
     short_e_multiplier = [
         98.4/100, # 1
         105.8/100, # 2
@@ -136,12 +137,11 @@ class Na_Xi_Da_Ch(Character):
     ]
 
     def __init__(self, teammate_types: list[Ys_Elem_Type],
-                 base_atk=841, has_zhuan_wu=True,
-                 ming_zuo_num=6, e_level=13, q_level=13):
+                 base_atk=841, has_zhuan_wu=True):
         if len(teammate_types) > 3:
             raise Exception("队友不能超过3个")
         
-        if ming_zuo_num >= 1:
+        if self.ming_zuo_num >= 1:
             huo_num = 1
             lei_num = 1
             shui_num = 1
@@ -164,7 +164,7 @@ class Na_Xi_Da_Ch(Character):
 
         elem_mastery = 115 # 突破加成
 
-        if ming_zuo_num >= 4:
+        if self.ming_zuo_num >= 4:
             # 只考虑对单的情形
             elem_mastery += 100
 
@@ -179,8 +179,7 @@ class Na_Xi_Da_Ch(Character):
             # 双草共鸣
             elem_mastery += (50 + 30 + 20)
         
-        super().__init__("纳西妲", elem_type=Ys_Elem_Type.CAO, ming_zuo_num=ming_zuo_num,
-                         e_level=e_level, q_level=q_level, base_atk=base_atk,
+        super().__init__(base_atk=base_atk,
                          elem_mastery=elem_mastery, base_bonus=bonus)
         
         self.teammate_types = teammate_types
@@ -191,7 +190,7 @@ class Na_Xi_Da_Ch(Character):
             if huo_num > 2:
                 huo_num = 2
         
-            self.extra_mie_jing_san_ye_bonus += Na_Xi_Da_Ch.q_huo_bonus[q_level - 1][huo_num - 1]
+            self.extra_mie_jing_san_ye_bonus += Na_Xi_Da_Ch.q_huo_bonus[self.q_level - 1][huo_num - 1]
         
         # self.mie_jing_san_ye_interval = 2.5
         # if lei_num > 0:

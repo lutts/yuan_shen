@@ -42,9 +42,9 @@ from fu_ning_na_common import *
 #
 # 对于二命以下的芙芙，打法是一样的，只不过第一轮输出会低些，但第一轮扣了很多血后，进第二轮瞬间奶满就和二命体验差不多了
 
-ch_yin_bao = Character("影宝", base_hp=12907, max_hp=21650, q_energy=90)
-ch_ye_lan = Character("夜兰", base_hp=14450, max_hp=46461, q_energy=70)
-ch_qin = Character("琴", base_hp=12965, max_hp=24224, 
+ch_yin_bao = Character(name="影宝", base_hp=12907, max_hp=21650, q_energy=90)
+ch_ye_lan = Character(name="夜兰", base_hp=14450, max_hp=46461, q_energy=70)
+ch_qin = Character(name="琴", base_hp=12965, max_hp=24224, 
                    base_atk=665, all_atk=1764, q_level=9, 
                    q_energy=80, healing_bonus=0.166)
 
@@ -154,17 +154,17 @@ def create_action_plan(fufu_initial_state: Character):
 
     # 注意：因为是基于芙芙e的统计，这两个action实际在芙芙e之前，但代码里顺序是反的
     plan.add_action("切芙芙出来", Switch_To_Character_Action, 0.183, 0.357, 
-                    negative=True, character_name=Character_FuFu.NAME)
+                    negative=True, character_name=Character_FuFu.name)
     plan.add_action("影宝e", YinBao_E_Action, 0.866, 1.202, negative=True,
                     base_action="切芙芙出来")
     
     three_little_first_action = "三小只开始扣血"
     plan.add_action(three_little_first_action, Action, 1.282, 1.455)
     plan.add_action("芙芙大招动画开始", Q_Animation_Start_Action, 0.733, 0.9,
-                    character_name=Character_FuFu.NAME)
+                    character_name=Character_FuFu.name)
     plan.add_action("芙芙q出伤", FuFu_Q_Action, 1.8, 1.8, base_action="芙芙大招动画开始")
     plan.add_action("芙芙大招动画结束", Q_Animation_Stop_Action, 1.9, 1.9,
-                    base_action="芙芙大招动画开始", character_name=Character_FuFu.NAME)
+                    base_action="芙芙大招动画开始", character_name=Character_FuFu.name)
     plan.add_action("切夜兰出来", Switch_To_Character_Action, 0.35, 0.467,
                     base_action="芙芙大招动画结束", character_name=ch_ye_lan.name)
     plan.add_action("夜兰e生效一层", Ye_Lan_4_Ming_Action, 0.734, 0.784,
@@ -198,7 +198,7 @@ def create_action_plan(fufu_initial_state: Character):
     # 注：这里假设芙芙大招效果消失时影宝e
     plan.add_action("下轮循环-切芙芙出来", Action, 0.866, 1.202, base_action="芙芙大招效果消失")
     plan.add_action("下轮循环-芙芙点按e",  Switch_To_Character_Action, 0.183, 0.357, 
-                    base_action="下轮循环-切芙芙出来", character_name=Character_FuFu.NAME)
+                    base_action="下轮循环-切芙芙出来", character_name=Character_FuFu.name)
     
     if enable_debug:
         action_names = [a.name for a in plan.action_list]

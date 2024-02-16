@@ -314,7 +314,41 @@ def ying_ye_fu_qing():
     for i in intervals:
         print(i)
 
+
+class A:
+    def __init_subclass__(cls, name) -> None:
+        cls.name = name
+        cls.__test = 10
+
+
+class B(A, name="test"):
+    def __init__(self, t):
+        self.__test = t
+
+    def get_test(self):
+        return self.__test
+
+print(B.name)
+
+b = B(100)
+print(b.get_test())
+
+
+class C(A, name="test2"):
+    def get_test(self):
+        return self.__test
+
+
+
+def f(haha, **kwargs):
+    print("haha:", haha)
+    if kwargs:
+        print(kwargs)
+
+
 # Main body
 if __name__ == '__main__':
-    avg_min_max([7.135, 6.855, 7.834,  6.885,  7.935,  7.385,  7.169,  6.268])
+    #avg_min_max([7.135, 6.855, 7.834,  6.885,  7.935,  7.385,  7.169,  6.268])
     pass
+
+    f(10)

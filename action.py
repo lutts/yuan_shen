@@ -20,6 +20,8 @@ class ActionTimestampException(Exception):
 
 
 class Action:
+    enable_debug = True
+    
     def __init__(self, name, owner:Character = None):
         self.name = name
         self.owner: Character = owner

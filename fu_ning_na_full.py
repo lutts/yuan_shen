@@ -31,11 +31,11 @@ WAN_YE_NAME = "wan ye"
 # 不修改算法的情况下，只允许改变各个角色的生命值上限
 g_teammates = [
     # 夜兰
-    Character(YE_LAN_NAME, base_hp=14450, max_hp=43779),
+    Character(name=YE_LAN_NAME, base_hp=14450, max_hp=43779),
     # 钟离
-    Character(ZHONG_LI_NAME, base_hp=14695, max_hp=50567),
+    Character(name=ZHONG_LI_NAME, base_hp=14695, max_hp=50567),
     # 万叶
-    Character(WAN_YE_NAME, base_hp=13348, max_hp=23505),
+    Character(name=WAN_YE_NAME, base_hp=13348, max_hp=23505),
 ]
 
 def create_fufu():
@@ -178,7 +178,7 @@ def create_action_plan(fufu_initial_state: Character):
                     0.868, 0.952, base_action="夜兰q增伤开始")
 
     plan.add_action("切芙芙出来", Switch_To_Character_Action,
-                    0.25, 0.316, base_action="夜兰四命生效2", character_name=Character_FuFu.NAME)
+                    0.25, 0.316, base_action="夜兰四命生效2", character_name=Character_FuFu.name)
     three_little_disappear = "三小只开始消失，众水的歌者出来"
     plan.add_action(three_little_disappear, Action,
                     0.751, 0.783, base_action="切芙芙出来")

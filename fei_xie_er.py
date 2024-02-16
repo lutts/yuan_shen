@@ -16,7 +16,7 @@ from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc
 
 enable_debug = False
 
-class Fei_Xie_Er_Ch(Character):
+class Fei_Xie_Er_Ch(Character, name="菲谢尔", ming_zuo_num=6, elem_type=Ys_Elem_Type.LEI, e_level=12):
     ao_zi_multiplier = [
         88.8 / 100, # 1
         95.5 / 100, # 2
@@ -60,13 +60,13 @@ class Fei_Xie_Er_Ch(Character):
         return Fei_Xie_Er_Ch.zhao_huan_multiplier[self.e_level - 1] + extra
 
 def get_fei_xie_er_with_mo_shu() -> Fei_Xie_Er_Ch:
-    ch = Fei_Xie_Er_Ch("菲谢尔", ming_zuo_num=6, elem_type=Ys_Elem_Type.LEI, e_level=12, base_atk=852)
+    ch = Fei_Xie_Er_Ch(base_atk=852)
     ch.add_crit_damage(0.662)
     ch.add_atk_per(0.32) # 刻晴是雷，因此只有2层【手法】效果
     return ch
     
 def get_fei_xie_er_with_jue_xian() -> Fei_Xie_Er_Ch:
-    ch = Fei_Xie_Er_Ch("菲谢尔", ming_zuo_num=6, elem_type=Ys_Elem_Type.LEI, e_level=12, base_atk=754)
+    ch = Fei_Xie_Er_Ch(base_atk=754)
     ch.add_elem_mastery(165)
     ch.add_all_bonus(0.48) # 精五
     return ch

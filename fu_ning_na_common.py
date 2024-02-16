@@ -34,8 +34,8 @@ def randtime(t_min, t_max):
     return random.randint(t_min, t_max) / 1000
 
 
-class Character_FuFu(Character):
-    NAME = "furina"
+class Character_FuFu(Character, name="furina", elem_type=Ys_Elem_Type.SHUI, ming_zuo_num=6, 
+                     e_level=13, q_level=13):
     BASE_HP = 15307
 
     def __init__(self, ming_zuo_num=6, has_zhuan_wu=True, required_energy_recharge=120):
@@ -49,7 +49,7 @@ class Character_FuFu(Character):
         四命及以上: 双水120, 单水160
         有雷神、西福斯的月光等其他充能手段酌情调整
         """
-        super().__init__(name=Character_FuFu.NAME, ming_zuo_num=ming_zuo_num,
+        super().__init__(ming_zuo_num=ming_zuo_num,
                          base_hp=Character_FuFu.BASE_HP, q_energy=60)
         self.has_zhuan_wu = has_zhuan_wu
 

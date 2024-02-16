@@ -356,6 +356,8 @@ all_syw = {
                   crit_damage=0.07, hp_percent=0.111, energy_recharge=0.045),
 
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_YU,
+                  crit_rate=0.062, crit_damage=0.132, atk_per=0.093, energy_recharge=0.162),
+        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_YU,
                   def_per=0.139, crit_damage=0.124, elem_mastery=44, crit_rate=0.093),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_YU,
                   crit_rate=0.113, def_v=42, energy_recharge=0.091, crit_damage=0.124),
