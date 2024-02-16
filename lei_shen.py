@@ -21,7 +21,7 @@ from wan_ye import get_wan_ye_q_bonus
 from jiu_tiao_sha_luo import get_jiu_tiao_atk_bonus, get_jiu_tiao_crit_damage_bonus
 from characters import Ying_Bao_Ch
 
-enable_debug = True
+enable_debug = False
 use_5az = False
 ye_lan_ming_zuo_num = 1
 

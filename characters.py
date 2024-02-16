@@ -111,10 +111,17 @@ class Ying_Bao_Ch(Character, name="影宝", elem_type=Ys_Elem_Type.LEI, ming_zuo
 
         extra_elem_bonus = (energy_recharge - 100) * 0.004  # 固有天赋2
         extra_elem_bonus += min(energy_recharge / 4 / 100, 0.75) # 四绝缘
-        extra_elem_bonus += Ying_Bao_Ch.e_bonus_multiplier[self.e_level - 1] * self.q_energy
+        extra_elem_bonus += Ying_Bao_Ch.get_e_bonus_multiplier(self.q_energy, e_level=self.e_level)
 
         self.add_all_bonus(extra_elem_bonus)
 
+
+    @classmethod
+    def get_e_bonus_multiplier(cls, q_energy, e_level=0):
+        if not e_level:
+            e_level = cls.e_level
+
+        return cls.e_bonus_multiplier[e_level -  1] * q_energy
 
     def get_yuan_li(self):
         # 注：目前都按最大愿力层数来计算
@@ -155,6 +162,9 @@ class Ying_Bao_Ch(Character, name="影宝", elem_type=Ys_Elem_Type.LEI, ming_zuo
     
     def get_charged_a_action(self, sub_phrase):
         return YingBao_Charged_A_Action(owner=self, sub_phrase=sub_phrase)
+
+
+# 影宝的 e 是全轴覆盖的，因此不需要单独的 action
 
 
 class YingBao_Q_Action(Action):
