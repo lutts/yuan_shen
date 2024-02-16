@@ -52,7 +52,20 @@ class Ti_Cao_Zhi_Dao_Guang(Ys_Weapon, name="薙草之稻光"):
         
 
 class Yu_Huo(Ys_Weapon, name="渔获"):
-    pass
+    q_bonus = [
+        16/100, 20/100, 24/100, 28/100, 32/100
+    ]
+
+    crit_rate_bonus = [
+        6/100, 7.5/100, 9/100, 10.5/100, 12/100
+    ]
+    def apply_static_attributes(self, character: Character, teammates=None):
+        character.add_energy_recharge(self.energy_recharge)
+    
+    def apply_passive(self, character: Character, action_plan=None):
+        character.add_q_bonus(Yu_Huo.q_bonus[self.jing_lian_rank - 1])
+        character.add_crit_rate(Yu_Huo.crit_rate_bonus[self.jing_lian_rank - 1])
+
 
 class Tian_Kong_Zhi_Yi(Ys_Weapon, name="天空之翼"):
     crit_damage_bonus = [

@@ -250,7 +250,8 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
     return True
 
 
-result_description = ["梦想一刀暴击伤害", "实战攻击力", "面板攻击力", "实战最大伤害加成", "暴击率", "暴击伤害", "面板充能效率"]
+result_description = ["梦想一刀暴击伤害", "实战攻击力", "面板攻击力", "实战最大伤害加成", "暴击率", "暴击伤害", "面板充能效率",
+                      "extra_score为梦想一刀暴击伤害"]
 
 def match_sha_callback(syw: ShengYiWu):
     return syw.energy_recharge == ShengYiWu.ENERGY_RECHARGE_MAX

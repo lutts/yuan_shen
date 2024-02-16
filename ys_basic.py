@@ -73,41 +73,41 @@ class Ys_Attributes:
         pass
 
     def __str__(self):
-        s = ""
+        attrs = []
         if self.crit_rate:
-            s += 'cc:' + str(self.crit_rate)
+            attrs.append('cc:' + str(self.crit_rate))
 
         if self.crit_damage:
-            s += ', cd:' + str(self.crit_damage)
+            attrs.append('cd:' + str(self.crit_damage))
 
         if self.hp_percent:
-            s += ', hpp:' + str(self.hp_percent)
+            attrs.append('hpp:' + str(self.hp_percent))
 
         if self.hp:
-            s += ', hp:' + str(self.hp)
+            attrs.append('hp:' + str(self.hp))
 
         if self.energy_recharge:
-            s += ', re:' + str(self.energy_recharge)
+            attrs.append('re:' + str(self.energy_recharge))
 
         if self.atk_per:
-            s += ', atkp:' + str(self.atk_per)
+            attrs.append('atkp:' + str(self.atk_per))
 
         if self.atk:
-            s += ', atk:' + str(self.atk)
+            attrs.append('atk:' + str(self.atk))
 
         if self.def_per:
-            s += ', defp:' + str(self.def_per)
+            attrs.append('defp:' + str(self.def_per))
 
         if self.def_v:
-            s += ', def:' + str(self.def_v)
+            attrs.append('def:' + str(self.def_v))
 
         if self.elem_mastery:
-            s += ', elem:' + str(self.elem_mastery)
+            attrs.append('elem:' + str(self.elem_mastery))
 
         if self.elem_bonus:
-            s += ', bonus:' + str(self.elem_bonus)
+            attrs.append('bonus:' + str(self.elem_bonus))
 
-        return s
+        return ", ".join(attrs)
     
     def __repr__(self) -> str:
         return self.__str__()
