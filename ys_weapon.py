@@ -84,3 +84,23 @@ class Tian_Kong_Zhi_Yi(Ys_Weapon, name="天空之翼"):
 class Ji_Li_Sword(Ys_Weapon, name="祭礼剑"):
     def apply_static_attributes(self, character: Character, teammates=None):
         character.add_energy_recharge(self.energy_recharge)
+
+class Wu_Qie_Zhi_Hui_Guang(Ys_Weapon, name="雾切之回光"):
+    elem_bonus_bonus =  [
+        12/100, 15/100, 18/100, 21/100, 24/100
+    ]
+
+    ba_yin_bonus = [
+        (8/100, 16/100, 28/100), # 1
+        (10/100, 20/100, 35/100), # 2
+        (12/100, 24/100, 42/100), # 3
+        (14/100, 28/100, 49/100), # 4
+        (16/100, 32/100, 56/100), # 5
+    ]
+    def apply_static_attributes(self, character: Character, teammates=None):
+        character.add_crit_damage(self.crit_damage)
+        character.add_all_bonus(Wu_Qie_Zhi_Hui_Guang.elem_bonus_bonus[self.jing_lian_rank - 1])
+    
+    def apply_passive(self, character: Character, action_plan=None):
+        # TODO: 绫华配戴时能完美吃到被动，别的角色如何处理？
+        character.add_all_bonus(Wu_Qie_Zhi_Hui_Guang.ba_yin_bonus[self.jing_lian_rank - 1][2])
