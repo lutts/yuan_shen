@@ -132,7 +132,7 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
     if energy_recharge < 200:
         return None
 
-    monster = Monster(level=93)
+    monster = Monster()
 
     # 手法: eqe
     e_damage_1 = xing_qiu.get_e_damage(monster)
@@ -154,7 +154,7 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
 
     cd = xing_qiu.get_crit_damage()
     score_data.damage_to_score(all_damage, xing_qiu.get_crit_rate(), cd)
-    
+
     q_damage_k = ys_crit_damage(q_damage_k, cd)
     score_data.extra_score = q_damage_k
 
