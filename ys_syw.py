@@ -82,9 +82,74 @@ class ShengYiWu(Ys_Attributes):
                          energy_recharge=energy_recharge)
         self.elem_type: Ys_Elem_Type = elem_type
 
+    @classmethod
+    def from_string(cls, syw_str: str):
+        # (jue_yuan, h, cc:0.066, cd:0.117, atkp:0.111, atk:33)
+        syw_str = syw_str.strip('() ')
+        attrs = syw_str.split(", ")
+        if len(attrs) < 6:
+            return None
+        
+        name = attrs[0]
+        part = attrs[1]
+        syw = ShengYiWu(name, part)
+        for i in range(2, len(attrs)):
+            attr = attrs[i]
+            key, value = attr.split(':')
+
+            try:
+                fvalue = float(value)
+            except:
+                pass
+
+            if key == "cc":
+                syw.crit_rate = fvalue
+            elif key == "cd":
+                syw.crit_damage = fvalue
+            elif key == "hpp":
+                syw.hp_percent = fvalue
+            elif key == "hp":
+                syw.hp = int(value)
+            elif key == "re":
+                syw.energy_recharge = fvalue
+            elif key == "atkp":
+                syw.atk_per = fvalue
+            elif key == "atk":
+                syw.atk = int(value)
+            elif key == "defp":
+                syw.def_per = fvalue
+            elif key == "def":
+                syw.def_v = int(value)
+            elif key == "elem":
+                syw.elem_mastery = int(value)
+            elif key == "bonus":
+                syw.elem_bonus = fvalue
+            elif key == "et":
+                syw.elem_type = Ys_Elem_Type(value)
+
+        return syw
+    
+    @classmethod
+    def string_to_syw_combine(cls, syw_combine_str: str | list[str]):
+        if isinstance(syw_combine_str, list):
+            syw_str_lst = syw_combine_str
+        else:
+            syw_str_lst = syw_combine_str.split("), (")
+        syw_combine = []
+        for syw_str in syw_str_lst:
+            syw = ShengYiWu.from_string(syw_str)
+            if syw:
+                syw_combine.append(syw)
+            else:
+                raise Exception("parse syw combine string failed on " + syw_str)
+            
+        return syw_combine
+
     def __str__(self):
         s = '(' + self.name + ', ' + self.part + ", "
         s += super().__str__()
+        if self.elem_type:
+            s += ", et:" + self.elem_type.value
         s += ')'
         return s
 
@@ -490,6 +555,8 @@ all_syw = {
                   energy_recharge=0.091, crit_rate=0.163, crit_damage=0.078, hp=239),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_SHA, atk_per=ShengYiWu.BONUS_MAX,
                   crit_rate=0.097, hp=209, crit_damage=0.202, def_v=42),
+        ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_SHA, hp_percent=ShengYiWu.BONUS_MAX,
+                  crit_rate=0.109, atk_per=0.053, crit_damage=0.21, def_v=21),
         ShengYiWu(ShengYiWu.BING_TAO, ShengYiWu.PART_SHA, hp_percent=ShengYiWu.BONUS_MAX,
                   crit_rate=0.031, def_v=23, crit_damage=0.295, energy_recharge=0.104),
     ],

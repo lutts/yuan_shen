@@ -79,3 +79,8 @@ class Tian_Kong_Zhi_Yi(Ys_Weapon, name="天空之翼"):
     def apply_static_attributes(self, character: Character, teammates=None):
         character.add_crit_rate(self.crit_rate)
         character.add_crit_damage(Tian_Kong_Zhi_Yi.crit_damage_bonus[self.jing_lian_rank - 1])
+
+
+class Ji_Li_Sword(Ys_Weapon, name="祭礼剑"):
+    def apply_static_attributes(self, character: Character, teammates=None):
+        character.add_energy_recharge(self.energy_recharge)

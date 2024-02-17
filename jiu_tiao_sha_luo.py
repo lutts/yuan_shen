@@ -6,10 +6,9 @@ Module documentation.
 
 from ys_basic import Ys_Elem_Type, ys_expect_damage, ys_crit_damage
 from monster import Monster
-from characters import Ying_Bao_Ch, Jiu_Tiao_Sha_Luo_Ch
+from characters import Ying_Bao_Ch, Jiu_Tiao_Sha_Luo_Ch, BanNiTe_Q_Action
 from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, set_score_threshold, Syw_Combine_Desc, find_syw_combine
 from wan_ye import get_wan_ye_q_bonus, get_wan_ye_e_bonus
-from ban_ni_te import BanNiTe_Q_Action
 
 
 enable_debug = False
@@ -79,7 +78,7 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
     if jiu_tiao.get_energy_recharge() < 220:
         return None
 
-    monster = Monster(character_level=81)
+    monster = Monster(character_level=jiu_tiao.ch_level)
     #monster.set_kang_xin(2.1)
 
     get_damage_in_lei_jiu_wan_ban(jiu_tiao, monster, score_data)

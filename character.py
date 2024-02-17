@@ -26,29 +26,34 @@ class Character_HP_Change_Data:
 
 
 class CharacterBase:
-    def __init_subclass__(cls, name, elem_type: Ys_Elem_Type=None, ming_zuo_num=0, a_level=1, e_level=1, q_level=1, q_energy=80,
+    def __init_subclass__(cls, name, elem_type: Ys_Elem_Type=None, ming_zuo_num=0, ch_level=90, a_level=1, e_level=1, q_level=1, q_energy=80,
                           **kwargs):
         """
         初始化一些固定不变的属性
+
+        ch_level: 角色等级
         """
         super().__init_subclass__(**kwargs)
 
         cls.name = name
         cls.elem_type = elem_type
         cls.ming_zuo_num = ming_zuo_num
+        cls.ch_level = ch_level
         cls.a_level = a_level
         cls.e_level = e_level
         cls.q_level = q_level
         cls.q_energy = q_energy
 
     def __init__(self, name=None, elem_type: Ys_Elem_Type = None, ming_zuo_num=0,
-                 a_level=1, e_level=1, q_level=1, q_energy=80):
+                 ch_level=90, a_level=1, e_level=1, q_level=1, q_energy=80):
         if name:
             self.name = name
         if elem_type:
             self.elem_type = elem_type
         if ming_zuo_num:
             self.ming_zuo_num = ming_zuo_num
+        if ch_level != 90:
+            self.ch_level = ch_level
         if a_level > 1:
             self.a_level = a_level
         if e_level > 1:
@@ -74,7 +79,6 @@ class Character(CharacterBase, name="通用角色"):
                  e_bonus=0, q_bonus=0,
                  base_bonus=0,
                  **kwargs):
-        
         if kwargs:
             super().__init__(**kwargs)
 
@@ -499,7 +503,7 @@ class Character(CharacterBase, name="通用角色"):
             s += "atk:" + str(self.get_atk()) + ", "
 
         if self.__all_defence:
-            s += "def:" + str(self.get_all_defence()) + ", "
+            s += "def:" + str(self.get_defence()) + ", "
 
         if self.__elem_mastery:
             s += "m:" + str(self.__elem_mastery) + ","

@@ -16,9 +16,8 @@ from ys_weapon import Ti_Cao_Zhi_Dao_Guang
 from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 from ye_lan import YeLan_Q_Bonus_Action
 from action import Action, ActionPlan, ActionPlanAttributes
-from ban_ni_te import BanNiTe_Q_Action
 from wan_ye import get_wan_ye_q_bonus
-from characters import Ying_Bao_Ch, Jiu_Tiao_Sha_Luo_Ch
+from characters import Ying_Bao_Ch, Jiu_Tiao_Sha_Luo_Ch, BanNiTe_Q_Action
 
 enable_debug = False
 use_5az = False

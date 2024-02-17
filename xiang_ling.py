@@ -14,8 +14,7 @@ from ys_reaction import Ys_Reaction, Ys_No_Reaction, Ys_Reaction_ZhengFa
 from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 from character import Character
 from monster import Monster
-from ban_ni_te import BanNiTe_Q_Action
-from characters import Ying_Bao_Ch
+from characters import Ying_Bao_Ch, BanNiTe_Q_Action
 from wan_ye import get_wan_ye_q_bonus
 from ys_weapon import Yu_Huo
 
