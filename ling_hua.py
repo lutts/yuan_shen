@@ -261,7 +261,7 @@ def get_damage_for_shen_mo_wan_mao(ling_hua: Ling_Hua_Ch):
     if enable_debug:
         print_damages(ling_hua)
 
-    monster = Monster(level=93)
+    monster = Monster()
     # monster.set_kang_xin(3.1)
 
     # 猫猫 q，宗室四件套
