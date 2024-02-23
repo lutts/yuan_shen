@@ -4,6 +4,8 @@
 Module documentation.
 """
 
+import random
+
 from attribute_hub import ActionPlanAttributeSupplier
 from ys_basic import Ys_Elem_Type, Ys_Weapon, ys_crit_damage, ys_expect_damage
 from character import Character
@@ -86,10 +88,15 @@ class YeLan_Ming_4_Action(Action, ActionPlanAttributeSupplier):
         return 0.1
 
 class YeLan_Q_Bonus_Action(Action, ActionPlanAttributeSupplier):
+    """
+    注：plan.add_action 时，这个 Action 的 min_t 和 max_t 填写夜兰大招动画开始的时间，实际的增伤开始时间会自动计算
+    """
     def __init__(self):
         super().__init__("夜兰Q增伤开始")
 
     def do_impl(self, plan: ActionPlan):
+        # 参见 ye_lan_readme.md
+        self.bonus_start_time = self.get_timestamp() + random.randint(1220, 1255) / 1000
         plan.add_extra_attr(self)
 
     def get_elem_bonus(self, plan: ActionPlan, target_character: Character):
@@ -98,13 +105,14 @@ class YeLan_Q_Bonus_Action(Action, ActionPlanAttributeSupplier):
             return 0
         
         cur_time = plan.get_current_action_time()
-        dur = cur_time - self.get_timestamp()
+        dur = cur_time - self.bonus_start_time
         if dur <= 0:
             return 0
         
         if dur >= 15:
             return 0
         
+        print(dur)
         return (1 + int(dur) * 3.5) / 100
 
 class YeLanQBonus:

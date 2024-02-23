@@ -116,8 +116,8 @@ def create_plan_for_lei_ye_wan_ban(ying_bao: Ying_Bao_Ch, monster: Monster) -> A
     plan = ActionPlan([ying_bao], monster=monster)
 
     if ye_lan_ming_zuo_num == 6:
-        ye_lan_q_action = YeLan_Q_Bonus_Action("夜兰Q增伤开始")
-        plan.add_action(ye_lan_q_action, 3.567, 3.567)
+        ye_lan_q_action = YeLan_Q_Bonus_Action()
+        plan.add_action(ye_lan_q_action, 2.217, 2.217)
         plan.add_action(BanNiTe_Q_Action.create_instance(), 11.319 - 1.883, 11.319 - 1.883)
 
         # 和满命夜兰配队不能采用az打法，因为时间只够打2次az，虽然2次az比5a伤害还高些，但只能触发两次回能，5a能触发3次
@@ -137,14 +137,14 @@ def create_plan_for_lei_ye_wan_ban(ying_bao: Ying_Bao_Ch, monster: Monster) -> A
         for t, action in action_sequence:
             plan.add_action(action, t, t)
     else:
-        ye_lan_q_action = YeLan_Q_Bonus_Action("夜兰Q增伤开始")
+        ye_lan_q_action = YeLan_Q_Bonus_Action()
         if use_5az:
-            plan.add_action(ye_lan_q_action, 4.369, 4.369)
+            plan.add_action(ye_lan_q_action, 3.05, 3.05)
             plan.add_action(BanNiTe_Q_Action.create_instance(), 12.104 - 1.883, 12.104 - 1.883)
 
             add_action_for_5az(plan, ying_bao)
         else: # 全程普攻
-            plan.add_action(ye_lan_q_action, 3.884, 3.884)
+            plan.add_action(ye_lan_q_action, 2.501, 2.501)
             plan.add_action(BanNiTe_Q_Action.create_instance(), 11.686 - 1.883, 11.686 - 1.883)
 
             add_action_for_only_normal_a(plan, ying_bao)
@@ -214,13 +214,13 @@ def create_plan_for_ying_ye_fu_qin(ying_bao: Ying_Bao_Ch, monster: Monster):
 
     plan = ActionPlan([ying_bao], monster=monster)
 
-    ye_lan_q_action = YeLan_Q_Bonus_Action("夜兰Q增伤开始")
+    ye_lan_q_action = YeLan_Q_Bonus_Action()
     plan.add_action(ye_lan_q_action, 0, 0)
 
     if use_5az:
-        add_action_for_5az(plan, ying_bao, time_shift=7.1 - 12.104)
+        add_action_for_5az(plan, ying_bao, time_shift=8.6 - 12.104)
     else: # 全程普攻
-        add_action_for_only_normal_a(plan, ying_bao, time_shift=7.1 - 11.686)
+        add_action_for_only_normal_a(plan, ying_bao, time_shift=8.6 - 11.686)
 
     return plan
 
