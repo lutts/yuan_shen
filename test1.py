@@ -15,13 +15,14 @@ from ys_basic import Ys_Elem_Type, ys_expect_damage
 from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine, set_qualifier_threshold
 from character import Character, Character_HP_Change_Data
 from monster import Monster
+from characters import YeLanQBonus
 from action import Action, ActionPlan
-from ys_weapon import Jing_Shui_Liu_Yong_Zhi_Hui
 
 
 enable_debug = True
 enable_record = False
 MAX_RUN_NUM = 1
+
 
 
 def randtime(t_min, t_max):
@@ -30,12 +31,12 @@ def randtime(t_min, t_max):
 
 class Character_FuFu(Character, name="furina", elem_type=Ys_Elem_Type.SHUI, ming_zuo_num=6, 
                      e_level=13, q_level=13, q_energy=60):
-    # 最小技能等级 8 级， 如果要设置 8 级以下的技能等级，请自行在下面的 MULTIPLIER 里添加 8 级以下的倍率系数
-    MIN_SKILL_LEVEL = 8
-
     BASE_HP = 15307
-    HEI_DAO_MULTIPLIER = 18/100
-    BAI_DAO_MULTIPLIER = (18 + 25)/100
+    HEI_FU_BEI_LV = 18/100
+    BAI_FU_BEI_LV = (18 + 25)/100
+
+    MIN_SKILL_LEVEL = 8
+    
 
     E_MULTIPLIER = [12.6/100, 13.4/100, 14.2/100, 14.9/100, 15.7/100, 16.7/100]
     FU_REN_MULTIPLIER = [5.17/100, 5.49/100, 5.82/100, 6.14/100, 6.46/100, 6.87/100]
@@ -52,7 +53,8 @@ class Character_FuFu(Character, name="furina", elem_type=Ys_Elem_Type.SHUI, ming
         """
         * ming_zuo_num: 命座数
         """
-        super().__init__(base_hp=Character_FuFu.BASE_HP, weapon=weapon, crit_rate=0.242)
+        super().__init__(base_hp=Character_FuFu.BASE_HP, weapon=weapon)
+
         super().set_ming_zuo_num(ming_zuo_num)
 
         if ming_zuo_num >= 1:
@@ -65,87 +67,44 @@ class Character_FuFu(Character, name="furina", elem_type=Ys_Elem_Type.SHUI, ming
         self.MAX_TOTAL_QI_FEN_ZHI = self.MAX_QI_FEN_ZHI
 
         if ming_zuo_num >= 2:
-            self.QI_INCREASE_MULTIPLIER = 3.5
-            self.QI_HP_MULTIPLIER = 0.0035
+            self.QI_INCREASE_BEI_LV = 3.5
+            self.QI_HP_BEI_LV = 0.0035
+            self.MING_2_HP_BONUS_MAX = 1.4
             self.MAX_TOTAL_QI_FEN_ZHI = 800
         else:
-            self.QI_INCREASE_MULTIPLIER = 1
-            self.QI_HP_MULTIPLIER = 0
+            self.QI_INCREASE_BEI_LV = 1
+            self.QI_HP_BEI_LV = 0
+            self.MING_2_HP_BONUS_MAX = 0
 
         # self.bei_lv_to_salon_member_name = {
-        #     self.FU_REN_MULTIPLIER: "夫人",
-        #     self.XUN_JUE_MULTIPLIER: "勋爵",
-        #     self.PANG_XIE_MULTIPLIER: "螃蟹"
+        #     self.FU_REN_BEI_LV: "夫人",
+        #     self.XUN_JUE_BEI_LV: "勋爵",
+        #     self.PANG_XIE_BEI_LV: "螃蟹"
         # }
 
         # self.bei_lv_to_str = {
-        #     self.FU_REN_MULTIPLIER: "fufu.FU_REN_MULTIPLIER / 100",
-        #     self.XUN_JUE_MULTIPLIER: "fufu.XUN_JUE_MULTIPLIER / 100",
-        #     self.PANG_XIE_MULTIPLIER: "fufu.PANG_XIE_MULTIPLIER / 100"
+        #     self.FU_REN_BEI_LV: "fufu.FU_REN_BEI_LV / 100",
+        #     self.XUN_JUE_BEI_LV: "fufu.XUN_JUE_BEI_LV / 100",
+        #     self.PANG_XIE_BEI_LV: "fufu.PANG_XIE_BEI_LV / 100"
         # }
-            
-    @classmethod
-    def create_with_zhuan_wu(cls, ming_zuo_num = 6):
-        weapon = Jing_Shui_Liu_Yong_Zhi_Hui(base_atk=542, crit_damage=0.882)
-        return Character_FuFu(weapon=weapon, ming_zuo_num=ming_zuo_num)
 
-    def gu_you_tian_fu_2_bonus(self, max_hp):
-        return min(max_hp / 1000 * 0.007, 0.28)
-    
-    def get_ge_zhe_cure_num(self, plan: ActionPlan):
-        multiplier = Character_FuFu.GE_ZHE_HEAL_MULTIPLIER[self.e_level - 1]
-        return round(self.get_hp().get_max_hp() * multiplier[0] + multiplier[1])
+    def gu_you_tian_fu_2_bonus(self, hp):
+        return min(self.get_hp().get_max_hp() / 1000 * 0.007, 0.28)
     
     def add_q_damage(self, plan: ActionPlan):
-        multiplier = Character_FuFu.Q_MULTIPLIER[self.q_level - 1]
-        damage = self.get_max_hp() * multiplier * (1 + self.get_q_bonus())
-        return plan.add_damage(damage)
+        multiplier = Character_FuFu.Q_MULTIPLIER[self.q_level]
+        damage = self.get_hp().get_max_hp() * multiplier * (1 + plan.get_q_bonus(self))
+        plan.add_damage(damage)
 
     def add_e_damage(self, plan: ActionPlan):
-        multiplier = Character_FuFu.E_MULTIPLIER[self.e_level - 1]
-        damage = self.get_max_hp() * multiplier * (1 + self.get_e_bonus())
-        return plan.add_damage(damage)
-    
-    def add_hei_dao_damage(self, plan: ActionPlan):
-        damage = self.get_max_hp() * Character_FuFu.HEI_DAO_MULTIPLIER * (1 + self.get_normal_a_bonus())
-        return plan.add_damage(damage)
-    
+        multiplier = Character_FuFu.E_MULTIPLIER[self.e_level]
+        damage = self.get_hp().get_max_hp() * multiplier * (1 + plan.get_e_bonus(self))
+        plan.add_damage(damage)
+
     def add_mang_huang_damage(self, plan: ActionPlan):
-        return self.add_hei_dao_damage(plan)
-    
-    def add_bai_dao_damage(self, plan: ActionPlan):
-        damage = self.get_max_hp() * Character_FuFu.BAI_DAO_MULTIPLIER * (1 + self.get_normal_a_bonus())
-        return plan.add_damage(damage)
 
-    def __add_salon_member_damage(self, plan: ActionPlan, multiplier, force_add_fufu_q_bonus):
-        max_hp = self.get_max_hp()
-        e_bonus = 1
-        if plan.qi_fen_zhi_supervisor.effective_qi_fen_zhi == 0 and force_add_fufu_q_bonus:
-            # print("force add q bonus")
-            hp += round(self.MAX_QI_FEN_ZHI * self.QI_HP_MULTIPLIER * Character_FuFu.BASE_HP)
-            e_bonus += self.MAX_QI_FEN_ZHI * Character_FuFu.QI_BONUS_MULTIPLIER[self.q_level - 1]
 
-        e_bonus += self.get_e_bonus() + self.gu_you_tian_fu_2_bonus(max_hp)
 
-        e_extra_bonus = 1
-        for t in plan.characters:
-            if t.get_hp().get_cur_hp_per() > 0.5:
-                e_extra_bonus += 0.1
-        
-        damage = max_hp *  multiplier * e_bonus * e_extra_bonus
-        return plan.add_damage(damage)
-
-    def add_fu_ren_damage(self, plan: ActionPlan, force_add_fufu_q_bonus):
-        multiplier = Character_FuFu.FU_REN_MULTIPLIER[self.e_level - 1]
-        return self.__add_salon_member_damage(plan, multiplier, force_add_fufu_q_bonus)
-    
-    def add_xun_jue_damage(self, plan: ActionPlan, force_add_fufu_q_bonus):
-        multiplier = Character_FuFu.XUN_JUE_MULTIPLIER[self.e_level - 1]
-        return self.__add_salon_member_damage(plan, multiplier, force_add_fufu_q_bonus)
-    
-    def add_pang_xie_damage(self, plan: ActionPlan, force_add_fufu_q_bonus):
-        multiplier = Character_FuFu.PANG_XIE_MULTIPLIER[self.e_level - 1]
-        return self.__add_salon_member_damage(plan, multiplier, force_add_fufu_q_bonus)
 
 
 R_CUR_HP_KEY = "cur_hp"
@@ -164,20 +123,20 @@ R_CUR_Q_BONUS_INIT = R_CUR_Q_BONUS_KEY + " = 1 + q_bonus"
 class FuFuActionPlan(ActionPlan):
     def __init__(self, fufu_initial_state: Character_FuFu, teammates: list[Character]):
         self.__fufu: Character_FuFu = copy.deepcopy(fufu_initial_state)
-        chs = copy.deepcopy(teammates)
-        # 把芙芙放在 P1
-        chs.insert(0, self.__fufu)
-        super().__init__(characters=chs, monster=Monster())
+        self.__teammates: list[Character] = copy.deepcopy(teammates)
+        super().__init__(characters=[self.__fufu] + self.__teammates,
+                         monster=Monster())
         
-        self.qi_fen_zhi_supervisor = Qi_Fen_Zhi_Supervisor(self.__fufu)
+        self.qi_fen_zhi_supervisor = Qi_Fen_Zhi_Supervisor()
 
         if self.__fufu.ming_zuo_num >= 6:
-            self.add_hei_fu_damage_callback(Hei_Fu_Cure_Supervisor(self.__fufu).on_hei_fu_damage)
+            self.add_hei_fu_damage_callback(Hei_Fu_Cure_Supervisor().on_hei_fu_damage)
 
-        self.add_over_healed_callback(FuFu_GuYouTianFu_1_Supervisor(self.__fufu).on_over_healed)
+        self.add_over_healed_callback(FuFu_GuYouTianFu_1_Supervisor().on_over_healed)
 
-        self.__fufu.get_weapon().apply_combat_attributes(self.__fufu)
         self.__fufu.get_weapon().apply_passive(self.__fufu, self)
+
+        self.ye_lan_q_bonus = YeLanQBonus()
 
         self.full_six_damage = 0
 
@@ -194,6 +153,40 @@ class FuFuActionPlan(ActionPlan):
             R_CUR_Q_BONUS_KEY: R_CUR_Q_BONUS_INIT
         }
         self.last_printed_strs = {}
+
+    def get_fufu(self) -> Character_FuFu:
+        return self.__fufu
+    
+    def get_teammates(self) -> list[Character]:
+        return self.__teammates
+
+    def get_teammate(self, name) -> Character:
+        for t in self.__teammates:
+            if t.name == name:
+                return t
+
+    def get_max_hp(self):
+        return self.__fufu.get_hp().get_max_hp()
+
+    def get_a_bonus(self):
+        self.debug("芙芙普攻元素增伤: %s", round(self.__fufu.get_a_bonus(), 3))
+        return self.__fufu.get_a_bonus() + self.get_ye_lan_q_bonus()
+
+    def get_e_bonus(self):
+        self.debug("芙芙e元素增伤: %s", round(self.__fufu.get_e_bonus(), 3))
+        return self.__fufu.get_e_bonus() + self.get_ye_lan_q_bonus()
+
+    def get_q_bonus(self):
+        self.debug("芙芙q元素增伤: %s", round(self.__fufu.get_q_bonus(), 3))
+        return self.__fufu.get_q_bonus() + self.get_ye_lan_q_bonus()
+
+    def get_ye_lan_q_bonus(self):
+        if self.__fufu.is_in_foreground():
+            self.debug("芙芙在前台获得夜兰增伤: %s", round(
+                self.ye_lan_q_bonus.bonus(self.get_current_action_time()), 3))
+            return self.ye_lan_q_bonus.bonus(self.get_current_action_time())
+        else:
+            return 0
 
     ##################################################
 
@@ -250,7 +243,7 @@ class FuFuActionPlan(ActionPlan):
             q_lst.append(str(round(self.extra_q_bonus, 3)))
 
         if self.__fufu.BASE_QI_FEN_ZHI:
-            q_lst.append(str(self.__fufu.BASE_QI_FEN_ZHI) + " * " + str(self.__fufu.QI_TO_BONUS_MULTIPLIER))
+            q_lst.append(str(self.__fufu.BASE_QI_FEN_ZHI) + " * " + str(self.__fufu.QI_TO_BONUS_BEI_LV))
 
         if self.zhuan_wu_supervisor and self.zhuan_wu_supervisor.e_bonus_level:
             e_lst.append("0.08 * " + str(self.zhuan_wu_supervisor.e_bonus_level))
@@ -259,7 +252,7 @@ class FuFuActionPlan(ActionPlan):
         qi = min(self.__fufu.MAX_QI_FEN_ZHI, self.qi_fen_zhi_supervisor.effective_qi_fen_zhi)
         qi = round(qi, 3)
         if qi:
-            qi_str = str(qi) + " * " + str(self.__fufu.QI_TO_BONUS_MULTIPLIER)
+            qi_str = str(qi) + " * " + str(self.__fufu.QI_TO_BONUS_BEI_LV)
             a_lst.append(qi_str)
             e_lst.append(qi_str)
 
@@ -356,10 +349,8 @@ class FuFuActionPlan(ActionPlan):
         if hasattr(self.events, "on_hei_fu_damage"):
             self.events.on_hei_fu_damage(self)
 
-
 class Qi_Fen_Zhi_Supervisor:
-    def __init__(self, fufu: Character_FuFu):
-        self.fufu = fufu
+    def __init__(self):
         self.blocking = True
 
         self.__qi_fen_zhi = 0
@@ -379,16 +370,18 @@ class Qi_Fen_Zhi_Supervisor:
 
     def on_hp_changed(self, plan: FuFuActionPlan, source: Character, targets_with_data: list[Character_HP_Change_Data]):
         qi_fen_zhi = 0
+        fufu = plan.get_fufu()
 
         for tdata in targets_with_data:
-            qi_fen_zhi += abs(tdata.data.hp_per) * self.fufu.QI_INCREASE_MULTIPLIER * 100
+            qi_fen_zhi += abs(tdata.data.hp_per) * fufu.QI_INCREASE_BEI_LV * 100
 
         self.add_qi_fen_zhi(plan, qi_fen_zhi)
 
     def add_qi_fen_zhi(self, plan: FuFuActionPlan, qi):
+        fufu = plan.get_fufu()
         self.__qi_fen_zhi += qi
-        if self.__qi_fen_zhi > self.fufu.MAX_TOTAL_QI_FEN_ZHI:
-            self.__qi_fen_zhi = self.fufu.MAX_TOTAL_QI_FEN_ZHI
+        if self.__qi_fen_zhi > fufu.MAX_TOTAL_QI_FEN_ZHI:
+            self.__qi_fen_zhi = fufu.MAX_TOTAL_QI_FEN_ZHI
         plan.debug("气氛值增加%s, 增加到:%s", round(qi, 3), round(self.__qi_fen_zhi, 3))
 
         if self.blocking:
@@ -423,7 +416,7 @@ class Qi_Fen_Zhi_Supervisor:
         self.prev_qi_healing_bonus = t[1]
         self.prev_qi_hp_per_bonus = t[2]
 
-        if self.__qi_fen_zhi >= self.fufu.MAX_TOTAL_QI_FEN_ZHI:
+        if self.__qi_fen_zhi >= plan.get_fufu().MAX_TOTAL_QI_FEN_ZHI:
             self.stop_supervise(plan)
 
         if enable_record:
@@ -433,20 +426,22 @@ class Qi_Fen_Zhi_Supervisor:
         return True
 
     def __do_apply_qi_fen_zhi(self, plan: FuFuActionPlan):
-        fufu = self.fufu
+        fufu = plan.get_fufu()
+
         if self.__qi_fen_zhi > fufu.MAX_QI_FEN_ZHI:
             bonus_qi_fen_zhi = fufu.MAX_QI_FEN_ZHI
-            hp_qi_fen_zhi = self.__qi_fen_zhi - self.fufu.MAX_QI_FEN_ZHI
+            hp_qi_fen_zhi = self.__qi_fen_zhi - fufu.MAX_QI_FEN_ZHI
         else:
             bonus_qi_fen_zhi = self.__qi_fen_zhi
             hp_qi_fen_zhi = 0
 
-        elem_bonus = bonus_qi_fen_zhi * fufu.QI_TO_BONUS_MULTIPLIER
-        healing_bonus = bonus_qi_fen_zhi * fufu.QI_TO_CURE_MULTIPLIER
-        hp_per_bonus = hp_qi_fen_zhi * fufu.QI_HP_MULTIPLIER
+        elem_bonus = bonus_qi_fen_zhi * fufu.QI_TO_BONUS_BEI_LV
+        healing_bonus = bonus_qi_fen_zhi * fufu.QI_TO_CURE_BEI_LV
+        hp_per_bonus = hp_qi_fen_zhi * fufu.QI_HP_BEI_LV
 
         fufu.modify_all_elem_bonus(elem_bonus - self.prev_qi_elem_bonus)
-        for t in plan.characters:
+        fufu.modify_incoming_healing_bonus(healing_bonus - self.prev_qi_healing_bonus)
+        for t in plan.get_teammates():
             t.modify_incoming_healing_bonus(healing_bonus - self.prev_qi_healing_bonus)
         fufu.get_hp().modify_max_hp_per(hp_per_bonus - self.prev_qi_hp_per_bonus)
         plan.debug("气氛值调整完成，生命值上限：%d， a_bonus: %s, e_bonus: %s, q_bonus: %s, healing_bonus:%s",
@@ -473,15 +468,13 @@ class Apply_Qi_Fen_Zhi_Action(Action):
         plan.insert_action_runtime(action)
 
 
-# 固有天赋1： 非源自芙芙的治疗溢出时，会触发芙芙回血
 class FuFu_GuYouTianFu_1_Supervisor:
-    def __init__(self, fufu: Character_FuFu):
-        self.fufu = fufu
+    def __init__(self):
         self.min_cure_num = 0
         self.end_time = None
 
     def on_over_healed(self, plan: FuFuActionPlan, source: Character, targets_with_data: list[Character_HP_Change_Data]):
-        if source is None or source is self.fufu:
+        if source is None or source is plan.get_fufu():
             return
 
         cur_time = plan.get_current_action_time()
@@ -544,38 +537,47 @@ class FuFu_GuYouTianFu_1_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
         self.supervisor.do_cure(plan)
 
-
 class FuFu_Q_Action(Action):
-    def __init__(self, fufu: Character_FuFu):
-        super().__init__("芙芙 Q 功能开始生效")
-        self.fufu = fufu
-
     def do_impl(self, plan: FuFuActionPlan):
+        plan.switch_to_forground(plan.get_fufu().name)
         plan.fufu_q_start()
 
 
 class FuFu_Q_Damage_Action(FuFu_Q_Action):
-    def __init__(self, fufu: Character_FuFu):
-        super().__init__("芙芙Q出伤")
-        self.fufu = fufu
-
     def do_impl(self, plan: FuFuActionPlan):
         super().do_impl(plan)
-        self.fufu.add_q_damage(plan)
+        self.do_damage(plan)
+
+    def do_damage(self, plan: FuFuActionPlan):
+        hp = plan.get_max_hp()
+        q_bonus = 1 + plan.get_q_bonus()
+
+        q_damage = hp * plan.get_fufu().Q_BEI_LV / 100 * q_bonus
+        q_damage = plan.add_damage(q_damage)
+        self.debug("芙芙q出伤, %d, hp: %s, q_bonus:%s, monster:%s",
+                   round(q_damage), hp, round(q_bonus, 3), plan.monster)
+        if enable_record:
+            plan.print_damage(bei_lv_str="fufu.Q_BEI_LV / 100",
+                            bonus_key=R_CUR_Q_BONUS_KEY)
 
 
 class FuFu_E_Action(Action):
-    def __init__(self, fufu: Character_FuFu):
-        super().__init__("芙芙E出伤")
-        self.fufu = fufu
-
     def do_impl(self, plan: FuFuActionPlan):
-        self.fufu.add_e_damage(plan)
+        plan.switch_to_forground(plan.get_fufu().name)
+        hp = plan.get_max_hp()
+        e_bonus = 1 + plan.get_e_bonus()
+
+        e_damage = hp * plan.get_fufu().E_BEI_LV / 100 * e_bonus
+        e_damage = plan.add_damage(e_damage)
+        self.debug("芙芙e出伤, %d, hp: %s, bonus: %s, monster:%s",
+                   round(e_damage), hp, round(e_bonus, 3), plan.monster)
+        if enable_record:
+            plan.print_damage(bei_lv_str="fufu.E_BEI_LV / 100",
+                            bonus_key=R_CUR_E_BONUS_KEY)
 
 
 class Hei_Fu_Cure_Supervisor:
-    def __init__(self, fufu: Character_FuFu):
-        self.fufu = fufu
+    def __init__(self):
         self.end_time = None
         self.is_cure_fufu_sync = True
         self.last_cure_teammate_actual_time = 0
@@ -630,7 +632,7 @@ class Hei_Fu_Cure_Supervisor:
         
         fufu_hp_decreased = False
         for tdata in targets_with_data:
-            if tdata.character is self.fufu:
+            if tdata.character is plan.get_fufu():
                 fufu_hp_decreased = tdata.has_changed()
                 break
 
@@ -645,9 +647,8 @@ class Hei_Fu_Cure_Action(Action):
         self.actual_cure_time = 0
         self.supervisor: Hei_Fu_Cure_Supervisor = supervisor
 
-    def get_cure_num(self):
-        fufu = self.supervisor.fufu
-        return round(fufu.get_max_hp() * 0.04)
+    def get_cure_num(self, fufu: Character):
+        return round(fufu.get_hp().get_max_hp() * 0.04)
     
     def do_impl(self, plan: FuFuActionPlan):
         if self.actual_cure_time > self.supervisor.end_time:
@@ -662,10 +663,9 @@ class Hei_Fu_Cure_Teammate_Action(Hei_Fu_Cure_Action):
         super().__init__("治疗后台三人", supervisor)
 
     def do_cure(self, plan: FuFuActionPlan):
-        cure_num = self.get_cure_num()
+        cure_num = self.get_cure_num(plan.get_fufu())
         self.debug("治疗后台三人, %s", cure_num)
-        fufu = self.supervisor.fufu
-        plan.regenerate_hp(targets=fufu.get_teammates(), hp=cure_num)
+        plan.regenerate_hp(targets=plan.get_teammates(), hp=cure_num)
 
         self.re_schedule(plan)
 
@@ -686,7 +686,7 @@ class Hei_Fu_Cure_FuFu_Action(Hei_Fu_Cure_Action):
         super().__init__("治疗芙芙", supervisor)
 
     def do_cure(self, plan: FuFuActionPlan):
-        fufu = self.supervisor.fufu
+        fufu = plan.get_fufu()
 
         if fufu.get_hp().is_full():
             self.debug("治疗芙芙时，芙芙满血，阻塞并转入独立模式")
@@ -694,7 +694,7 @@ class Hei_Fu_Cure_FuFu_Action(Hei_Fu_Cure_Action):
             self.supervisor.is_cure_fufu_sync = False
             plan.add_consume_hp_callback(self.supervisor.on_consume_hp)
         else:
-            cure_num = self.get_cure_num()
+            cure_num = self.get_cure_num(fufu)
             self.debug("治疗芙芙，%s", cure_num)
             plan.regenerate_hp(targets=[fufu], hp=cure_num)
 
@@ -711,168 +711,263 @@ class Hei_Fu_Cure_FuFu_Action(Hei_Fu_Cure_Action):
             next_time = self.actual_cure_time + plan.get_hei_fu_cure_interval()
             self.supervisor.start_cure_fu_fu(plan, next_time)
 
-class Mang_Huang_Damage_Action(Action):
-    def __init__(self, name, fufu: Character_FuFu):
-        super().__init__(name)
-        self.fufu = fufu
 
+# 芒、荒的伤害刀似乎都是按黑芙计算的
+# 注意：芒荒刀出伤的时候，芙芙不一定在前台
+
+
+class Mang_Huang_Damage_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
-        damage = self.fufu.add_mang_huang_damage(plan)
+        monster = plan.monster
+
+        hp = plan.get_max_hp()
+        a_bonus = 1 + plan.get_a_bonus()
+
+        damage = hp * HEI_FU_BEI_LV / 100 * a_bonus
+        damage = plan.add_damage(damage)
         plan.full_six_damage += damage
+        self.debug("芒/荒刀出伤，%d, hp: %s, bonus: %s, monster:%s",
+                   round(damage), hp, round(a_bonus, 3), monster)
+        if enable_record:
+            plan.print_damage(bei_lv_str="HEI_FU_BEI_LV / 100",
+                            bonus_key=R_CUR_A_BONUS_KEY)
 
 
 class Hei_Fu_Damage_Action(Action):
-    def __init__(self, name, fufu: Character_FuFu):
-        super().__init__(name)
-        self.fufu = fufu
-
     def do_impl(self, plan: FuFuActionPlan):
-        damage = self.fufu.add_hei_dao_damage(plan)
-        plan.full_six_damage += damage
-
+        plan.switch_to_forground(plan.get_fufu().name)
+        self.do_damage(plan)
+        #self.do_cure(plan)
         plan.call_hei_fu_damage_callback()
+
+    def do_damage(self, plan: FuFuActionPlan):
+        hp = plan.get_max_hp()
+        a_bonus = 1 + plan.get_a_bonus()
+        damage = hp * HEI_FU_BEI_LV / 100 * a_bonus
+        damage = plan.add_damage(damage)
+        plan.full_six_damage += damage
+        self.debug("%s出伤, %d, hp: %s, bonus:%s, monster:%s",
+                   self.name, round(damage), hp, round(a_bonus, 3), plan.monster)
+        if enable_record:
+            plan.print_damage(bei_lv_str="HEI_FU_BEI_LV / 100",
+                            bonus_key=R_CUR_A_BONUS_KEY)
 
 
 class Bai_Dao_Kou_Xue_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
         # 白刀扣血 1%
-        self.debug(self.name)
+        self.debug("%s", self.name)
         plan.fufu_consume_hp_per(0.01)
 
 
 class Bai_Fu_Damage_Action(Action):
-    def __init__(self, name, fufu: Character_FuFu):
+    def do_impl(self, plan: FuFuActionPlan):
+        plan.switch_to_forground(plan.get_fufu().name)
+
+        hp = plan.get_max_hp()
+        bonus = 1 + plan.get_a_bonus()
+        damage = hp * BAI_FU_BEI_LV / 100 * bonus
+        damage = plan.add_damage(damage)
+        plan.full_six_damage += damage
+        self.debug("%s出伤，%d, hp: %s, bonus:%s, monster:%s",
+                   self.name, round(damage), hp, round(bonus,  3), plan.monster)
+        if enable_record:
+            plan.print_damage(bei_lv_str="BAI_FU_BEI_LV / 100",
+                            bonus_key=R_CUR_A_BONUS_KEY)
+
+
+class Switch_To_Character_Action(Action):
+    def __init__(self, name, character_name):
         super().__init__(name)
-        self.fufu = fufu
+        self.character_name = character_name
 
     def do_impl(self, plan: FuFuActionPlan):
-        damage = self.fufu.add_bai_dao_damage(plan)
-        plan.full_six_damage += damage
+        self.debug("切换到%s", self.character_name)
+        plan.switch_to_forground(self.character_name)
+
+class Q_Animation_Action(Action):
+    def __init__(self, name, character_name):
+        super().__init__(name)
+        self.character_name = character_name
+
+    def do_impl(self, plan: FuFuActionPlan):
+        self.set_anim_state(plan.get_character_by_name(self.character_name))
+
+    def set_anim_state(self, ch: Character):
+        pass
+
+class Q_Animation_Start_Action(Q_Animation_Action):
+    def set_anim_state(self, ch: Character):
+        self.debug("%s大招动画开始", self.character_name)
+        ch.get_hp().set_in_q_animation(True)
+
+
+class Q_Animation_Stop_Action(Q_Animation_Action):
+    def set_anim_state(self, ch: Character):
+        self.debug("%s大招动画结束", self.character_name)
+        ch.get_hp().set_in_q_animation(False)
+
+
+class Ye_Lan_4_Ming_Action(Action):
+    def do_impl(self, plan: FuFuActionPlan):
+        plan.ye_lan_e_num += 1
+        self.debug("夜兰四命生效一层")
+        if enable_record:
+            plan.damage_record_hp()
+        plan.get_fufu().get_hp().modify_max_hp_per(0.1)
+        for t in plan.get_teammates():
+            t.get_hp().modify_max_hp_per(0.1)
+
+        # hps_str = "fufu:" + str(plan.get_fufu().get_hp().get_max_hp()) + ", "
+        # for t in plan.get_teammates():
+        #     hps_str += t.name + ":" + str(t.get_hp().get_max_hp()) + ", "
+        # self.debug("夜兰e后各角色生命值上限: %s", hps_str)
+
+
+class Ye_Lan_Q_Bonus_Start(Action):
+    def __init__(self, name, ye_lan_name):
+        super().__init__(name)
+        self.ye_lan_name = ye_lan_name
+
+    def do_impl(self, plan: FuFuActionPlan):
+        self.debug("夜兰大招出伤")
+        ye_lan = plan.get_teammate(self.ye_lan_name)
+        ye_lan.get_hp().set_in_q_animation(False)
+        plan.ye_lan_q_bonus.start(self.get_timestamp())
 
 
 class Fu_Fu_Q_Bonus_Stop_Action(Action):
-    def __init__(self):
-        super().__init__("芙芙大招效果消失")
-
     def do_impl(self, plan: FuFuActionPlan):
-        self.debug(self.name)
+        self.debug("芙芙大招效果消失")
         plan.fufu_q_stop()
 
 
-class Salon_Member_Damage_Action(Action):
-    def __init__(self, name, fufu: Character_FuFu):
-        super().__init__(name)
-        self.fufu = fufu
-        self.force_add_fufu_q_bonus = False
+class Ye_Lan_Q_Bonus_Stop_Actioin(Action):
+    def do_impl(self, plan: FuFuActionPlan):
+        self.debug("夜兰大招效果消失")
+        plan.ye_lan_q_bonus.stop()
 
-    def enable_force_add_fufu_q_bonus(self):
-        self.force_add_fufu_q_bonus = True
+
+class Salon_Member_Damage_Action(Action):
+    def __init__(self, name, force_add_fufu_q_bonus=False):
+        super().__init__(name)
+        self.force_add_fufu_q_bonus = force_add_fufu_q_bonus
+
+    def do_damage(self, plan: FuFuActionPlan, bei_lv):
+        hp = plan.get_max_hp()
+        fufu = plan.get_fufu()
+        e_bonus = 1 + plan.get_e_bonus() + fufu.gu_you_tian_fu_2_bonus(hp)
+
+        if plan.qi_fen_zhi_supervisor.effective_qi_fen_zhi == 0 and self.force_add_fufu_q_bonus:
+            # print("force add q bonus")
+            hp += round(fufu.MAX_QI_FEN_ZHI * fufu.QI_HP_BEI_LV * Character_FuFu.BASE_HP)
+            e_bonus += fufu.MAX_QI_FEN_ZHI * fufu.QI_TO_BONUS_BEI_LV
+
+        e_extra_bonus = 1
+        if fufu.get_hp().get_cur_hp_per() > 0.5:
+            e_extra_bonus += 0.1
+        
+        for t in plan.get_teammates():
+            if t.get_hp().get_cur_hp_per() >  0.5:
+                e_extra_bonus += 0.1
+        
+        damage = hp * bei_lv / 100 * e_bonus * e_extra_bonus
+        damage = plan.add_damage(damage)
+
+        self.debug("%s出伤, damage: %s, hp:%s bonus:%s, monster:%s",
+                   fufu.bei_lv_to_salon_member_name[bei_lv], round(damage), 
+                   hp, round(e_bonus, 3), plan.monster)
+        if enable_record:
+            plan.print_damage(bei_lv_str=fufu.bei_lv_to_str[bei_lv],
+                            bonus_key=R_SALON_MEMBER_BONUS_KEY, 
+                            others=round(e_extra_bonus, 1))
 
 
 class Fu_Ren_Kou_Xue_Action(Action):
-    NAME = "夫人扣血"
-    INTERVAL = (1468, 1684)
-
-    def __init__(self):
-        super().__init__(Fu_Ren_Kou_Xue_Action.NAME)
-
     def do_impl(self, plan: FuFuActionPlan):
-        self.debug(Fu_Ren_Kou_Xue_Action.NAME)
+        self.debug("夫人扣血")
         plan.fufu_consume_hp_per(0.016)
 
 
 class Fu_Ren_Damage_Action(Salon_Member_Damage_Action):
-    NAME = "夫人出伤"
-    INTERVAL = (1467, 1725)
-    TIME_AFTER_KOU_XUE = (330, 721)
-
-    def __init__(self, fufu: Character_FuFu):
-        super().__init__(Fu_Ren_Damage_Action.NAME, fufu)
-
     def do_impl(self, plan: FuFuActionPlan):
-        self.fufu.add_fu_ren_damage(plan, self.force_add_fufu_q_bonus)
+        self.do_damage(plan, plan.get_fufu().FU_REN_BEI_LV)
 
 
 class Xun_Jue_Kou_Xue_Action(Action):
-    NAME = "勋爵扣血"
-    INTERVAL = (3180, 3387)
-
-    def __init__(self):
-        super().__init__(Xun_Jue_Kou_Xue_Action.NAME)
-
     def do_impl(self, plan: FuFuActionPlan):
-        self.debug(Xun_Jue_Kou_Xue_Action.NAME)
+        self.debug("勋爵扣血")
         plan.fufu_consume_hp_per(0.024)
 
 
 class Xun_Jue_Damage_Action(Salon_Member_Damage_Action):
-    NAME = "勋爵出伤"
-    INTERVAL = (3127, 3443)
-    TIME_AFTER_KOU_XU = (723, 951)
-
-    def __init__(self, fufu: Character_FuFu):
-        super().__init__(Xun_Jue_Damage_Action.NAME, fufu)
-
     def do_impl(self, plan: FuFuActionPlan):
-        self.fufu.add_xun_jue_damage(plan, self.force_add_fufu_q_bonus)
+        self.do_damage(plan, plan.get_fufu().XUN_JUE_BEI_LV)
 
 
 class Pang_Xie_Kou_Xue_Action(Action):
-    NAME = "螃蟹扣血"
-    INTERVAL = (5056, 5293)
-
-    def __init__(self):
-        super().__init__(Pang_Xie_Kou_Xue_Action.NAME)
-
     def do_impl(self, plan: FuFuActionPlan):
-        self.debug(Pang_Xie_Kou_Xue_Action.NAME)
+        self.debug("螃蟹扣血")
         plan.fufu_consume_hp_per(0.036)
 
 
 class Pang_Xie_Damage_Action(Salon_Member_Damage_Action):
-    NAME = "螃蟹出伤"
-    INTERVAL = (5063, 5325)
-    TIME_AFTER_KOU_XU = (745, 1018)
-
-    def __init__(self, fufu: Character_FuFu):
-        super().__init__(Pang_Xie_Damage_Action.NAME, fufu)
-
     def do_impl(self, plan: FuFuActionPlan):
-        self.fufu.add_pang_xie_damage(plan, self.force_add_fufu_q_bonus)
+        self.do_damage(plan, plan.get_fufu().PANG_XIE_BEI_LV)
 
 
 class Ge_Zhe_Cure_Action(Action):
-    def __init__(self, fufu: Character_FuFu):
-        super().__init__("歌者治疗")
-        self.fufu = fufu
-
     def do_impl(self, plan: FuFuActionPlan):
-        cure_num = self.fufu.get_ge_zhe_cure_num(plan)
+        fufu = plan.get_fufu()
+        cure_num = round(plan.get_max_hp() * fufu.GE_ZHE_CURE_BEI_LV / 100 + fufu.GE_ZHE_CURE_BASE)
+
         foreground_character = plan.get_foreground_character()
         self.debug("歌者治疗 %s, 治疗量: %s", foreground_character.name, cure_num)
         plan.regenerate_hp(targets=[foreground_character], hp=cure_num)
 
 
+FU_REN_NAME = "夫人"
+XUN_JUE_NAME = "勋爵"
+PANG_XIE_NAME = "螃蟹"
+
+kou_xue_interval_dict = {
+    FU_REN_NAME: (1468, 1684),
+    XUN_JUE_NAME: (3180, 3387),
+    PANG_XIE_NAME: (5056, 5293)
+}
+
+chu_shang_interval_dict = {
+    FU_REN_NAME: (1467, 1725),
+    XUN_JUE_NAME: (3127, 3443),
+    PANG_XIE_NAME: (5063, 5325)
+}
+
+chu_shang_kou_xue_interval_dict = {
+    FU_REN_NAME: (330, 721),
+    XUN_JUE_NAME: (723, 951),
+    PANG_XIE_NAME: (745, 1018)
+}
+
 # for debug only
 salon_member_min_k_num = {
-    Fu_Ren_Kou_Xue_Action.NAME: 0,
-    Xun_Jue_Kou_Xue_Action.NAME: 0,
-    Pang_Xie_Kou_Xue_Action.NAME: 0,
+    FU_REN_NAME: 0,
+    XUN_JUE_NAME: 0,
+    PANG_XIE_NAME: 0,
 }
+
 salon_member_min_c_num = {
-    Fu_Ren_Damage_Action.NAME: 0,
-    Xun_Jue_Damage_Action.NAME: 0,
-    Pang_Xie_Damage_Action.NAME: 0
+    FU_REN_NAME: 0,
+    XUN_JUE_NAME: 0,
+    PANG_XIE_NAME: 0,
 }
 
 
-def schedule_little_three(plan: FuFuActionPlan, 
-                          fufu: Character_FuFu,
+def schedule_little_three(plan: FuFuActionPlan, name,
                           start_time, end_time,
                           kou_xue_cls, chu_shang_cls,
                           kou_xue_num=None, chu_shang_num=None):
     """
-    关于 kou_xue_num 和 chu_shang_num:
+    关于kou_xue_num和chu_shang_num:
     
     为了使每次运行的结果更稳定，这两个参数在最终版本是一定要指定具体数值，不能为 None 的，这个数值的确定方法如下:
     
@@ -880,10 +975,9 @@ def schedule_little_three(plan: FuFuActionPlan,
     * 配置好 logging 模块的输出文件并启用
     * 执行程序，在Logging的输出里会有建议值
     """
-    kou_xue_interval_min, kou_xue_interval_max = kou_xue_cls.INTERVAL
-    chu_shang_interval_min, chu_shang_interval_max = chu_shang_cls.INTERVAL
-    chu_kou_interval_min, chu_kou_interval_max = chu_shang_cls.TIME_AFTER_KOU_XU
- 
+    kou_xue_interval_min, kou_xue_interval_max = kou_xue_interval_dict[name]
+    chu_shang_interval_min, chu_shang_interval_max = chu_shang_interval_dict[name]
+    chu_kou_interval_min, chu_kou_interval_max = chu_shang_kou_xue_interval_dict[name]
 
     # 三小只第一次扣血并不一定是同时的，是在一个窗口内有先后顺序
     kou_xue_time = start_time + randtime(0, 133)
@@ -896,7 +990,7 @@ def schedule_little_three(plan: FuFuActionPlan,
     c_action_lst = []
 
     while kou_xue_time < end_time:
-        kou_xue_action = kou_xue_cls()
+        kou_xue_action = kou_xue_cls(name + "扣血")
         kou_xue_action.set_timestamp(kou_xue_time + plan.get_effective_delay())
         plan.insert_action(kou_xue_action)
         k_action_lst.append(kou_xue_action)
@@ -904,28 +998,14 @@ def schedule_little_three(plan: FuFuActionPlan,
 
         if not chu_shang_num or c_num < chu_shang_num:
             if last_chu_shang_time:
-                # 我们可以从两种途径计算出本次出伤的时间：
-                # 1. 上次出伤时间 + 出伤间隔
-                # 2. 扣血时间 + 出伤-扣血间隔
-
-                # 途径1 的 最小、最大值
                 c_min = last_chu_shang_time + chu_shang_interval_min / 1000
                 c_max = last_chu_shang_time + chu_shang_interval_max / 1000
 
-                # 途径2 的 最小、最大值
                 k_min = kou_xue_time + chu_kou_interval_min / 1000
                 k_max = kou_xue_time + chu_kou_interval_max / 1000
 
-                # 有交集：出伤时间点需要同时满足两者的要求
-                #   [k_min, k_max]   [k_min, k_max]     [k_min, k_max]    [k_min,     k_max]
-                # [c_min, c_max]      [c_min, c_max]  [c_min,     c_max]    [c_min, c_max]
-                # 无交集: 以 途径1 计算出的为准
-                #                 [k_min, k_max]
-                # [c_min, c_max]                  [c_min, c_max]
-
-                # 途径1：随机出一个时间点
-                chu_shang_time = last_chu_shang_time + randtime(chu_shang_interval_min, chu_shang_interval_max)
-
+                chu_shang_time = last_chu_shang_time + \
+                    randtime(chu_shang_interval_min, chu_shang_interval_max)
                 if k_min > c_max or k_max < c_min:
                     # 没有交集，以出伤间隔为准
                     # logging.debug("以出伤间隔为准 kou_xue_time: %s, last_chu_shang_time: %s, c_min: %s, c_max:%s, k_min:%s, k_max:%s",
@@ -944,13 +1024,13 @@ def schedule_little_three(plan: FuFuActionPlan,
                 chu_shang_time = kou_xue_time + randtime(chu_kou_interval_min, chu_kou_interval_max)
 
             if chu_shang_time < end_time:
-                chu_shang_action = chu_shang_cls(fufu)
+                chu_shang_action = chu_shang_cls(name + "出伤")
                 chu_shang_action.set_timestamp(chu_shang_time)
                 plan.insert_action(chu_shang_action)
                 c_action_lst.append(chu_shang_action)
                 c_num += 1
 
-            last_chu_shang_time = chu_shang_time
+        last_chu_shang_time = chu_shang_time
 
         if kou_xue_num and k_num >= kou_xue_num:
             break
@@ -965,38 +1045,35 @@ def schedule_little_three(plan: FuFuActionPlan,
 
     if enable_debug:
         # logging.debug(f"{name}: {start_time:.3f} to {end_time:.3f}: k_num = {k_num} c_num = {c_num}")
-        cur_min_k_num = salon_member_min_k_num[kou_xue_cls.NAME]
-        cur_min_c_num = salon_member_min_c_num[chu_shang_cls.NAME]
+        cur_min_k_num = salon_member_min_k_num[name]
+        cur_min_c_num = salon_member_min_c_num[name]
         if cur_min_k_num == 0 or k_num <  cur_min_k_num:
-            salon_member_min_k_num[kou_xue_cls.NAME] = k_num
+            salon_member_min_k_num[name] = k_num
 
         if cur_min_c_num == 0 or c_num < cur_min_c_num:
-            salon_member_min_c_num[chu_shang_cls.NAME] = c_num
+            salon_member_min_c_num[name] = c_num
 
 
     return (k_action_lst, c_action_lst)
 
 
 def calc_score(fufu_initial_state: Character_FuFu, 
-               create_plan_func: Callable[[Character_FuFu], FuFuActionPlan]):
+               aciton_plan_creator_func: Callable[[Character_FuFu], ActionPlan]):
     all_damage = 0
     full_six_zhan_bi = 0
     run_num = MAX_RUN_NUM
 
     for _ in range(0, run_num):
-        plan = create_plan_func(fufu_initial_state)
+        plan = aciton_plan_creator_func(fufu_initial_state)
+        plan.run()
+        all_damage += plan.total_damage
+        full_six_zhan_bi += plan.full_six_damage / plan.total_damage
 
-        with plan:
-            plan.run()
-
-            all_damage += plan.total_damage
-            full_six_zhan_bi += plan.full_six_damage / plan.total_damage
-
-            if enable_record:
-                expect_score = ys_expect_damage(plan.total_damage, fufu_initial_state.get_crit_rate(), fufu_initial_state.get_crit_damage())
-                crit_score = round(plan.total_damage * (1 + fufu_initial_state.get_crit_damage()))
-                logging.debug("damage: %d, expect_score:%s, crit_score:%s",
-                            round(plan.total_damage), round(expect_score), round(crit_score))
+        if enable_record:
+            expect_score = ys_expect_damage(plan.total_damage, fufu_initial_state.get_crit_rate(), fufu_initial_state.get_crit_damage())
+            crit_score = round(plan.total_damage * (1 + fufu_initial_state.get_crit_damage()))
+            logging.debug("damage: %d, expect_score:%s, crit_score:%s",
+                          round(plan.total_damage), round(expect_score), round(crit_score))
 
     all_damage /= run_num
     full_six_zhan_bi /= run_num
@@ -1009,13 +1086,30 @@ def calc_score(fufu_initial_state: Character_FuFu,
     return (all_damage, round(full_six_zhan_bi, 3))
 
 
-def scan_syw_combine(syw_combine: list[ShengYiWu], 
-                     fufu_creator_func: Callable[[], Character_FuFu],
-                     check_fufu_func: Callable[[Character_FuFu], bool]) -> Character_FuFu:
+def scan_syw_combine(combine: list[ShengYiWu], 
+                     fufu_creator_func: Callable[[], Character_FuFu]) -> Character_FuFu:
     fufu = fufu_creator_func()
-    fufu.set_syw_combine(syw_combine)
+    fufu.add_crit_rate(0.242 - 0.05)  # 突破加成
 
-    name_count = fufu.get_syw_name_count()
+    for p in combine:
+        fufu.add_crit_rate(p.crit_rate)
+        fufu.add_crit_damage(p.crit_damage)
+        fufu.get_hp().modify_max_hp(p.hp)
+        fufu.get_hp().modify_max_hp_per(p.hp_percent)
+        fufu.add_all_bonus(p.elem_bonus)
+        fufu.add_energy_recharge(p.energy_recharge)
+
+    crit_rate = round(fufu.get_crit_rate(), 3)
+    if crit_rate < 0.70:
+        return None
+
+    energy_recharge = fufu.get_energy_recharge()
+    if energy_recharge < fufu.required_energy_recharge:
+        return None
+
+    syw_names = [p.name for p in combine]
+    # print(syw_names)
+    name_count = {i: syw_names.count(i) for i in syw_names}
     # print(name_count)
     for n in name_count:
         if name_count[n] < 2:  # 散件不计算套装效果
@@ -1033,21 +1127,13 @@ def scan_syw_combine(syw_combine: list[ShengYiWu],
         elif n == ShengYiWu.JU_TUAN:
             fufu.add_e_bonus(0.2)
             if name_count[n] >= 4:
-                # FIXME: 暂时不考虑芙芙在前台会吃不到 0.25 增伤的问题，需要后续软件框架继续完善
-                # 满命芙芙：qeaa起手时，在aa时三小只有一次同时出伤，此时应该是吃不到的
-                # 非满命芙芙：基本在后台，因此基本是能吃满增伤的
+                # FIXME: 暂时不考虑芙芙在前台会吃不到 0.25 增伤的问题，后续需要补充
                 fufu.add_e_bonus(0.25 + 0.25)
-
-    if not check_fufu_func(fufu):
-        return None
 
     return fufu
 
-def qualify_syw(score_data: ShengYiWu_Score, 
-                fufu_creator_func: Callable[[], Character_FuFu],
-                check_fufu_func: Callable[[Character_FuFu], bool],
-                qualify_func):
-    fufu = scan_syw_combine(score_data.syw_combine, fufu_creator_func, check_fufu_func)
+def qualify_syw(score_data: ShengYiWu_Score, fufu_creator_func, qualify_func):
+    fufu = scan_syw_combine(score_data.syw_combine, fufu_creator_func)
     if not fufu:
         return False
 
@@ -1074,18 +1160,17 @@ def qualify_syw(score_data: ShengYiWu_Score,
 
 def calculate_score_common(score_data: ShengYiWu_Score, 
                     fufu_creator_func: Callable[[], Character_FuFu], 
-                    check_fufu_func: Callable[[Character_FuFu], bool],
-                    create_plan_func: Callable[[Character_FuFu], FuFuActionPlan]):
+                    aciton_plan_creator_func: Callable[[Character_FuFu], ActionPlan]):
     if score_data.custom_data:
         fufu = score_data.custom_data
     else:
-        fufu = scan_syw_combine(score_data.syw_combine, fufu_creator_func, check_fufu_func)
+        fufu = scan_syw_combine(score_data.syw_combine, fufu_creator_func)
 
     if not fufu:
         return False
 
     # logging.debug(str(fufu))
-    damage, full_six_zhan_bi = calc_score(fufu, create_plan_func)
+    damage, full_six_zhan_bi = calc_score(fufu, aciton_plan_creator_func)
     if not damage:
         return False
 
@@ -1097,13 +1182,14 @@ def calculate_score_common(score_data: ShengYiWu_Score,
                         round(score_data.expect_score), round(score_data.crit_score),
                         round(fufu.get_crit_rate(), 3), round(fufu.get_crit_damage(), 3))
     
-    panel_hp = fufu.get_max_hp()
+    panel_hp = fufu.get_hp().get_max_hp()
     score_data.custom_data = [full_six_zhan_bi, int(panel_hp),
                               round(fufu.get_e_bonus(), 3), round(fufu.get_normal_a_bonus(), 3),
                               round(fufu.get_crit_rate(), 3), round(fufu.get_crit_damage(), 3), 
                               round(fufu.get_energy_recharge(), 1)]
 
     return True
+
 
 
 def get_debug_raw_score_list():

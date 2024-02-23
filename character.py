@@ -5,9 +5,13 @@ Module documentation.
 """
 
 import logging
+import weakref
+
+from typing import Self
 from ys_basic import Ys_Elem_Type, Ys_Weapon
 from health_point import HealthPoint, HP_Change_Data
 from ys_syw import ShengYiWu
+from attribute_hub import AttributeHub
 
 
 class Character_HP_Change_Data:
@@ -44,24 +48,17 @@ class CharacterBase:
         cls.q_level = q_level
         cls.q_energy = q_energy
 
-    def __init__(self, name=None, elem_type: Ys_Elem_Type = None, ming_zuo_num=0,
-                 ch_level=90, a_level=1, e_level=1, q_level=1, q_energy=80):
-        if name:
-            self.name = name
-        if elem_type:
-            self.elem_type = elem_type
-        if ming_zuo_num:
-            self.ming_zuo_num = ming_zuo_num
-        if ch_level != 90:
-            self.ch_level = ch_level
-        if a_level > 1:
-            self.a_level = a_level
-        if e_level > 1:
-            self.e_level = e_level
-        if q_level > 1:
-            self.q_level = q_level
-        if q_energy != 80:
-            self.q_energy = q_energy
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            if k in ["name", "elem_type", "ming_zuo_num", 
+                     "ch_level", "a_level", "e_level", "q_level", 
+                     "q_energy"]:
+                setattr(self, k, v)
+            else:
+                raise Exception("unknown attribute when init CharacterBase: " + k)
+            
+    def set_ming_zuo_num(self, ming_zuo_num):
+        self.ming_zuo_num = ming_zuo_num
         
 
 class Character(CharacterBase, name="通用角色"):
@@ -125,53 +122,66 @@ class Character(CharacterBase, name="通用角色"):
         self.__q_bonus = base_bonus + q_bonus
 
         self.__in_foreground = False
+        self.__last_fore_back_switch_time = None
 
         self.__weapon: Ys_Weapon = weapon
 
         self.__syw_combine: list[ShengYiWu] = None
         self.__syw_name_count: dict[str, int] = None
 
+        self.__teammates = None
+
+        self.__attribute_hub: AttributeHub = None
+
         if weapon:
+            weapon.set_owner(self)
             weapon.apply_static_attributes(self)
 
-    def get_elem_type(self):
-        return self.elem_type
+    def get_teammates(self) -> list[Self|None]:
+        tms = []
+        for t in self.__teammates:
+            ch = t()
+            if ch is not None:
+                tms.append(ch)
 
-    def set_elem_type(self, et: Ys_Elem_Type):
-        self.elem_type = et
+        return tms
+    
+    def set_teammates(self, teammates: list[Self]):
+        self.__teammates = [weakref.ref(t) for t in teammates]
 
-    def get_ming_zuo_num(self):
-        return self.ming_zuo_num
+    def set_attribute_hub(self, hub):
+        self.__attribute_hub = hub
 
-    def set_ming_zuo_num(self, num):
-        self.ming_zuo_num = num
+        def inner():
+            return self.__attribute_hub.get_max_hp(self)
+        
+        self.__hp.set_extra_max_hp_func(inner)
 
-    def get_a_level(self):
-        return self.a_level
+    def unset_attribute_hub(self):
+        self.__attribute_hub = None
+        self.__hp.unset_extra_max_hp_func()
 
-    def set_a_level(self, level):
-        self.a_level = level
+    def get_base_hp(self):
+        return self.__hp.get_base_hp()
 
-    def get_e_level(self):
-        return self.e_level
-
-    def set_e_level(self, level):
-        self.e_level = level
-
-    def get_q_level(self):
-        return self.q_level
-
-    def get_q_energy(self):
-        return self.q_energy
-
-    def set_q_level(self, level):
-        self.q_level = level
+    def get_cur_hp(self):
+        return self.__hp.get_cur_hp()
+    
+    def get_cur_hp_per(self):
+        return self.__hp.get_cur_hp_per()
+    
+    def get_max_hp(self):
+        return self.__hp.get_max_hp()
 
     def get_base_atk(self):
         return self.__base_atk
 
     def get_atk(self):
-        return round(self.__all_atk)
+        atk = self.__all_atk
+        if self.__attribute_hub:
+            atk += self.__attribute_hub.get_atk(self)
+        
+        return round(atk)
 
     def set_atk(self, atk):
         self.__all_atk = atk
@@ -198,7 +208,11 @@ class Character(CharacterBase, name="通用角色"):
         return self.__base_defence
 
     def get_defence(self):
-        return round(self.__all_defence)
+        defence = self.__all_defence
+        if self.__attribute_hub:
+            defence += self.__attribute_hub.get_defence(self)
+        
+        return round(defence)
 
     def modify_defence(self, defence):
         self.__all_defence += defence
@@ -219,7 +233,11 @@ class Character(CharacterBase, name="通用角色"):
         self.modify_defence_per(0 - def_per)
 
     def get_elem_mastery(self):
-        return self.__elem_mastery
+        em = self.__elem_mastery
+        if self.__attribute_hub:
+            em += self.__attribute_hub.get_elem_mastery(self)
+
+        return em
 
     def set_elem_mastery(self, em):
         self.__elem_mastery = em
@@ -234,7 +252,11 @@ class Character(CharacterBase, name="通用角色"):
         self.modify_elem_mastery(0 - em)
 
     def get_crit_rate(self):
-        return self.__crit_rate
+        cr = self.__crit_rate
+        if self.__attribute_hub:
+            cr += self.__attribute_hub.get_crit_rate(self)
+
+        return cr
 
     def set_crit_rate(self, crit_rate):
         self.__crit_rate = crit_rate
@@ -249,7 +271,11 @@ class Character(CharacterBase, name="通用角色"):
         self.modify_crit_rate(0 - crit_rate)
 
     def get_crit_damage(self):
-        return self.__crit_damage
+        cd = self.__crit_damage
+        if self.__attribute_hub:
+            cd += self.__attribute_hub.get_crit_damage(self)
+
+        return cd
 
     def set_crit_damage(self, crit_damage):
         self.__crit_damage = crit_damage
@@ -294,7 +320,11 @@ class Character(CharacterBase, name="通用角色"):
         self.modify_incoming_healing_bonus(0 - bonus)
 
     def get_energy_recharge(self):
-        return round(self.__energy_recharge, 1)
+        er = self.__energy_recharge
+        if self.__attribute_hub:
+            er += self.__attribute_hub.get_energy_recharge(self)
+
+        return round(er, 1)
 
     def set_energy_recharge(self, er):
         self.__energy_recharge = er * 100
@@ -315,8 +345,7 @@ class Character(CharacterBase, name="通用角色"):
         return self.__hp
 
     def regenerate_hp(self, cure_hp, healing_bonus):
-        actual_cure_hp = round(
-            cure_hp * (1 + healing_bonus + self.get_incoming_healing_bonus()))
+        actual_cure_hp = cure_hp * (1 + healing_bonus + self.get_incoming_healing_bonus())
         # print("incoming_healing_bonus: ", round(self.get_incoming_healing_bonus(), 1))
         # print("actual_cure_hp: ", round(actual_cure_hp))
         return Character_HP_Change_Data(self, self.__hp.modify_cur_hp(actual_cure_hp))
@@ -331,7 +360,11 @@ class Character(CharacterBase, name="通用角色"):
         return Character_HP_Change_Data(self, self.__hp.modify_cur_hp_per(hp_per))
 
     def get_normal_a_bonus(self):
-        return self.__normal_a_bonus
+        bonus = self.__normal_a_bonus
+        if self.__attribute_hub:
+            bonus += self.__attribute_hub.get_normal_a_bonus(self)
+
+        return bonus
 
     def set_normal_a_bonus(self, bonus):
         self.__normal_a_bonus = bonus
@@ -346,7 +379,11 @@ class Character(CharacterBase, name="通用角色"):
         self.modify_normal_a_bonus(0 - bonus)
 
     def get_charged_a_bonus(self):
-        return self.__charged_a_bonus
+        bonus = self.__charged_a_bonus
+        if self.__attribute_hub:
+            bonus += self.__attribute_hub.get_charged_a_bonus(self)
+
+        return bonus
 
     def set_charged_a_bonus(self, bonus):
         self.__charged_a_bonus = bonus
@@ -361,7 +398,11 @@ class Character(CharacterBase, name="通用角色"):
         self.__charged_a_bonus -= bonus
 
     def get_plunging_bonus(self):
-        return self.__plunging_bonus
+        bonus = self.__plunging_bonus
+        if self.__attribute_hub:
+            bonus += self.__attribute_hub.get_plunging_bonus(self)
+        
+        return bonus
 
     def set_plunging_bonus(self, bonus):
         self.__plunging_bonus = bonus
@@ -376,7 +417,7 @@ class Character(CharacterBase, name="通用角色"):
         self.__plunging_bonus -= bonus
 
     def get_a_bonus(self):
-        return self.__normal_a_bonus
+        return self.get_normal_a_bonus()
 
     def set_a_bonus(self, bonus):
         self.set_normal_a_bonus(bonus)
@@ -399,7 +440,11 @@ class Character(CharacterBase, name="通用角色"):
         self.sub_plunging_bonus(bonus)
 
     def get_e_bonus(self):
-        return self.__e_bonus
+        bonus = self.__e_bonus
+        if self.__attribute_hub:
+            bonus += self.__attribute_hub.get_e_bonus(self)
+
+        return bonus
 
     def set_e_bonus(self, bonus):
         self.__e_bonus = bonus
@@ -414,7 +459,11 @@ class Character(CharacterBase, name="通用角色"):
         self.__e_bonus -= bonus
 
     def get_q_bonus(self):
-        return self.__q_bonus
+        bonus = self.__q_bonus
+        if self.__attribute_hub:
+            bonus += self.__attribute_hub.get_q_bonus(self)
+
+        return bonus
 
     def set_q_bonus(self, bonus):
         self.__q_bonus = bonus
@@ -451,12 +500,17 @@ class Character(CharacterBase, name="通用角色"):
 
     def is_in_foreground(self):
         return self.__in_foreground
+    
+    def get_last_fore_back_switch_time(self):
+        return self.__last_fore_back_switch_time
 
-    def switch_to_foreground(self):
+    def switch_to_foreground(self, switch_time):
         self.__in_foreground = True
+        self.__last_fore_back_switch_time = switch_time
 
-    def switch_to_background(self):
+    def switch_to_background(self, switch_time):
         self.__in_foreground = False
+        self.__last_fore_back_switch_time = switch_time
 
     def get_syw_combine(self):
         return self.__syw_combine
@@ -476,7 +530,7 @@ class Character(CharacterBase, name="通用角色"):
             self.add_crit_rate(syw.crit_rate)
             self.add_crit_damage(syw.crit_damage)
             self.__hp.modify_max_hp_per(syw.hp_percent)
-            self.__hp.modify_cur_hp(syw.hp)
+            self.__hp.modify_max_hp(syw.hp)
             self.add_energy_recharge(syw.energy_recharge)
             self.add_atk_per(syw.atk_per)
             self.add_atk(syw.atk)
@@ -494,8 +548,10 @@ class Character(CharacterBase, name="通用角色"):
         if self.__weapon:
             raise Exception("原神不支持战斗时切换武器")
         
-        weapon.apply_static_attributes(self)
         self.__weapon = weapon
+        weapon.set_owner(self)
+        weapon.apply_static_attributes(self)
+        
 
     def __str__(self):
         s = ""

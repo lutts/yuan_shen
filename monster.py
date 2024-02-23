@@ -72,6 +72,7 @@ class Monster:
         self.kang_xin = kx
         self.kang_xin_xi_su = self.get_jian_kang_bonus()
 
+    # FIXME: 是否需要区分不同元素类型的抗性？ 目前我们还不支持整队伤害计算，原神也暂时没有双元素属性的主C，似乎暂时没必要支持
     def get_jian_kang_bonus(self, extra_jian_kang=0):
         cur_kang_xin = self.kang_xin - self.jian_kang - extra_jian_kang
         if cur_kang_xin >= 0:

@@ -11,82 +11,13 @@ import itertools
 from character import Character
 
 from ys_basic import Ys_Elem_Type, ys_expect_damage
+from ys_weapon import Ruo_Shui_Arrow
 from monster import Monster
+from characters import Ye_Lan_Ch, Ying_Bao_Ch, YeLan_Q_Bonus_Action, YeLanQBonus
+from wan_ye import get_wan_ye_e_bonus, get_wan_ye_q_bonus
 from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
-from action import Action, ActionPlan, ActionPlanAttributes
 
-ming_zuo_num = 6
-
-if ming_zuo_num >= 3:
-    q_bei_lv = 15.53
-    qx_bei_lv = 10.35
-else:
-    q_bei_lv = 13.89
-    qx_bei_lv = 9.26
-
-if ming_zuo_num >= 1:
-    if ming_zuo_num == 6:
-        e_bei_lv = 48.1
-    else:  # 非满命一般只会升到9
-        if ming_zuo_num == 5:
-            e_bei_lv = 45.2
-        else:
-            e_bei_lv = 38.4
-else:
-    e_bei_lv = 38.4  # 9级
-
-fu_fu_q_bonus = 1.24
-wan_ye_bonus = 0.4
-
-ye_lan_base_hp = 14450.0
-
-class YeLan_Q_Bonus_Action(Action, ActionPlanAttributes):
-    def do_impl(self, plan: ActionPlan):
-        plan.add_extra_attr(self)
-
-    def get_elem_bonus(self, plan: ActionPlan, target_character):
-        cur_time = plan.get_current_action_time()
-        dur = cur_time - self.get_timestamp()
-        if dur <= 0:
-            return 0
-        
-        if dur >= 15:
-            return 0
-        
-        return (1 + int(dur) * 3.5) / 100
-
-
-class YeLanQBonus:
-    def __init__(self):
-        self.__invalid = False
-        self.__stopped = True
-        self.__start_time = 0
-
-    def invalidate(self):
-        self.__invalid = True
-
-    def start(self, start_time):
-        self.__stopped = False
-        self.__start_time = start_time
-
-    def bonus(self, checkpoint_time):
-        #logging.debug("YeLanQBonus.bonus, checkpoint_time: %s, stopped:%s, invalid:%s, start_time:%s",
-        #              round(checkpoint_time, 3), self.__stopped, self.__invalid, round(self.__start_time, 3))
-        if self.__stopped or self.__invalid:
-            return 0
-
-        dur = checkpoint_time - self.__start_time
-        if dur <= 0:
-            return 0
-
-        if dur >= 15:
-            return 0
-
-        return (1 + int(dur) * 3.5) / 100
-
-    def stop(self):
-        self.__stopped = True
-
+enable_debug = True
 
 def calc_qx_and_po_ju_shi_damage(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, qx_damage_timestamps,
                                  extra_qx_damage_timestamps, po_ju_shi_timestamps, ye_lan_q_bonus, e3_timestamp):
@@ -302,56 +233,16 @@ def calc_score_with_lei_shen(all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_
 
     return all_damage
 
-
-def scan_syw_combine(combine: list[ShengYiWu], has_fu_fu=True, has_lei_shen=False):
-    extra_hp_bonus = {
-        "专武": 0.16,
-    }
-
-    common_elem_bonus = {
-        "专武": 0.2,
-        "万叶": wan_ye_bonus,
-        "芙芙q": 0,
-    }
-
-    extra_crit_damage = {
-        "专武": 0.882,
-    }
-
-    extra_q_bonus = {
-    }
-
-    if has_fu_fu:
-        extra_hp_bonus["双水"] = 0.18 + 0.25   # 天赋0.18, 双水0.25
-        common_elem_bonus["芙芙q"] = fu_fu_q_bonus  # 除了起手第一个e，所有伤害都能吃到芙芙的增伤
-
-    if has_lei_shen:
-        extra_q_bonus["雷神e"] = 70 * 0.003
-        if not has_fu_fu:
-            extra_hp_bonus["四色"] = 0.3
-
-    crit_rate = 0.242
-    crit_damage = 1 + 0.5 + sum(extra_crit_damage.values())
-    hp = 4780
-    hp_per = sum(extra_hp_bonus.values())
-    elem_bonus = 1 + sum(common_elem_bonus.values())
-    energy_recharge = 1
-
-    for p in combine:
-        crit_rate += p.crit_rate
-        crit_damage += p.crit_damage
-        hp += p.hp
-        hp_per += p.hp_percent
-        elem_bonus += p.elem_bonus
-        energy_recharge += p.energy_recharge
+def create_ye_lan(syw_combine: list[ShengYiWu], teammate_elem_types: list[Ys_Elem_Type]):
+    weapon = Ruo_Shui_Arrow(base_atk=542, crit_damage=0.882)
+    ye_lan = Ye_Lan_Ch(weapon, teammate_elem_types)
+    ye_lan.set_syw_combine(syw_combine)
 
     crit_rate = round(crit_rate, 3)
     if crit_rate < 0.70:
         return None
 
-    syw_names = [p.name for p in combine]
-    # print(syw_names)
-    name_count = {i: syw_names.count(i) for i in syw_names}
+    name_count = ye_lan.get_syw_name_count()
     # print(name_count)
     for n in name_count:
         if name_count[n] < 2:  # 散件不计算套装效果
@@ -359,56 +250,98 @@ def scan_syw_combine(combine: list[ShengYiWu], has_fu_fu=True, has_lei_shen=Fals
 
         # print(n)
         if n == ShengYiWu.HUA_HAI:
-            hp_per += 0.2
+            ye_lan.get_hp().modify_max_hp_per(0.2)
         elif n == ShengYiWu.SHUI_XIAN:
-            elem_bonus += 0.15
+            ye_lan.add_all_bonus(0.15)
         elif n == ShengYiWu.QIAN_YAN:
-            hp_per += 0.2
+            ye_lan.get_hp().modify_max_hp_per(0.2)
         elif n == ShengYiWu.CHEN_LUN:
-            elem_bonus += 0.15
+            ye_lan.add_all_bonus(0.15)
         elif n == ShengYiWu.JUE_YUAN:
+            ye_lan.add_energy_recharge(0.2)
             if name_count[n] >= 4:
-                energy_recharge += 0.2  # 绝缘2件套
+                energy_recharge = ye_lan.get_energy_recharge()
+                jue_yuan_bonus = min(energy_recharge / 4 / 100, 0.75)
+                ye_lan.add_q_bonus(jue_yuan_bonus)
 
-    energy_recharge *= 100
-    energy_recharge = round(energy_recharge, 1)
+    energy_recharge = ye_lan.get_energy_recharge()
     if energy_recharge < 120:
         return None
 
-    if ShengYiWu.JUE_YUAN in name_count and name_count[ShengYiWu.JUE_YUAN] >= 4:
-        extra_q_bonus["绝缘4件套"] = min(energy_recharge / 4 / 100, 0.75)
+    return ye_lan
 
-    all_hp = int(ye_lan_base_hp * (1 + hp_per)) + hp
-    q_elem_bonus = elem_bonus + sum(extra_q_bonus.values())
-    e_po_ju_shi_elem_bonus = elem_bonus
+def create_ye_lan_for_lei_ye_wan_ban(syw_combine: list[ShengYiWu]):
+    ye_lan = create_ye_lan(syw_combine, [Ys_Elem_Type.LEI, Ys_Elem_Type.FENG, Ys_Elem_Type.HUO])
+    if ye_lan:
+        ye_lan.add_q_bonus(Ying_Bao_Ch.get_bonus_to_q(ye_lan.q_energy))
+    return ye_lan
 
-    return (all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energy_recharge)
+def create_ye_lan_for_lei_ye_xiang_ban(syw_combine: list[ShengYiWu]):
+    ye_lan = create_ye_lan(syw_combine, [Ys_Elem_Type.LEI, Ys_Elem_Type.HUO, Ys_Elem_Type.HUO])
+    if ye_lan:
+        ye_lan.add_q_bonus(Ying_Bao_Ch.get_bonus_to_q(ye_lan.q_energy))
+    return ye_lan
 
-def calculate_score_qualifier(score_data: ShengYiWu_Score, has_fu_fu=True, has_lei_shen=False):
-    scan_result = scan_syw_combine(score_data.syw_combine, has_fu_fu, has_lei_shen)
-    if not scan_result:
+def create_ye_lan_for_ying_ye_fu_qin(syw_combine: list[ShengYiWu]):
+    ye_lan = create_ye_lan(syw_combine, [Ys_Elem_Type.LEI, Ys_Elem_Type.SHUI, Ys_Elem_Type.FENG])
+    if ye_lan:
+        ye_lan.add_q_bonus(Ying_Bao_Ch.get_bonus_to_q(ye_lan.q_energy))
+    return ye_lan
+
+def create_ye_lan_for_ye_fu_wan_zhong(syw_combine: list[ShengYiWu]):
+    return create_ye_lan(syw_combine, [Ys_Elem_Type.SHUI, Ys_Elem_Type.FENG, Ys_Elem_Type.YAN])
+
+def calc_score_for_ye_fu_wan_zhong(score_data: ShengYiWu_Score):
+    ye_lan = create_ye_lan_for_ye_fu_wan_zhong(score_data.syw_combine)
+    if not ye_lan:
         return False
     
-    all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energy_recharge = scan_result
-    # 以第8秒的破局矢伤害为初步判断依据
-    po_ju_shi_bonus = e_po_ju_shi_elem_bonus + (1 + 3.5 * 8)
-    # 两次在单怪上e
-    hp = all_hp + 0.1 * 2 * ye_lan_base_hp
-    damage = hp * 20.84 / 100 * 1.56 * po_ju_shi_bonus
+    monster = Monster(level=93)
 
-    score_data.damage_to_score(damage, crit_rate, crit_damage - 1)
-    score_data.custom_data = scan_result
+    total_damage = 0
+
+    # 钟离 e
+    monster.add_jian_kang(0.2)
+
+    # 芙芙 qeaa
+    # 万叶 q
+    monster.add_jian_kang(0.4)
+    ye_lan.add_all_bonus(get_wan_ye_e_bonus())
+
+    # 夜兰 eqe
+    first_e_fufu_qi_bonus = 300 * 0.0031
+    q_fufu_qi_bonus = 350 * 0.0031
+    second_e_fufu_qi_bonus = 400 * 0.0031
+
+    ye_lan.add_all_bonus(first_e_fufu_qi_bonus)
+    total_damage += ye_lan.get_e_damage(monster)
+    if ye_lan.ming_zuo_num >= 4:
+        ye_lan.get_hp().modify_max_hp_per(0.1)
+
+    ye_lan.add_all_bonus(q_fufu_qi_bonus - first_e_fufu_qi_bonus)
+    total_damage += ye_lan.get_q_damage(monster)
+
+    ye_lan_q_bonus = YeLanQBonus()
+    ye_lan_q_bonus.start(14.896)
+
+    ye_lan.add_all_bonus(second_e_fufu_qi_bonus - q_fufu_qi_bonus)
+
+    if ye_lan.ming_zuo_num >= 1:
+        total_damage += ye_lan.get_e_damage(monster)
+        if ye_lan.ming_zuo_num >= 4:
+            ye_lan.get_hp().modify_max_hp_per(0.1)
+
+
+
+
+    
+    
 
     return True
 
-
 def calculate_score_callback(score_data: ShengYiWu_Score, has_fu_fu=True, has_lei_shen=False):
-    if score_data.custom_data:
-        scan_result = score_data.custom_data
-    else:
-        scan_result = scan_syw_combine(score_data.syw_combine, has_fu_fu, has_lei_shen)
-
-    if not scan_result:
+    ye_lan = create_ye_lan_for_ye_fu_wan_zhong(score_data.syw_combine)
+    if not ye_lan:
         return False
     
     all_hp, q_elem_bonus, e_po_ju_shi_elem_bonus, crit_rate, crit_damage, energy_recharge = scan_result
@@ -434,14 +367,9 @@ def calculate_score_callback(score_data: ShengYiWu_Score, has_fu_fu=True, has_le
 result_description = ", ".join(["出战生命值上限", "实战元素伤害加成", "暴击率", "暴击伤害", "充能效率"])
 
 
-def calculate_score_qualifier_only_fu_fu(score_data: ShengYiWu_Score):
-    return calculate_score_qualifier(score_data)
-
 def calculate_score_callback_only_fufu(score_data: ShengYiWu_Score):
     return calculate_score_callback(score_data)
 
-def calculate_score_qualifier_only_lei_shen(score_data: ShengYiWu_Score):
-    return calculate_score_qualifier(score_data, False, True)
 
 def calculate_score_callback_only_lei_shen(score_data: ShengYiWu_Score):
     return calculate_score_callback(score_data, False, True)
@@ -459,7 +387,20 @@ def match_tou_callback(syw: ShengYiWu):
     return syw.crit_rate == ShengYiWu.CRIT_RATE_MAIN or syw.crit_damage == ShengYiWu.CRIT_DAMAGE_MAIN or syw.hp_percent == ShengYiWu.BONUS_MAX
 
 
+def get_debug_raw_score_list():
+    syw_combine_str_lst = ["(hua_hai, h, cc:0.035, cd:0.218, hpp:0.157, atk:31)",
+                           "(hua_hai, y, cc:0.027, cd:0.28, re:0.123, def:23)",
+                           "(shui_xian, s, cc:0.074, cd:0.218, hpp:0.466, re:0.091, atk:18)",
+                           "(shui_xian, b, cc:0.074, hpp:0.204, hp:209, atk:16, bonus:0.466)",
+                           "(jue_dou_shi, t, cc:0.311, cd:0.303, hpp:0.053, hp:209, atk:39)"
+                           ]
+    return [ShengYiWu_Score(ShengYiWu.string_to_syw_combine(syw_combine_str_lst))]
+
+
 def get_raw_score_list():
+    if enable_debug:
+        return get_debug_raw_score_list
+    
     combine_desc_lst = Syw_Combine_Desc.any_2p2([ShengYiWu.HUA_HAI,
                                                  ShengYiWu.QIAN_YAN,
                                                  ShengYiWu.CHEN_LUN,
@@ -480,7 +421,6 @@ def find_syw_for_ye_lan_with_fu_fu():
                            calculate_score_callbak=calculate_score_callback_only_fufu,
                            result_txt_file="ye_lan_syw_with_fu_fu.txt",
                            result_description=result_description,
-                           #calculate_score_qualifier=calculate_score_qualifier_only_fu_fu
                            )
 
 
@@ -489,7 +429,6 @@ def find_syw_for_ye_lan_with_lei_shen():
                            calculate_score_callbak=calculate_score_callback_only_lei_shen,
                            result_txt_file="ye_lan_syw_with_lei_shen.txt",
                            result_description=result_description,
-                           #calculate_score_qualifier=calculate_score_qualifier_only_lei_shen
                            )
 
 

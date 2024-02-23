@@ -315,53 +315,43 @@ def ying_ye_fu_qing():
         print(i)
 
 
+import gc
+import sys
+
+class B:
+    def bfunc(self):
+        print("is b")
+
 class A:
-    def __init_subclass__(cls, name) -> None:
-        cls.name = name
-        cls.__test = 10
+    def __init__(self, b: B):
+        self.haha = "good"
+        self.b = b
+        self.orig_bfunc = b.bfunc
+        b.bfunc = self.__afunc(b.bfunc)
 
+    def __afunc(self, callback):
+        def inner():
+            print(self.haha)
+            print("before")
+            callback()
+            print("after")
 
-class B(A, name="test"):
-    def __init__(self, t):
-        self.__test = t
+        return inner
 
-    def get_test(self):
-        return self.__test
+def test_cr():
+    b = B()
+    a = A(b)
+    b.bfunc()
 
-print(B.name)
-
-b = B(100)
-print(b.get_test())
-
-
-class C(A, name="test2"):
-    def get_test(self):
-        return self.__test
-
-
-
-def f(haha, **kwargs):
-    print("haha:", haha)
-    if kwargs:
-        print(kwargs)
-
+class F():
+    def __init__(self, v):
+        self.v = v
 
 # Main body
 if __name__ == '__main__':
     #avg_min_max([7.135, 6.855, 7.834,  6.885,  7.935,  7.385,  7.169,  6.268])
     pass
 
-    print(ShengYiWu.from_string("(jue_dou_shi, b, cd:0.202, re:0.065, atkp:0.163, atk:29, bonus:0.466, et:Pyro)"))
+    f = F(10)
+    print(f"f.v = {f.v}")
 
-    syw_combine_str = "(jue_yuan, h, cc:0.066, cd:0.117, atkp:0.111, atk:33), (jue_yuan, y, cd:0.171, hp:807, re:0.11, atkp:0.047), (jue_yuan, s, cc:0.086, cd:0.202, hpp:0.105, atkp:0.466, elem:19), (yue_tuan, b, cc:0.074, cd:0.078, hp:538, atkp:0.152, bonus:0.466), (jue_yuan, t, cc:0.311, cd:0.179, re:0.104, atk:31, defp:0.058)"
-
-    syw_combine = ShengYiWu.string_to_syw_combine(syw_combine_str)
-    print(syw_combine)
-
-    syw_combine_str_lst = ["(jue_yuan, h, cc:0.066, cd:0.117, atkp:0.111, atk:33)",
-                           "(jue_yuan, y, cd:0.171, hp:807, re:0.11, atkp:0.047)",
-                           "(jue_yuan, s, cc:0.086, cd:0.202, hpp:0.105, atkp:0.466, elem:19)",
-                           "(yue_tuan, b, cc:0.074, cd:0.078, hp:538, atkp:0.152, bonus:0.466)",
-                           "(jue_yuan, t, cc:0.311, cd:0.179, re:0.104, atk:31, defp:0.058)"]
-    syw_combine = ShengYiWu.string_to_syw_combine(syw_combine_str_lst)
-    print(syw_combine)

@@ -4,15 +4,142 @@
 Module documentation.
 """
 
+from attribute_hub import ActionPlanAttributeSupplier
 from ys_basic import Ys_Elem_Type, Ys_Weapon, ys_crit_damage, ys_expect_damage
 from character import Character
-from action import Action, ActionPlan, ActionPlanAttributes
+from monster import Monster
+from action import Action, ActionPlan, AttributeAction
 from ys_syw import ShengYiWu
 
 import ys_weapon
 
+class Ye_Lan_Ch(Character, name="夜兰", elem_type=Ys_Elem_Type.SHUI, ming_zuo_num=6,
+                ch_level=90, a_level=10, e_level=13, q_level=13, q_energy=70):
+    # 技能最少点到 8 级
+    MIN_SKILL_LEVEL = 8
+    PO_JU_SHI_MULTIPLIER = [18.52/100, 19.68/100, 20.84/100]
+    E_MULTIPLIER = [36.2/100, 38.4/100, 40.7/100, 43.0/100, 45.2/100, 48.1/100]
+    Q_MULTIPLIER = [11.69/100, 12.42/100, 13.15/100, 13.89/100, 14.62/100, 15.53/100]
+    QXT_MULTIPLIER = [7.80/100, 8.28/100, 8.77/100, 9.26/100, 9.74/100, 10.35/100]
+
+    NUM_ELEM_TYPE_TO_HP_PER = {
+            1: 6/100, 2: 12/100, 3: 18/100, 4: 30/100
+        }
+
+    def __init__(self, weapon: Ys_Weapon=None):
+        super().__init__(base_hp=14450, weapon=weapon, crit_rate=0.242)
+
+    def set_teammates(self, teammates: list[Character]):
+        super().set_teammates(teammates)
+
+        # 固有天赋 1
+        elem_types_set = set([Ys_Elem_Type.SHUI] + [t.elem_type for t in teammates])
+        tf1_hp_per = Ye_Lan_Ch.NUM_ELEM_TYPE_TO_HP_PER[len(elem_types_set)]
+        self.get_hp().modify_max_hp_per(tf1_hp_per)
+    
+    def __get_damage(self, multiplier, bonus, monster:Monster):
+        damage = self.get_hp().get_max_hp() * multiplier * (1 + bonus)
+        if monster:
+            return monster.attacked(damage)
+        else:
+            return damage
+    
+    def get_po_ju_shi_damage(self, ming_6=True, monster: Monster = None):
+        if ming_6 and self.ming_zuo_num < 6:
+            return 0
+        
+        multiplier = Ye_Lan_Ch.PO_JU_SHI_MULTIPLIER[self.a_level - Ye_Lan_Ch.MIN_SKILL_LEVEL]
+        damage = self.__get_damage(multiplier, self.get_a_bonus(), monster)
+        if ming_6:
+            damage *= 156/100
+        
+        return damage
+    
+    def get_e_damage(self, monster: Monster=None):
+        multiplier = Ye_Lan_Ch.E_MULTIPLIER[self.e_level - Ye_Lan_Ch.MIN_SKILL_LEVEL]
+        return self.__get_damage(multiplier, self.get_e_bonus(), monster)
+    
+    def get_q_damage(self, monster: Monster=None):
+        multiplier = Ye_Lan_Ch.Q_MULTIPLIER[self.q_level - Ye_Lan_Ch.MIN_SKILL_LEVEL]
+        return self.__get_damage(multiplier, self.get_q_bonus(), monster)
+    
+    def get_qxt_damage(self, monster: Monster=None):
+        multiplier = Ye_Lan_Ch.QXT_MULTIPLIER[self.q_level - Ye_Lan_Ch.MIN_SKILL_LEVEL]
+        return self.__get_damage(multiplier, self.get_q_bonus(), monster)
+    
+    def get_extra_qxt_damage(self, monster: Monster=None):
+        if self.ming_zuo_num < 2:
+            return 0
+        
+        return self.__get_damage(14/100, self.get_q_bonus(), monster)
+
+
+class YeLan_Ming_4_Action(Action, ActionPlanAttributeSupplier):
+    def __init__(self):
+        super().__init__("夜兰四命生效一层")
+
+    def do_impl(self, plan: ActionPlan):
+        plan.add_extra_attr(self)
+
+    def get_hp_percent(self, plan, target_character):
+        # FIXME: 生效时长是否要加？持续25秒是否能覆盖整个输出轴？
+        return 0.1
+
+class YeLan_Q_Bonus_Action(Action, ActionPlanAttributeSupplier):
+    def __init__(self):
+        super().__init__("夜兰Q增伤开始")
+
+    def do_impl(self, plan: ActionPlan):
+        plan.add_extra_attr(self)
+
+    def get_elem_bonus(self, plan: ActionPlan, target_character: Character):
+        if not target_character.is_in_foreground():
+            print("xxx")
+            return 0
+        
+        cur_time = plan.get_current_action_time()
+        dur = cur_time - self.get_timestamp()
+        if dur <= 0:
+            return 0
+        
+        if dur >= 15:
+            return 0
+        
+        return (1 + int(dur) * 3.5) / 100
+
+class YeLanQBonus:
+    def __init__(self):
+        self.__invalid = False
+        self.__stopped = True
+        self.__start_time = 0
+
+    def invalidate(self):
+        self.__invalid = True
+
+    def start(self, start_time):
+        self.__stopped = False
+        self.__start_time = start_time
+
+    def bonus(self, checkpoint_time):
+        #logging.debug("YeLanQBonus.bonus, checkpoint_time: %s, stopped:%s, invalid:%s, start_time:%s",
+        #              round(checkpoint_time, 3), self.__stopped, self.__invalid, round(self.__start_time, 3))
+        if self.__stopped or self.__invalid:
+            return 0
+
+        dur = checkpoint_time - self.__start_time
+        if dur <= 0:
+            return 0
+
+        if dur >= 15:
+            return 0
+
+        return (1 + int(dur) * 3.5) / 100
+
+    def stop(self):
+        self.__stopped = True
+
 class Ying_Bao_Ch(Character, name="影宝", elem_type=Ys_Elem_Type.LEI, ming_zuo_num=4, 
-                  a_level=4, e_level=9, q_level=13, q_energy=90):
+                  ch_level=90, a_level=4, e_level=9, q_level=13, q_energy=90):
     e_bonus_multiplier = [
         0.22/100, # 1
         0.23/100, # 2
@@ -158,26 +285,29 @@ class Ying_Bao_Ch(Character, name="影宝", elem_type=Ys_Elem_Type.LEI, ming_zuo
         return multiplier
     
     def get_q_action(self):
-        return YingBao_Q_Action(name="影宝Q", owner=self)
+        return YingBao_Q_Action(self)
     
     def get_a_action(self, phrase, sub_phrase=1):
-        return YingBao_A_Action(owner=self, phrase=phrase, sub_phrase=sub_phrase)
+        return YingBao_A_Action(self, phrase=phrase, sub_phrase=sub_phrase)
     
     def get_charged_a_action(self, sub_phrase):
-        return YingBao_Charged_A_Action(owner=self, sub_phrase=sub_phrase)
+        return YingBao_Charged_A_Action(self, sub_phrase=sub_phrase)
 
 
 # 影宝的 e 是全轴覆盖的，因此不需要单独的 action
 
 
 class YingBao_Q_Action(Action):
-    def do_impl(self, plan: ActionPlan):
-        ying_bao: Ying_Bao_Ch = self.owner
+    def __init__(self, ying_bao: Ying_Bao_Ch):
+        super().__init__("影宝Q")
+        self.ying_bao = ying_bao
 
-        
-        all_atk = plan.get_atk(ying_bao)
+    def do_impl(self, plan: ActionPlan):
+        ying_bao = self.ying_bao
+
+        all_atk = ying_bao.get_atk()
         multiplier = ying_bao.get_meng_xiang_yi_dao_multiplier()
-        bonus = 1 + plan.get_q_bonus(ying_bao)
+        bonus = 1 + ying_bao.get_q_bonus()
 
         q_damage = all_atk * multiplier * bonus
         # print("q_bonus=", ying_bao.get_q_bonus())
@@ -191,18 +321,18 @@ class YingBao_Q_Action(Action):
                 round(bonus, 3), round(multiplier, 3)))
 
 class YingBao_A_Action(Action):
-    def __init__(self, owner:Character, phrase, sub_phrase=1):
+    def __init__(self, ying_bao: Ying_Bao_Ch, phrase, sub_phrase=1):
+        super().__init__(f"影宝普攻{phrase}-{sub_phrase}")
         self.phrase = phrase
         self.sub_phrase = sub_phrase
-
-        super().__init__(f"普攻{phrase}-{sub_phrase}", owner)
+        self.ying_bao = ying_bao
 
     def do_impl(self, plan: ActionPlan):
-        ying_bao: Ying_Bao_Ch = self.owner
+        ying_bao = self.ying_bao
         
-        all_atk = plan.get_atk(ying_bao)
+        all_atk = ying_bao.get_atk()
         multiplier = ying_bao.get_meng_a_multiplier(phrase=self.phrase, sub_phrase=self.sub_phrase)
-        bonus = 1 + plan.get_q_bonus(ying_bao)
+        bonus = 1 + ying_bao.get_q_bonus()
         # print("add damage2: ", round(all_atk * multiplier * bonus, 3))
         a_damage = plan.add_damage(all_atk * multiplier * bonus)
 
@@ -214,16 +344,17 @@ class YingBao_A_Action(Action):
 
 
 class YingBao_Charged_A_Action(Action):
-    def __init__(self, owner:Character, sub_phrase):
+    def __init__(self, ying_bao: Ying_Bao_Ch, sub_phrase):
+        super().__init__(f"影宝重击{sub_phrase}段")
         self.sub_phrase = sub_phrase
-        super().__init__(f"重击{sub_phrase}段", owner)
+        self.ying_bao = ying_bao
 
     def do_impl(self, plan: ActionPlan):
-        ying_bao: Ying_Bao_Ch = self.owner
+        ying_bao = self.ying_bao
         
-        all_atk = plan.get_atk(ying_bao)
+        all_atk = ying_bao.get_atk()
         multiplier = ying_bao.get_charged_a_multiplier(sub_phrase=self.sub_phrase)
-        bonus = 1 + plan.get_q_bonus(ying_bao)
+        bonus = 1 + ying_bao.get_q_bonus()
 
         z_damage = plan.add_damage(all_atk * multiplier * bonus)
 
@@ -234,7 +365,7 @@ class YingBao_Charged_A_Action(Action):
                 round(bonus, 3), round(multiplier, 3)))
 
 
-class BanNiTe_Q_Action(Action, ActionPlanAttributes):
+class BanNiTe_Q_Action(Action, ActionPlanAttributeSupplier):
     q_atk_multiplier = [
         56/100, # 1
         60/100, # 2
@@ -406,4 +537,3 @@ class Jiu_Tiao_Sha_Luo_Ch(Character, name="九条裟罗", elem_type=Ys_Elem_Type
     def create_instance(cls, syw_combine: list[ShengYiWu]):
         weapon = ys_weapon.Tian_Kong_Zhi_Yi(base_atk=674, crit_rate=0.221)
         return Jiu_Tiao_Sha_Luo_Ch(weapon, syw_combine)
-    
