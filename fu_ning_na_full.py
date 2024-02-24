@@ -248,10 +248,11 @@ def create_action_plan(fufu_initial_state: Character):
                     base_action=bai_dao_6, effective_delay=plan.get_effective_delay())
 
     # 切万叶补减抗
-    # TODO: 这里的切人时间沿用了切夜兰出来的时间，是否需要重新测试
+    # TODO: 这里的切人时间沿用了切夜兰出来的时间，需要重新测试
     switch_to_wan_ye = SwitchAction(wan_ye_ch)
     plan.add_action(switch_to_wan_ye, 0.333, 0.549, base_action=bai_dao_6)
-    plan.add_action(wan_ye_attr.create_e_action(), 1.568, 1.568, base_action=switch_to_wan_ye)
+    wan_ye_e_action = wan_ye_attr.create_e_action()
+    plan.add_action(wan_ye_e_action, 1.568, 1.568, base_action=switch_to_wan_ye)
 
     three_little_2nd_action = "三小只再次切出来后第一次扣血"
     plan.add_action(three_little_2nd_action, Action,
@@ -263,11 +264,6 @@ def create_action_plan(fufu_initial_state: Character):
     # 夜兰 e 又好了
     ye_lan_ming_4_3 = YeLan_Ming_4_Action()
     plan.add_action(ye_lan_ming_4_3, 10.5, 11, base_action=ye_lan_first_e_end)
-
-    # FIXME: 改为使用 attribute supplier
-    fufu_q_stop = Fu_Fu_Q_Bonus_Stop_Action
-    plan.add_action("芙芙大招效果消失", Fu_Fu_Q_Bonus_Stop_Action,
-                    18.253, 18.737, "芙芙q出伤")
 
     # FIXME: 一轮输出结束的时间如何来界定
     # TODO: 这里的切人时间沿用了切夜兰出来的时间，实际切人时间需要进行测试统计

@@ -236,9 +236,9 @@ def calculate_score_callback(score_data: ShengYiWu_Score):
     
     ying_bao.switch_to_foreground(0)
 
-    # plan = create_plan_for_lei_ye_wan_ban(ying_bao, monster)
+    plan = create_plan_for_lei_ye_wan_ban(ying_bao, monster)
     # plan = create_plan_for_ying_ye_fu_qin(ying_bao, monster)
-    plan = create_plan_for_lei_jiu_wan_ban(ying_bao, monster)
+    # plan = create_plan_for_lei_jiu_wan_ban(ying_bao, monster)
     # plan = create_plan_for_lei_guo(ying_bao, monster)
     # plan = create_plan_for_lei_xia_xiang_ban(ying_bao, monster)
 

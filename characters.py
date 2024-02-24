@@ -87,21 +87,23 @@ class YeLan_Ming_4_Action(Action, ActionPlanAttributeSupplier):
         # FIXME: 生效时长是否要加？持续25秒是否能覆盖整个输出轴？
         return 0.1
 
-class YeLan_Q_Bonus_Action(Action, ActionPlanAttributeSupplier):
+class YeLan_Q_Bonus_Action(AttributeAction):
     """
     注：plan.add_action 时，这个 Action 的 min_t 和 max_t 填写夜兰大招动画开始的时间，实际的增伤开始时间会自动计算
     """
     def __init__(self):
         super().__init__("夜兰Q增伤开始")
 
-    def do_impl(self, plan: ActionPlan):
+    def set_timestamp(self, t):
+        super().set_timestamp(t)
         # 参见 ye_lan_readme.md
-        self.bonus_start_time = self.get_timestamp() + random.randint(1220, 1255) / 1000
+        self.bonus_start_time = t + random.randint(1220, 1255) / 1000
+
+    def do_impl(self, plan: ActionPlan):
         plan.add_extra_attr(self)
 
     def get_elem_bonus(self, plan: ActionPlan, target_character: Character):
         if not target_character.is_in_foreground():
-            print("xxx")
             return 0
         
         cur_time = plan.get_current_action_time()
@@ -112,7 +114,6 @@ class YeLan_Q_Bonus_Action(Action, ActionPlanAttributeSupplier):
         if dur >= 15:
             return 0
         
-        print(dur)
         return (1 + int(dur) * 3.5) / 100
 
 class YeLanQBonus:

@@ -290,7 +290,11 @@ class Character(CharacterBase, name="通用角色"):
         self.modify_crit_damage(0 - cd)
 
     def get_healing_bonus(self):
-        return self.__healing_bonus
+        bonus = self.__healing_bonus
+        if self.__attribute_hub:
+            bonus += self.__attribute_hub.get_healing_bonus(self)
+
+        return bonus
 
     def set_healing_bonus(self, bonus):
         self.__healing_bonus = bonus
@@ -305,7 +309,11 @@ class Character(CharacterBase, name="通用角色"):
         self.modify_healing_bonus(0 - bonus)
 
     def get_incoming_healing_bonus(self):
-        return self.__incomming_healing_bonus
+        bonus = self.__incomming_healing_bonus
+        if self.__attribute_hub:
+            bonus += self.__attribute_hub.get_incoming_healing_bonus(self)
+
+        return bonus
 
     def set_incoming_headling_bonus(self, bonus):
         self.__incomming_healing_bonus = bonus

@@ -16,6 +16,7 @@ from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc
 from character import Character, Character_HP_Change_Data
 from monster import Monster
 from action import Action, ActionPlan
+from attribute_hub import ActionPlanAttributeSupplier
 from ys_weapon import Jing_Shui_Liu_Yong_Zhi_Hui
 
 
@@ -45,6 +46,7 @@ class Character_FuFu(Character, name="furina", elem_type=Ys_Elem_Type.SHUI, ming
                               (9.12/100, 1098), (9.60/100, 1183), (10.20/100, 1271)]
     
     Q_MULTIPLIER = [18.3/100, 19.4/100, 20.5/100, 21.7/100, 22.8/100, 24.2/100]
+
     QI_BONUS_MULTIPLIER = [0.21/100, 0.23/100, 0.25/100, 0.27/100, 0.29/100, 0.31/100]
     QI_HEAL_MULTIPLIER = [0.08/100, 0.09/100, 0.10/100, 0.11/100, 0.12/100, 0.13/100]
 
@@ -62,15 +64,14 @@ class Character_FuFu(Character, name="furina", elem_type=Ys_Elem_Type.SHUI, ming
             self.BASE_QI_FEN_ZHI = 0
             self.MAX_QI_FEN_ZHI = 300
 
-        self.MAX_TOTAL_QI_FEN_ZHI = self.MAX_QI_FEN_ZHI
-
         if ming_zuo_num >= 2:
             self.QI_INCREASE_MULTIPLIER = 3.5
             self.QI_HP_MULTIPLIER = 0.0035
-            self.MAX_TOTAL_QI_FEN_ZHI = 800
+            self.MING_2_QI_FEN_ZHI = 800
         else:
             self.QI_INCREASE_MULTIPLIER = 1
             self.QI_HP_MULTIPLIER = 0
+            self.MING_2_QI_FEN_ZHI = self.MAX_QI_FEN_ZHI
 
         # self.bei_lv_to_salon_member_name = {
         #     self.FU_REN_MULTIPLIER: "夫人",
@@ -89,6 +90,12 @@ class Character_FuFu(Character, name="furina", elem_type=Ys_Elem_Type.SHUI, ming
         weapon = Jing_Shui_Liu_Yong_Zhi_Hui(base_atk=542, crit_damage=0.882)
         return Character_FuFu(weapon=weapon, ming_zuo_num=ming_zuo_num)
 
+    def qi_fen_zhi_to_elem_bonus(self, qi):
+        return qi * self.QI_BONUS_MULTIPLIER[self.q_level]
+    
+    def qi_fen_zhi_to_healing_bonus(self, qi):
+        return qi * self.QI_HEAL_MULTIPLIER[self.q_level]
+    
     def gu_you_tian_fu_2_bonus(self, max_hp):
         return min(max_hp / 1000 * 0.007, 0.28)
     
@@ -122,7 +129,7 @@ class Character_FuFu(Character, name="furina", elem_type=Ys_Elem_Type.SHUI, ming
         e_bonus = 1
         if plan.qi_fen_zhi_supervisor.effective_qi_fen_zhi == 0 and force_add_fufu_q_bonus:
             # print("force add q bonus")
-            hp += round(self.MAX_QI_FEN_ZHI * self.QI_HP_MULTIPLIER * Character_FuFu.BASE_HP)
+            max_hp += round(self.MAX_QI_FEN_ZHI * self.QI_HP_MULTIPLIER * Character_FuFu.BASE_HP)
             e_bonus += self.MAX_QI_FEN_ZHI * Character_FuFu.QI_BONUS_MULTIPLIER[self.q_level - 1]
 
         e_bonus += self.get_e_bonus() + self.gu_you_tian_fu_2_bonus(max_hp)
@@ -148,19 +155,6 @@ class Character_FuFu(Character, name="furina", elem_type=Ys_Elem_Type.SHUI, ming
         return self.__add_salon_member_damage(plan, multiplier, force_add_fufu_q_bonus)
 
 
-R_CUR_HP_KEY = "cur_hp"
-R_CUR_A_BONUS_KEY = "cur_a_bonus"
-R_CUR_E_BONUS_KEY = "cur_e_bonus"
-R_SALON_MEMBER_BONUS_KEY = "salon_member_bonus"
-R_CUR_Q_BONUS_KEY = "cur_q_bonus"
-
-R_CUR_HP_INIT = R_CUR_HP_KEY + " = hp"
-R_CUR_A_BONUS_INIT = R_CUR_A_BONUS_KEY + " = 1 + a_bonus"
-R_CUR_E_BONUS_INIT = R_CUR_E_BONUS_KEY + " = 1 + e_bonus"
-R_SALON_MEMBER_BONUS_INIT = R_SALON_MEMBER_BONUS_KEY + " = 1 + e_bonus + 0.28"
-R_CUR_Q_BONUS_INIT = R_CUR_Q_BONUS_KEY + " = 1 + q_bonus"
-
-
 class FuFuActionPlan(ActionPlan):
     def __init__(self, fufu_initial_state: Character_FuFu, teammates: list[Character]):
         self.__fufu: Character_FuFu = copy.deepcopy(fufu_initial_state)
@@ -181,143 +175,7 @@ class FuFuActionPlan(ActionPlan):
 
         self.full_six_damage = 0
 
-        # 以下变量用于预筛选代码录制
-        self.ye_lan_e_num = 0
-        self.extra_a_bonus = 0
-        self.extra_e_bonus = 0
-        self.extra_q_bonus = 0
-        self.recorded_strs = {
-            R_CUR_HP_KEY: R_CUR_HP_INIT,
-            R_CUR_A_BONUS_KEY: R_CUR_A_BONUS_INIT,
-            R_CUR_E_BONUS_KEY: R_CUR_E_BONUS_INIT,
-            R_SALON_MEMBER_BONUS_KEY: R_SALON_MEMBER_BONUS_INIT,
-            R_CUR_Q_BONUS_KEY: R_CUR_Q_BONUS_INIT
-        }
-        self.last_printed_strs = {}
-
     ##################################################
-
-    def __damage_record_hp(self):
-        # for damage record
-        s = "cur_hp = hp"
-        p = []
-
-        if self.zhuan_wu_supervisor and self.zhuan_wu_supervisor.hp_bonus_level:
-            p.append("0.14 * " + str(self.zhuan_wu_supervisor.hp_bonus_level))
-
-        if self.ye_lan_e_num:
-            p.append("0.1 * " + str(self.ye_lan_e_num))
-
-        if self.qi_fen_zhi_supervisor.effective_qi_fen_zhi > self.__fufu.MAX_QI_FEN_ZHI and self.__fufu.ming_zuo_num >= 2:
-            p.append(
-                "(" + str(min(800, round(self.qi_fen_zhi_supervisor.effective_qi_fen_zhi, 3))) + " - 400) * 0.0035")
-
-        if p:
-            s += " + ("
-            s += " + ".join(p)
-            s += ") * Character_FuFu.BASE_HP"
-
-        if s != self.recorded_strs[R_CUR_HP_KEY]:
-            self.recorded_strs[R_CUR_HP_KEY] = s
-
-    def damage_record_hp(self):
-        self.__damage_record_hp()
-    
-    def add_all_bonus(self, bonus):
-        self.extra_a_bonus += bonus
-        self.extra_e_bonus += bonus
-        self.extra_q_bonus += bonus
-        self.damage_record_bonus()
-
-    def sub_all_bonus(self, bonus):
-        self.extra_a_bonus -= bonus
-        self.extra_e_bonus -= bonus
-        self.extra_q_bonus -= bonus
-        self.damage_record_bonus()
-
-    def __damage_record_bonus(self):
-        a_lst = []
-        e_lst = []
-        q_lst = []
-
-        if self.extra_a_bonus:
-            a_lst.append(str(round(self.extra_a_bonus, 3)))
-        
-        if self.extra_e_bonus:
-            e_lst.append(str(round(self.extra_e_bonus, 3)))
-
-        if self.extra_q_bonus:
-            q_lst.append(str(round(self.extra_q_bonus, 3)))
-
-        if self.__fufu.BASE_QI_FEN_ZHI:
-            q_lst.append(str(self.__fufu.BASE_QI_FEN_ZHI) + " * " + str(self.__fufu.QI_TO_BONUS_MULTIPLIER))
-
-        if self.zhuan_wu_supervisor and self.zhuan_wu_supervisor.e_bonus_level:
-            e_lst.append("0.08 * " + str(self.zhuan_wu_supervisor.e_bonus_level))
-
-
-        qi = min(self.__fufu.MAX_QI_FEN_ZHI, self.qi_fen_zhi_supervisor.effective_qi_fen_zhi)
-        qi = round(qi, 3)
-        if qi:
-            qi_str = str(qi) + " * " + str(self.__fufu.QI_TO_BONUS_MULTIPLIER)
-            a_lst.append(qi_str)
-            e_lst.append(qi_str)
-
-        a_str = R_CUR_A_BONUS_INIT
-        if a_lst:
-            a_str += " + " 
-            a_str += " + ".join(a_lst)
-
-        if a_str != self.recorded_strs[R_CUR_A_BONUS_KEY]:
-            self.recorded_strs[R_CUR_A_BONUS_KEY] = a_str
-
-        salon_member_str = R_SALON_MEMBER_BONUS_INIT
-        e_str = R_CUR_E_BONUS_INIT
-        if e_lst:
-            e_lst_str = " + " + " + ".join(e_lst)
-            e_str += e_lst_str
-            salon_member_str += e_lst_str
-
-        if e_str != self.recorded_strs[R_CUR_E_BONUS_KEY]:
-            self.recorded_strs[R_CUR_E_BONUS_KEY] = e_str
-
-        if salon_member_str != self.recorded_strs[R_SALON_MEMBER_BONUS_KEY]:
-            self.recorded_strs[R_SALON_MEMBER_BONUS_KEY] = salon_member_str
-
-        q_str = R_CUR_Q_BONUS_INIT
-        if q_lst:
-            q_str += " + "
-            q_str += " + ".join(q_lst)
-
-        if q_str != self.recorded_strs[R_CUR_Q_BONUS_KEY]:
-            self.recorded_strs[R_CUR_Q_BONUS_KEY] = q_str
-
-    def damage_record_bonus(self):
-        self.__damage_record_bonus()
-
-    def print_recored_str(self, key, print_empty_line=True):
-        s = self.recorded_strs[key]
-        last_printed = None
-        if key in self.last_printed_strs:
-            last_printed = self.last_printed_strs[key]
-
-        if s != last_printed:
-            if print_empty_line:
-                logging.debug("")
-            logging.debug(s)
-            self.last_printed_strs[key] = s
-            return True
-
-    def print_damage(self, bei_lv_str, bonus_key, others=None):
-        cur_hp_changed = self.print_recored_str(R_CUR_HP_KEY)
-        self.print_recored_str(bonus_key, print_empty_line=not cur_hp_changed)
-        s = ["damage += cur_hp", bei_lv_str]
-        s.append(bonus_key)
-        if others:
-            s.append(str(others))
-        s.append(str(round(self.monster.kang_xin_xi_su, 3)))
-        s.append(str(round(self.monster.fang_yu_xi_shu, 3)))
-        logging.debug(" * ".join(s))
 
     @staticmethod
     def get_hei_fu_first_cure_delay():
@@ -334,14 +192,6 @@ class FuFuActionPlan(ActionPlan):
     @staticmethod
     def get_hei_fu_cure_fufu_delay():
         return random.randint(53, 173) / 1000
-    
-    def fufu_q_start(self):
-        self.qi_fen_zhi_supervisor.set_qi_fen_zhi(self, self.__fufu.BASE_QI_FEN_ZHI)
-        self.qi_fen_zhi_supervisor.start_supervise(self)
-
-    def fufu_q_stop(self):
-        self.qi_fen_zhi_supervisor.stop_supervise(self)
-        self.qi_fen_zhi_supervisor.set_qi_fen_zhi(self, 0)
 
     def fufu_consume_hp_per(self, hp_per):
         self.modify_cur_hp(targets=self.characters, hp_per=(0 - hp_per))
@@ -357,27 +207,72 @@ class FuFuActionPlan(ActionPlan):
             self.events.on_hei_fu_damage(self)
 
 
-class Qi_Fen_Zhi_Supervisor:
+class Qi_Fen_Zhi_Supervisor(ActionPlanAttributeSupplier):
     def __init__(self, fufu: Character_FuFu):
         self.fufu = fufu
+        self.__stopped = True
+
+    def is_bonus_valid(self, plan: FuFuActionPlan):
+        cur_time = plan.get_current_action_time()
+        if cur_time < self.__start_time or cur_time > self.__bonus_end_time:
+            plan.debug("超出芙芙增伤时间范围：{.3f} - {.3f}".format(self.__start_time, self.__bonus_end_time))
+            return False
+        
+        return True
+
+    def get_elem_bonus(self, plan: FuFuActionPlan, target_character):
+        if self.is_bonus_valid(plan):
+            return self.elem_bonus
+        else:
+            return 0
+    
+    def get_incoming_healing_bonus(self, plan, target_character):
+        if self.is_bonus_valid(plan):
+            return self.incoming_healing_bonus
+        else:
+            return 0
+    
+    def get_hp_percent(self, plan, target_character):
+        if target_character is self.fufu and self.is_bonus_valid(plan):
+            return self.hp_per_bonus
+        else:
+            return 0
+
+    def start_supervise(self, plan: FuFuActionPlan, start_time):
+        self.__start_time = start_time
+        self.__pao_pao_end_time = start_time + 18
+        self.__bonus_end_time = start_time + 18 + random.randint(0, 433) / 1000
+
         self.blocking = True
 
         self.__qi_fen_zhi = 0
         self.effective_qi_fen_zhi = 0
-        self.prev_qi_elem_bonus = 0
-        self.prev_qi_healing_bonus = 0
-        self.prev_qi_hp_per_bonus = 0
 
-    def start_supervise(self, plan: FuFuActionPlan):
+        self.elem_bonus = 0
+        self.incoming_healing_bonus = 0
+        self.hp_per_bonus = 0
+
+        self.set_qi_fen_zhi(plan, self.fufu.BASE_QI_FEN_ZHI)
+        plan.add_extra_attr(self)
         plan.add_consume_hp_callback(self.on_hp_changed)
         plan.add_regenerate_hp_callback(self.on_hp_changed)
+
+        self.started = True
 
     def stop_supervise(self, plan: FuFuActionPlan):
         plan.debug("气氛值调整线程终止")
         plan.remove_consume_hp_callback(self.on_hp_changed)
         plan.remove_regenerate_hp_callback(self.on_hp_changed)
 
+        self.started = False
+
     def on_hp_changed(self, plan: FuFuActionPlan, source: Character, targets_with_data: list[Character_HP_Change_Data]):
+        cur_time = plan.get_current_action_time()
+        if cur_time > self.__pao_pao_end_time:
+            print("泡泡消失了，停止监控生命值变动")
+            self.stop_supervise(plan)
+            return
+        
         qi_fen_zhi = 0
 
         for tdata in targets_with_data:
@@ -387,8 +282,10 @@ class Qi_Fen_Zhi_Supervisor:
 
     def add_qi_fen_zhi(self, plan: FuFuActionPlan, qi):
         self.__qi_fen_zhi += qi
-        if self.__qi_fen_zhi > self.fufu.MAX_TOTAL_QI_FEN_ZHI:
-            self.__qi_fen_zhi = self.fufu.MAX_TOTAL_QI_FEN_ZHI
+        if self.__qi_fen_zhi >= self.fufu.MING_2_QI_FEN_ZHI:
+            self.__qi_fen_zhi = self.fufu.MING_2_QI_FEN_ZHI
+            plan.debug("气氛值已达最大值，停止监控生命值变动")
+            self.stop_supervise(plan)
         plan.debug("气氛值增加%s, 增加到:%s", round(qi, 3), round(self.__qi_fen_zhi, 3))
 
         if self.blocking:
@@ -409,52 +306,32 @@ class Qi_Fen_Zhi_Supervisor:
         self.apply_qi_fen_zhi(plan)
 
     def apply_qi_fen_zhi(self, plan: FuFuActionPlan):
-        if self.__qi_fen_zhi == self.effective_qi_fen_zhi:
+        cur_time = plan.get_current_action_time()
+        if cur_time > self.__pao_pao_end_time:
+            return False
+        
+        cur_qi_fen_zhi = self.__qi_fen_zhi
+        if cur_qi_fen_zhi == self.effective_qi_fen_zhi:
             self.blocking = True
             plan.debug("气氛值调整线程：气氛值没变化，转入阻塞")
             return False
 
-        plan.debug("气氛值调整开始：生效层数%s", round(self.__qi_fen_zhi, 3))
+        plan.debug("气氛值调整开始：生效层数%s", round(cur_qi_fen_zhi, 3))
 
-        t = self.__do_apply_qi_fen_zhi(plan)
+        if cur_qi_fen_zhi > self.fufu.MAX_QI_FEN_ZHI:
+            elem_bonus_qi_fen_zhi = self.fufu.MAX_QI_FEN_ZHI
+            hp_bonus_qi_fen_zhi = cur_qi_fen_zhi - self.fufu.MAX_QI_FEN_ZHI
+        else:
+            elem_bonus_qi_fen_zhi = cur_qi_fen_zhi
+            hp_bonus_qi_fen_zhi = 0
 
-        self.effective_qi_fen_zhi = self.__qi_fen_zhi
-        self.prev_qi_elem_bonus = t[0]
-        self.prev_qi_healing_bonus = t[1]
-        self.prev_qi_hp_per_bonus = t[2]
+        self.elem_bonus = self.fufu.qi_fen_zhi_to_elem_bonus(elem_bonus_qi_fen_zhi)
+        self.incoming_healing_bonus = self.fufu.qi_fen_zhi_to_healing_bonus(elem_bonus_qi_fen_zhi)
+        self.hp_per_bonus = hp_bonus_qi_fen_zhi * self.fufu.QI_HP_MULTIPLIER
 
-        if self.__qi_fen_zhi >= self.fufu.MAX_TOTAL_QI_FEN_ZHI:
-            self.stop_supervise(plan)
-
-        if enable_record:
-            plan.damage_record_hp()
-            plan.damage_record_bonus()
+        self.effective_qi_fen_zhi = cur_qi_fen_zhi
 
         return True
-
-    def __do_apply_qi_fen_zhi(self, plan: FuFuActionPlan):
-        fufu = self.fufu
-        if self.__qi_fen_zhi > fufu.MAX_QI_FEN_ZHI:
-            bonus_qi_fen_zhi = fufu.MAX_QI_FEN_ZHI
-            hp_qi_fen_zhi = self.__qi_fen_zhi - self.fufu.MAX_QI_FEN_ZHI
-        else:
-            bonus_qi_fen_zhi = self.__qi_fen_zhi
-            hp_qi_fen_zhi = 0
-
-        elem_bonus = bonus_qi_fen_zhi * fufu.QI_TO_BONUS_MULTIPLIER
-        healing_bonus = bonus_qi_fen_zhi * fufu.QI_TO_CURE_MULTIPLIER
-        hp_per_bonus = hp_qi_fen_zhi * fufu.QI_HP_MULTIPLIER
-
-        fufu.modify_all_elem_bonus(elem_bonus - self.prev_qi_elem_bonus)
-        for t in plan.characters:
-            t.modify_incoming_healing_bonus(healing_bonus - self.prev_qi_healing_bonus)
-        fufu.get_hp().modify_max_hp_per(hp_per_bonus - self.prev_qi_hp_per_bonus)
-        plan.debug("气氛值调整完成，生命值上限：%d， a_bonus: %s, e_bonus: %s, q_bonus: %s, healing_bonus:%s",
-                   round(fufu.get_hp().get_max_hp()),
-                   round(fufu.get_a_bonus(), 3), round(fufu.get_e_bonus(), 3),
-                   round(fufu.get_q_bonus(), 3), round(fufu.get_incoming_healing_bonus(), 3))
-
-        return (elem_bonus, healing_bonus, hp_per_bonus)
 
 
 class Apply_Qi_Fen_Zhi_Action(Action):
@@ -545,16 +422,23 @@ class FuFu_GuYouTianFu_1_Action(Action):
         self.supervisor.do_cure(plan)
 
 
-class FuFu_Q_Action(Action):
+class FuFu_Q_Bonus_Action(Action):
+    """
+    注：plan.add_action 时，min_t 和 max_t 填写芙芙大招动画开始的时间，实际的增伤开始与结束时间会自动计算
+    """
     def __init__(self, fufu: Character_FuFu):
         super().__init__("芙芙 Q 功能开始生效")
         self.fufu = fufu
 
+    def set_timestamp(self, t):
+        super().set_timestamp(t)
+        self.bonus_start_time = t + random.randint(1703, 1819) / 1000
+
     def do_impl(self, plan: FuFuActionPlan):
-        plan.fufu_q_start()
+        plan.qi_fen_zhi_supervisor.start_supervise(plan, self.bonus_start_time)
 
 
-class FuFu_Q_Damage_Action(FuFu_Q_Action):
+class FuFu_Q_Damage_Action(FuFu_Q_Bonus_Action):
     def __init__(self, fufu: Character_FuFu):
         super().__init__("芙芙Q出伤")
         self.fufu = fufu
@@ -748,15 +632,6 @@ class Bai_Fu_Damage_Action(Action):
     def do_impl(self, plan: FuFuActionPlan):
         damage = self.fufu.add_bai_dao_damage(plan)
         plan.full_six_damage += damage
-
-
-class Fu_Fu_Q_Bonus_Stop_Action(Action):
-    def __init__(self):
-        super().__init__("芙芙大招效果消失")
-
-    def do_impl(self, plan: FuFuActionPlan):
-        self.debug(self.name)
-        plan.fufu_q_stop()
 
 
 class Salon_Member_Damage_Action(Action):

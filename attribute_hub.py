@@ -36,6 +36,12 @@ class ActionPlanAttributeSupplier:
 
     def get_elem_bonus(self, plan, target_character):
         return 0
+    
+    def get_healing_bonus(self, plan, target_character):
+        return 0
+    
+    def get_incoming_healing_bonus(self, plan, target_character):
+        return 0
 
     def get_energy_recharge(self, plan, target_character):
         return 0
@@ -106,6 +112,12 @@ class AttributeHub:
 
     def get_elem_mastery(self, ch):
         return sum([attr.get_elem_mastery(self.plan, ch) for attr in self.__extra_attrs])
+    
+    def get_healing_bonus(self, ch):
+        return sum([attr.get_healing_bonus(self.plan, ch) for attr in self.__extra_attrs])
+    
+    def get_incoming_healing_bonus(self, ch):
+        return sum([attr.get_incoming_healing_bonus(self, ch) for attr in self.__extra_attrs])
 
     def get_energy_recharge(self, ch):
         return sum([attr.get_energy_recharge(self.plan, ch) * 100 for attr in self.__extra_attrs])
