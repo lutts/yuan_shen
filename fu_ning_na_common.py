@@ -153,6 +153,14 @@ class Character_FuFu(Character, name="furina", elem_type=Ys_Elem_Type.SHUI, ming
     def add_pang_xie_damage(self, plan: ActionPlan, force_add_fufu_q_bonus):
         multiplier = Character_FuFu.PANG_XIE_MULTIPLIER[self.e_level - 1]
         return self.__add_salon_member_damage(plan, multiplier, force_add_fufu_q_bonus)
+    
+    def get_salon_member_start_time(self, after_charged_a=False):
+        """
+        沙龙成员出现的时机有两个：释放e技能后，白芙重击切为黑芙后
+
+        默认为释放 e 技能后，如果是白芙重击切为黑芙，则传参 after_charged_a 为 True 
+        """
+        return 0
 
 
 class FuFuActionPlan(ActionPlan):

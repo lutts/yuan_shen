@@ -2,7 +2,9 @@ import math
 import numpy
 import itertools
 from datetime import datetime
+from ys_basic import ys_crit_damage
 from ys_syw import all_syw, ShengYiWu
+from monster import Monster
 
 time_format_data = "%H:%M:%S.%f"
 def time_diff(t1_str, t2_str):
@@ -315,84 +317,82 @@ def ying_ye_fu_qing():
         print(i)
 
 
-import gc
-import sys
+a_multiplier = [70.3/100, 63.6/100, 80.1/100, 106.5/100, 107.9/100, 13.8/100]
+max_hp = [44764, 46817, 48960, 48960]
+e_bonus = [0.616, 0.616 + 0.08, 0.616 + 2 * 0.08, 0.616 + 3 * 0.08]
+salom_member_multiplier = [6.87/100, 12.67/100, 17.61/100]
 
-class B:
-    def bfunc(self):
-        print("is b")
+def get_a_damage(phrase, zw_level, monster, hei_dao=True):
+    multiplier = a_multiplier[phrase - 1]
+    if hei_dao:
+        full_multiplier = 18/100
+    else:
+        full_multiplier = (18 + 25) / 100
+    damage = (1124 * multiplier + max_hp[zw_level] * full_multiplier) * (1 + 0.616)
+    return monster.attacked(damage)
 
-class A:
-    def __init__(self, b: B):
-        self.haha = "good"
-        self.b = b
-        self.orig_bfunc = b.bfunc
-        b.bfunc = self.__afunc(b.bfunc)
 
-    def __afunc(self, callback):
-        def inner():
-            print(self.haha)
-            print("before")
-            callback()
-            print("after")
+def get_salon_member_damage(multiplier, zw_level, monster):
+    damage = max_hp[zw_level] * multiplier * (1 + 0.28 + e_bonus[zw_level]) * 1.4
+    return monster.attacked(damage)
 
-        return inner
+def get_e_damages():
+    cd = 2.369
 
-def test_cr():
-    b = B()
-    a = A(b)
-    b.bfunc()
+    monster = Monster(level=93, kang_xin=3.1)
+    monster.add_jian_kang(0.2)
 
-class F():
-    def __init__(self, v):
-        self.v = v
+
+
+    for phrase in range(1, 7):
+        hei_str = f"普攻第{phrase}段: "
+        bai_str = "        : "
+        for zw_level in range(0, 3):
+            hei_damage = get_a_damage(phrase, zw_level, monster)
+            hei_crit = ys_crit_damage(hei_damage, cd)
+            hei_damage = round(hei_damage)
+
+            bai_damage = get_a_damage(phrase, zw_level, monster, hei_dao=False)
+            bai_crit = ys_crit_damage(bai_damage, cd)
+            bai_damage = round(bai_damage)
+
+            hei_str += f"黑: {hei_damage}/{hei_crit}\t\t"
+            bai_str += f"白: {bai_damage}/{bai_crit}\t\t"
+
+        print(hei_str)
+        print(bai_str)
+
+    e_str = "e伤害:"
+    for zw_level in range(0, 4):
+        e_damage = max_hp[zw_level] * 16.7/100 * (1 + e_bonus[zw_level])
+        e_damage = monster.attacked(e_damage)
+        e_crit = ys_crit_damage(e_damage, cd)
+        e_damage = round(e_damage)
+
+        e_str += f"{e_damage}/{e_crit}\t\t"
+
+    print(e_str)
+
+
+    for multiplier in salom_member_multiplier:
+        sl_str = ""
+        for zw_level in range(0, 4):
+            sl_damage = get_salon_member_damage(multiplier, zw_level, monster)
+            sl_crit = ys_crit_damage(sl_damage, cd)
+            sl_damage = round(sl_damage)
+
+            sl_str += f"{sl_damage}/{sl_crit}\t\t"
+        print(sl_str)
 
 # Main body
 if __name__ == '__main__':
     #avg_min_max([7.135, 6.855, 7.834,  6.885,  7.935,  7.385,  7.169,  6.268])
     pass
+    # get_e_damages()
 
-    l = [
-[19.755, 0.117],
-[19.721, 0],
-[19.805, 0.283],
-[19.771, 0.134],
-[19.772, 0],
-[19.753, 0.267],
-[19.771, 0.084],
-[19.788, 0.183],
-[19.722, 0],
-[19.705, 0.034],
-[19.739, 0.15],
-[19.757, 0.117],
-[19.705, 0.05],
-[19.755, 0],
-[19.738, 0],
-[19.688, 0.05],
-[19.771, 0.067],
-[19.772, 0],
-[19.805, 0],
-[19.738, 0.05],
-[19.738, 0.083],
-[19.83, 0.016],
-[19.722, 0.127],
-[19.822, 0],
-[19.805, 0.366],
-[19.771, 0.3 ],
-[19.722, 0.433],
-[19.805, 0.066],
-[19.821, 0.217],
-[19.722, 0.217],
-[19.656, 0.333],
-[19.805, 0.1],
-    ]
+    lp = [19.721, 19.722, 19.722, 19.722, 19.722, 19.738, 19.738, 19.738, 19.739, 19.753, 19.755, 19.755, 19.757, 19.771, 19.771, 19.771, 19.771, 19.772, 19.772, 19.788, 19.805, 19.805, 19.805, 19.805, 19.805]
+    avg_min_max(lp)
 
-    
-    print("num: ", len(l))
-    print(sorted([i[0] for i in l]))
-    print(sorted([i[1] for i in l]))
-
-    pp = [round(i[0] - 18, 3) for i in l]
-    pp = [1.721, 1.722, 1.722, 1.722, 1.722, 1.738, 1.738, 1.738, 1.739, 1.753, 1.755, 1.755, 1.757, 1.771, 1.771, 1.771, 1.771, 1.772, 1.772, 1.788, 1.805, 1.805, 1.805, 1.805, 1.805]
-    avg_min_max(pp)
+    lp18 = [round(i - 18, 3) for i in lp]
+    avg_min_max(lp18)
 

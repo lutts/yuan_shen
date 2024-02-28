@@ -24,7 +24,9 @@ class ZhongLi_E_AttributeSupplier(ActionPlanAttributeSupplier):
 
 class ZhongLi_E_Action(Action):
     """
-    注: 不要直接创建这个 Action 的实例，使用ZhongLi_E_AttributeSupplier.get_e_action获取
+    注1: 不要直接创建这个 Action 的实例，使用ZhongLi_E_AttributeSupplier.get_e_action获取
+
+    注2: plan.add_action时，min_t 和 max_t 使用钟离点按e时按钮变灰时的时间，实际减抗开始时间会自动计算
     """
     def __init__(self, name, attr: ZhongLi_E_AttributeSupplier):
         if not name:
@@ -34,5 +36,6 @@ class ZhongLi_E_Action(Action):
         self.__attr = attr
 
     def do_impl(self, plan: ActionPlan):
-        self.__attr.end_time = self.get_timestamp() + 20
+        jian_kang_start_time = self.get_timestamp + 1.15
+        self.__attr.end_time = jian_kang_start_time + 20
         plan.add_extra_attr(self.__attr)

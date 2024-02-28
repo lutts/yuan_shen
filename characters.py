@@ -97,7 +97,7 @@ class YeLan_Q_Bonus_Action(AttributeAction):
     def set_timestamp(self, t):
         super().set_timestamp(t)
         # 参见 ye_lan_readme.md
-        self.bonus_start_time = t + random.randint(1220, 1255) / 1000
+        self.bonus_start_time = t + random.randint(1235, 1270) / 1000
 
     def do_impl(self, plan: ActionPlan):
         plan.add_extra_attr(self)
