@@ -63,7 +63,7 @@ local function copyTime()
     r = r - (h * 3600)
     local m = r / 60
     local s, ms = string.format('%.03f', s_ms):match('([^.]*).(.*)')
-    local time = string.format('%02d:%02d:%02d.%03d', h, m, s, ms)
+    local time = string.format('\'"%02d:%02d:%02d.%03d"\'', h, m, s, ms)
     if set_clipboard(time) then
         mp.osd_message(string.format("Copied to Clipboard: %s", time))
     else
