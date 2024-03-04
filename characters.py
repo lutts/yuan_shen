@@ -320,13 +320,13 @@ class YingBao_Q_Action(Action):
 
         q_damage = all_atk * multiplier * bonus
         # print("q_bonus=", ying_bao.get_q_bonus())
-        q_damage = plan.add_damage(q_damage)
-        ying_bao.meng_xiang_yi_dao_damage = ys_crit_damage(q_damage, ying_bao.get_crit_damage())
+        q_damage, crit_damage, _ = plan.add_damage(q_damage, ying_bao)
+        ying_bao.meng_xiang_yi_dao_damage = crit_damage
 
         if Action.enable_debug:
             print(plan.monster)
             print("q_damage:{}, q_crit:{}, all_atk:{}, elem_bonus:{}, multiplier:{}".format(
-                round(q_damage), round(q_damage * (1 + ying_bao.get_crit_damage())), round(all_atk), 
+                round(q_damage), crit_damage, round(all_atk), 
                 round(bonus, 3), round(multiplier, 3)))
 
 class YingBao_A_Action(Action):
@@ -343,12 +343,12 @@ class YingBao_A_Action(Action):
         multiplier = ying_bao.get_meng_a_multiplier(phrase=self.phrase, sub_phrase=self.sub_phrase)
         bonus = 1 + ying_bao.get_q_bonus()
         # print("add damage2: ", round(all_atk * multiplier * bonus, 3))
-        a_damage = plan.add_damage(all_atk * multiplier * bonus)
+        a_damage, crit_damage, _ = plan.add_damage(all_atk * multiplier * bonus, ying_bao)
 
         if Action.enable_debug:
             print(plan.monster)
             print("a_damage:{}, q_crit:{}, all_atk:{}, elem_bonus:{}, multiplier:{}".format(
-                round(a_damage), round(a_damage * (1 + ying_bao.get_crit_damage())), round(all_atk), 
+                round(a_damage), crit_damage, round(all_atk), 
                 round(bonus, 3), round(multiplier, 3)))
 
 
@@ -365,7 +365,7 @@ class YingBao_Charged_A_Action(Action):
         multiplier = ying_bao.get_charged_a_multiplier(sub_phrase=self.sub_phrase)
         bonus = 1 + ying_bao.get_q_bonus()
 
-        z_damage = plan.add_damage(all_atk * multiplier * bonus)
+        z_damage, crit_damage, _ = plan.add_damage(all_atk * multiplier * bonus, ying_bao)
 
         if Action.enable_debug:
             print(plan.monster)

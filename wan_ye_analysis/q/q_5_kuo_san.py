@@ -4,16 +4,7 @@ import os
 sys.path.append(os.path.abspath('../..'))
 
 from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary
-
-timestamp_names = [
-    "switch_to_wan_ye", "q_start", "q_damage", "q_end",
-    "liu_feng_first",
-    "liu_feng_2nd",
-    "liu_feng_3rd",
-    "liu_feng_4th",
-    "liu_feng_5th"
-]
-
+from typing import NamedTuple
 
 timestamp_dict = {
     "SCVE3726":
@@ -62,53 +53,52 @@ timestamp_dict = {
      ]
 }
 
-def get_intervals(ys_timestamp_dict: dict[str, list[Ys_Timestamp|list[Ys_Timestamp]]]):
+class Video_Timestamps(NamedTuple):
+    switch_to_wan_ye: Ys_Timestamp
+    q_start: Ys_Timestamp
+    q_damage: Ys_Timestamp
+    q_end: Ys_Timestamp
+    liu_feng_first: list[Ys_Timestamp]
+    liu_feng_2nd: list[Ys_Timestamp]
+    liu_feng_3rd: list[Ys_Timestamp]
+    liu_feng_4th: list[Ys_Timestamp]
+    liu_feng_5th: list[Ys_Timestamp]
+
+
+def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
     intervals_dict = {}
-    for name, ys_timestamps in ys_timestamp_dict.items():
-        switch_to_wan_ye = ys_timestamps["switch_to_wan_ye"]
-        q_start = ys_timestamps["q_start"]
-        q_damage = ys_timestamps["q_damage"]
-        q_end = ys_timestamps["q_end"]
-
-        liu_feng_first: list[Ys_Timestamp] = ys_timestamps["liu_feng_first"]
-        if len(liu_feng_first):
-            liu_feng_first.append(Ys_Timestamp("00:00:00.000"))
-
-        liu_feng_2nd: list[Ys_Timestamp] = ys_timestamps["liu_feng_2nd"]
-        liu_feng_3rd: list[Ys_Timestamp] = ys_timestamps["liu_feng_3rd"]
-        liu_feng_4th: list[Ys_Timestamp] = ys_timestamps["liu_feng_4th"]
-        liu_feng_5th: list[Ys_Timestamp] = ys_timestamps["liu_feng_5th"]
+    for name, t in ys_timestamp_dict.items():
+        if len(t.liu_feng_first) < 3:
+            t.liu_feng_first.append(Ys_Timestamp("00:00:00.000"))
 
         intervals_dict[name] = {
-            "切万叶 - Q动画开始": q_start - switch_to_wan_ye,
-            "Q动画开始 - Q扩散出冰伤": q_damage - q_start,
-            "Q动画开始 - Q动画结束": q_end - q_start,
+            "切万叶 - Q动画开始": t.q_start - t.switch_to_wan_ye,
+            "Q动画开始 - Q扩散出冰伤": t.q_damage - t.q_start,
+            "Q动画开始 - Q动画结束": t.q_end - t.q_start,
 
-            "Q动画结束 - 第一次流风开始": liu_feng_first[0] - q_end,
+            "Q动画结束 - 第一次流风开始": t.liu_feng_first[0] - t.q_end,
             "流风间隔": [
-                liu_feng_2nd[0] - liu_feng_first[0],
-                liu_feng_3rd[0] - liu_feng_2nd[0],
-                liu_feng_4th[0] - liu_feng_3rd[0],
-                liu_feng_5th[0] - liu_feng_4th[0]
+                t.liu_feng_2nd[0] - t.liu_feng_first[0],
+                t.liu_feng_3rd[0] - t.liu_feng_2nd[0],
+                t.liu_feng_4th[0] - t.liu_feng_3rd[0],
+                t.liu_feng_5th[0] - t.liu_feng_4th[0]
             ],
             "流风开始 - 扩散出伤": [
-                liu_feng_2nd[-1] - liu_feng_2nd[0],
-                liu_feng_3rd[-1] - liu_feng_3rd[0],
-                liu_feng_4th[-1] - liu_feng_4th[0],
-                liu_feng_5th[-1] - liu_feng_5th[0],
+                t.liu_feng_2nd[-1] - t.liu_feng_2nd[0],
+                t.liu_feng_3rd[-1] - t.liu_feng_3rd[0],
+                t.liu_feng_4th[-1] - t.liu_feng_4th[0],
+                t.liu_feng_5th[-1] - t.liu_feng_5th[0],
             ],
-            "第一次流风 - 最后一次流风": liu_feng_5th[0] - liu_feng_first[0],
-            "Q动画结束 - 最后一次流风": liu_feng_5th[0] - q_end,
+            "第一次流风 - 最后一次流风": t.liu_feng_5th[0] - t.liu_feng_first[0],
+            "Q动画结束 - 最后一次流风": t.liu_feng_5th[0] - t.q_end,
         }
 
     return intervals_dict
 
 
-print_timestamps_summary(timestamp_names, timestamp_dict, get_intervals)
+print_timestamps_summary(Video_Timestamps, timestamp_dict, get_intervals)
 
-timestamp_names2 = [
-    "q_anim_start", "kuo_san_damage", "q_anim_end", "ling_hua_first_damage", "ling_hua_last_jian_kang_damage", "ling_hua_first_non_jian_kang_damage"
-]
+
 timestamps_dict2 = {
 "ALUG6642": ["00:00:02.533",  "00:00:04.018", "00:00:04.085", "00:00:10.068", "00:00:13.870", "00:00:14.070"],
 "ANJH0223": ["00:00:04.385", "00:00:05.852", "00:00:05.952", "00:00:13.537", "00:00:15.820", "00:00:16.120"],
@@ -126,20 +116,26 @@ timestamps_dict2 = {
 "XKQA5526": ["00:00:05.335", "00:00:06.818", "00:00:06.902", "00:00:14.437", "00:00:16.670", "00:00:16.987"]
 }
 
-def get_intervals2(ys_timestamp_dict: dict[str, list[Ys_Timestamp|list[Ys_Timestamp]]]):
-    intervals_dict = {}
-    for name, ys_timestamps in ys_timestamp_dict.items():
-        q_anim_start = ys_timestamps["q_anim_start"]
-        kuo_san_damage = ys_timestamps["kuo_san_damage"]
-        q_anim_end = ys_timestamps["q_anim_end"]
 
+class Video_Timestamps2(NamedTuple):
+    q_anim_start: Ys_Timestamp
+    kuo_san_damage: Ys_Timestamp
+    q_anim_end: Ys_Timestamp
+    ling_hua_first_damage: Ys_Timestamp
+    ling_hua_last_jian_kang_damage:Ys_Timestamp
+    ling_hua_first_non_jian_kang_damage: Ys_Timestamp
+
+
+def get_intervals2(ys_timestamp_dict: dict[str, Video_Timestamps2]):
+    intervals_dict = {}
+    for name, t in ys_timestamp_dict.items():
         intervals_dict[name] = {
-            "Q动画开始 - 扩散出伤": kuo_san_damage - q_anim_start,
+            "Q动画开始 - 扩散出伤": t.kuo_san_damage - t.q_anim_start,
         }
 
     return intervals_dict
 
-print_timestamps_summary(timestamp_names2, timestamps_dict2, get_intervals2)
+print_timestamps_summary(Video_Timestamps2, timestamps_dict2, get_intervals2)
 
 
 

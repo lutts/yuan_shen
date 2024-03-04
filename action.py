@@ -9,7 +9,7 @@ import typing
 import random
 import weakref
 
-from ys_basic import Ys_Elem_Type
+from ys_basic import Ys_Elem_Type, ys_crit_damage, ys_expect_damage
 from attribute_hub import ActionPlanAttributeSupplier, AttributeHub
 from monster import Monster
 from character import Character, Character_HP_Change_Data
@@ -27,15 +27,11 @@ class Action:
 
     def __init__(self, name):
         self.name = name
-        self.done = False
         # timestamp是动态计算出来的，这里只是放一个占位符
         self.__timestamp = 0
 
-    def set_done(self):
-        self.done = True
-
     def set_timestamp(self, t):
-        # 时间戳只允许设置一次，这样做是为了防止将同一个action实例插入到 action_list
+        # 时间戳只允许设置一次，这样做是为了防止将同一个action实例插入到 action_list 多次
         if self.__timestamp:
             raise ActionTimestampException(
                 "Action timestamp already setted, can not change")
@@ -54,9 +50,6 @@ class Action:
         # self.__debug(fmt_str, *args, **kwargs)
 
     def do(self, plan: ActionPlan):
-        if self.done:
-            return None
-
         return self.do_impl(plan)
 
     def do_impl(self, plan: ActionPlan):
@@ -104,11 +97,13 @@ class AttributeAction(Action, ActionPlanAttributeSupplier):
 class ActionPlan:
     def __init__(self, characters: list[Character], monster: Monster):
         """
-        注：会自动处理队伍元素共鸣，但双岩不会处理，因为有双岩不一定有盾，减了岩抗时，输出位不定是岩C，存在太多不确定性
+        注：会自动处理队伍元素共鸣，但双岩例外，因为有双岩不一定有盾，减了岩抗时，输出位不定是岩C，比如计算娜维娅队里的香菱或夜兰的输出
+
+        如果需要添加双岩共鸣 buff, 需要手动调用 add_shuang_yan_buff
         """
 
         self.__characters = characters if characters else []
-        self.__pre_process_characters() 
+        self.__pre_process_characters()
 
         self.__forground_character: Character = None
         self.__monster = monster
@@ -120,11 +115,10 @@ class ActionPlan:
         self.__attribute_hub = AttributeHub(self)
         
         self.events = Events()
-        # self.__has_on_consume_hp_callback = False
-        # self.__has_on_regenerate_hp_callback = False
-        # self.__has_on_over_healed_callback = False
 
-        self.__total_damage = 0
+        self.__total_raw_damage = 0
+        self.__total_expect_damage = 0
+        self.__total_crit_damage = 0
 
     def __pre_process_characters(self):
         num_chs = len(self.__characters)
@@ -146,7 +140,7 @@ class ActionPlan:
                 cao_num += 1
             elif ch.elem_type is Ys_Elem_Type.BING:
                 bing_num += 1
-            
+
             ch.set_teammates(self.__characters[:i] + self.__characters[i+1:])
 
         if huo_num >= 2:
@@ -164,6 +158,14 @@ class ActionPlan:
         if bing_num >= 2:
             for t in self.__characters:
                 t.add_crit_rate(0.15)
+
+    def add_shuang_yan_buff(self):
+        # 假设盾是常驻的
+        for t in self.__characters:
+            t.add_all_bonus(0.15)
+        # 造成伤害使岩元素抗性下降20%，持续15秒，时间很长，加上可能的结晶盾，因此这里我们假设减抗是常驻的
+        # 假设的前提：15秒内会攻击一次刷新时间、盾如果破碎的话，15秒内会重新开盾(主动开盾或捡结晶盾)
+        self.__monster.add_jian_kang(0.2)
 
     def prepare(self):
         self.__set_attribute_hub()
@@ -212,10 +214,6 @@ class ActionPlan:
     def monster(self):
         return self.__monster
     
-    @property
-    def total_damage(self):
-        return self.__total_damage
-    
     @staticmethod
     def get_effective_delay():
         """
@@ -227,10 +225,12 @@ class ActionPlan:
         return self.__current_action_time
     
     def __set_attribute_hub(self):
+        self.__monster.set_attribute_hub(self.__attribute_hub)
         for t in self.__characters:
             t.set_attribute_hub(self.__attribute_hub)
 
     def __unset_attribute_hub(self):
+        self.__monster.unset_attribute_hub()
         for t in self.__characters:
             t.unset_attribute_hub()
 
@@ -244,15 +244,30 @@ class ActionPlan:
 
     ##################################################
 
-    def add_damage(self, damage):
-        if self.__attribute_hub.has_extra_attr():
-            real_damage = damage * self.__attribute_hub.get_kang_xin_multiplier(self.monster) 
-            real_damage *= self.__attribute_hub.get_fang_yu_multiplier(self.monster)
-        else:
-            real_damage = self.monster.attacked(damage)
-        #print("add damage:", round(real_damage, 3))
-        self.__total_damage += real_damage
-        return real_damage
+    def add_damage(self, damage, ch: Character):
+        damage = self.monster.attacked(damage)
+        cd = ch.get_crit_damage()
+        expect_damage = ys_expect_damage(damage, ch.get_crit_rate(), cd)
+        crit_damage = ys_crit_damage(damage, cd)
+        damage = int(damage)
+
+        self.__total_raw_damage += damage
+        self.__total_expect_damage += expect_damage
+        self.__total_crit_damage += crit_damage
+
+        return (damage, crit_damage, expect_damage)
+    
+    @property
+    def total_raw_damage(self):
+        return self.__total_raw_damage
+    
+    @property
+    def total_expect_damage(self):
+        return self.__total_expect_damage
+    
+    @property
+    def total_crit_damage(self):
+        return self.__total_crit_damage
 
     def switch_ch_to_forground(self, ch: Character):
         if self.__forground_character:
@@ -367,24 +382,16 @@ class ActionPlan:
     def sort_action(self):
         self.action_list.sort(key=lambda a: a.get_timestamp())
 
-    def add_action(self, action:Action, min_t, max_t, base_action: Action = None, negative=False, effective_delay=0) -> Action:
+    def add_action(self, action:Action, min_t, max_t, base_action: Action = None, effective_delay=0) -> Action:
         base_time = 0 if base_action is None else base_action.get_timestamp()
 
         t = random.randint(round(min_t * 1000), round(max_t * 1000)) / 1000
-        if negative:
-            timestamp = base_time - t
-        else:
-            timestamp = base_time + t
+        timestamp = base_time + t
         action.set_timestamp(timestamp + effective_delay)
 
         self.action_list.append(action)
 
         return action
-
-    def find_action(self, action_name) -> Action:
-        for a in reversed(self.action_list):
-            if a.name == action_name:
-                return a
             
     def insert_action(self, action, re_sort=False):
         self.action_list.append(action)
@@ -405,12 +412,6 @@ class ActionPlan:
             idx += 1
             
         self.action_list.append(action)
-
-    def check_duplicate_action(self):
-        action_names = [a.name for a in self.action_list]
-        action_name_set = set(action_names)
-        if len(action_names) != len(action_name_set):
-            raise Exception("action name duplicated!")
 
     def run(self):
         self.sort_action()

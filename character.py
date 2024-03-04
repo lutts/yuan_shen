@@ -6,6 +6,7 @@ Module documentation.
 
 import logging
 import weakref
+from enum import Enum
 
 from typing import Self
 from ys_basic import Ys_Elem_Type, Ys_Weapon
@@ -28,6 +29,17 @@ class Character_HP_Change_Data:
     def __str__(self):
         return self.character.name + " " + str(self.data)
 
+class NormalAttackType(Enum):
+    HIT_FIRST = "普攻第一段"
+    HIT_2ND = "普攻第二段"
+    HIT_3ND = "普攻第三段"
+    HIT_4TH = "普攻第四段"
+    HIT_5TH = "普攻第五段"
+
+    CHARGED = "重击"
+    PLUNGE = "下坠期间"
+    LOW_PLUNGE = "低空坠地冲击"
+    HIGH_PLUNGE = "高空坠地冲击"
 
 class CharacterBase:
     def __init_subclass__(cls, name, elem_type: Ys_Elem_Type=None, ming_zuo_num=0, ch_level=90, a_level=1, e_level=1, q_level=1, q_energy=80,

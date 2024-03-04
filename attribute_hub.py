@@ -4,8 +4,6 @@
 Module documentation.
 """
 
-from monster import Monster
-
 class ActionPlanAttributeSupplier:
     def get_crit_rate(self, plan, target_character):
         return 0
@@ -136,13 +134,12 @@ class AttributeHub:
 
     def get_q_bonus(self, ch):
         return sum([attr.get_elem_bonus(self.plan, ch) + attr.get_q_bonus(self.plan, ch) for attr in self.__extra_attrs])
-
-    def get_kang_xin_multiplier(self, monster: Monster):
-        extra_jian_kang = sum([attr.get_jian_kang(self.plan) for attr in self.__extra_attrs])
-        return monster.get_jian_kang_bonus(extra_jian_kang)
-
-    def get_fang_yu_multiplier(self, monster: Monster):
-        extra_jian_fang = sum([attr.get_jian_fang(self.plan) for attr in self.__extra_attrs])
-        extra_ignore_def = sum([attr.get_ignore_fang(self.plan) for attr in self.__extra_attrs])
-        return monster.get_fang_yu_xi_shu(extra_jian_fang=extra_jian_fang,
-                                                extra_ignore_defence_ratio=extra_ignore_def)
+    
+    def get_jian_kang(self):
+        return sum([attr.get_jian_kang(self.plan) for attr in self.__extra_attrs])
+    
+    def get_jian_fang(self):
+        return sum([attr.get_jian_fang(self.plan) for attr in self.__extra_attrs])
+    
+    def get_ignore_fang(self):
+        return sum([attr.get_ignore_fang(self.plan) for attr in self.__extra_attrs])

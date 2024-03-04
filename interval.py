@@ -5,6 +5,8 @@ from datetime import datetime
 from ys_basic import ys_crit_damage
 from ys_syw import all_syw, ShengYiWu
 from monster import Monster
+from typing import NamedTuple
+
 
 time_format_data = "%H:%M:%S.%f"
 def time_diff(t1_str, t2_str):
@@ -342,7 +344,7 @@ def get_e_damages():
     monster = Monster(level=93, kang_xin=3.1)
     monster.add_jian_kang(0.2)
 
-
+    print(monster)
 
     for phrase in range(1, 7):
         hei_str = f"普攻第{phrase}段: "
@@ -384,15 +386,35 @@ def get_e_damages():
             sl_str += f"{sl_damage}/{sl_crit}\t\t"
         print(sl_str)
 
+class A:
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+
+    def get_ints(self):
+        """
+        aa: 测试1
+        bb: 测试2
+        """
+        # class Ints:
+        #     def __init__(self, a, b):
+        #         self.aa = a
+        #         self.bb = b
+
+        class Ints(NamedTuple):
+           
+            aa: int
+            bb: int
+
+        return Ints(self.a, self.b)
+
 # Main body
 if __name__ == '__main__':
     #avg_min_max([7.135, 6.855, 7.834,  6.885,  7.935,  7.385,  7.169,  6.268])
     pass
     # get_e_damages()
 
-    lp = [19.721, 19.722, 19.722, 19.722, 19.722, 19.738, 19.738, 19.738, 19.739, 19.753, 19.755, 19.755, 19.757, 19.771, 19.771, 19.771, 19.771, 19.772, 19.772, 19.788, 19.805, 19.805, 19.805, 19.805, 19.805]
-    avg_min_max(lp)
+    a = A(5, 10)
+    aa, bb = a.get_ints()
 
-    lp18 = [round(i - 18, 3) for i in lp]
-    avg_min_max(lp18)
-
+    print(aa)

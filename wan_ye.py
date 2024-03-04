@@ -4,9 +4,33 @@
 Module documentation.
 """
 
+from ys_basic import Ys_Elem_Type
+from ys_weapon import Ys_Weapon
 from action import Action, ActionPlan
 from attribute_hub import ActionPlanAttributeSupplier
 from character import Character
+
+class Wan_Ye_Ch(Character, name="枫原万叶", elem_type=Ys_Elem_Type.FENG, ming_zuo_num=2, q_energy=60):
+    def __init__(self, elem_mastery = 994, weapon: Ys_Weapon=None):
+        super().__init__(elem_mastery=elem_mastery, weapon=weapon)
+
+    def get_e_bonus(self):
+        return self.get_elem_mastery() * 0.04 / 100
+    
+    def get_q_bonus(self):
+        em = self.get_elem_mastery()
+        if self.ming_zuo_num >= 2:
+            em += 200
+
+        return em * 0.04 / 100
+    
+    def get_e_action(self):
+        return super().get_e_action()
+    
+    def get_q_action(self):
+        return super().get_q_action()
+
+
 
 WAN_YE_ELEM_MASTERY = 994
 WAN_YE_MING_ZUO_NUM = 2
@@ -68,7 +92,10 @@ class WanYeAttributes(ActionPlanAttributeSupplier):
 
         return 0.4
 
-    def create_e_action(self):
+    def create_e_action(self, use_e_start_time=False):
+        """
+        如果 plan.add_action时使用的时间是点按e后普攻键变下落图标的时间，则 use_e_start_time 传 True
+        """
         return WanYe_E_Action(self)
 
     def create_q_action(self):
@@ -81,7 +108,22 @@ class WanYe_E_Action(Action):
     """
     def __init__(self, attr: WanYeAttributes):
         self.attr = attr
+        self.__use_e_start_time = False
+
         super().__init__("万叶E扩散")
+
+    def use_e_start_time(self):
+        self.__use_e_start_time = True
+
+    def set_timestamp(self, t):
+        if self.__use_e_start_time:
+            pass
+        else:
+            pass
+
+        super().set_timestamp(t)
+
+
 
     def do_impl(self, plan: ActionPlan):
         self.attr.set_bonus_end_time(self.get_timestamp() + 8)
