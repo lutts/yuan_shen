@@ -31,6 +31,9 @@ class Monster:
         self.kang_xin = kang_xin
         self.kang_xin_xi_su  = self.get_jian_kang_bonus()
 
+        # 上一次被扩散反应的时间：扩散反应是有内置CD的，大约为1.2秒, 每个怪独立计时
+        self.last_kuo_san_time = None
+
     def set_level(self, lv):
         self.level = lv
         self.fang_yu_xi_shu = self.get_fang_yu_xi_shu()
@@ -55,6 +58,13 @@ class Monster:
     def sub_jian_fang(self, jian_fang):
         self.jian_fang -= jian_fang
         self.fang_yu_xi_shu = self.get_fang_yu_xi_shu()
+
+    def do_kuo_san(self, cur_time):
+        if cur_time - self.last_kuo_san_time > 1.2:
+            self.last_kuo_san_time = cur_time
+            return True
+        else:
+            return False
 
     def set_jian_kang(self, jian_kang):
         self.jian_kang = jian_kang
