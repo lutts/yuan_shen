@@ -8,14 +8,15 @@ import sys
 import os
 import logging
 import itertools
+from character_impl.ban_ni_te import BanNiTe_Q_Action
 
 from ys_basic import Ys_Elem_Type, Ys_Weapon, ys_expect_damage, ys_crit_damage
 from ys_reaction import Ys_Reaction, Ys_No_Reaction, Ys_Reaction_ZhengFa
 from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 from character import Character
 from monster import Monster
-from characters import Ying_Bao_Ch, BanNiTe_Q_Action
-from wan_ye import get_wan_ye_q_bonus
+from characters import Ying_Bao_Ch
+from character_impl.wan_ye import Wan_Ye_Ch
 from ys_weapon import Yu_Huo
 
 
@@ -60,7 +61,7 @@ class Xiang_Ling_Ch(Character, name="香菱", elem_type=Ys_Elem_Type.HUO, ming_z
         self.add_q_bonus(Ying_Bao_Ch.get_bonus_to_q(self.q_energy))
 
     def add_wan_ye_bonus(self, monster: Monster):
-        self.add_q_bonus(get_wan_ye_q_bonus())
+        self.add_q_bonus(Wan_Ye_Ch.get_q_bonus())
         monster.add_jian_kang(0.4)
 
     def add_xia_wo_lei_bonus(self, monster: Monster):

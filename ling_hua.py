@@ -13,7 +13,7 @@ from ys_basic import Ys_Elem_Type, Ys_Weapon, ys_expect_damage, ys_crit_damage
 from ys_weapon import Wu_Qie_Zhi_Hui_Guang
 from character import Character
 from monster import Monster
-from wan_ye import get_wan_ye_q_bonus, get_wan_ye_e_bonus
+from character_impl.wan_ye import Wan_Ye_Ch
 from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
 enable_debug = False
@@ -134,7 +134,7 @@ def print_damages(ling_hua_init: Ling_Hua_Ch):
     ling_hua.add_atk_per(0.2)
 
     # 万叶 q
-    wan_ye_bonus = get_wan_ye_q_bonus()
+    wan_ye_bonus = Wan_Ye_Ch().get_q_bonus()
     ling_hua.add_all_bonus(wan_ye_bonus)
     monster.add_jian_kang(0.4)
 
@@ -268,7 +268,7 @@ def get_damage_for_shen_mo_wan_mao(ling_hua: Ling_Hua_Ch):
     ling_hua.add_atk_per(0.2)
 
     # 万叶 q，在猫猫 6 命时，二命万叶 q 和 e 的加成是一样的，如果猫猫没满命，可能用 e_bonus 更合理些
-    ling_hua.add_all_bonus(get_wan_ye_q_bonus())
+    ling_hua.add_all_bonus(Wan_Ye_Ch().get_q_bonus())
     monster.add_jian_kang(0.4)
 
     # 莫娜 e, 千岩四件套，讨龙
@@ -319,7 +319,7 @@ def get_damage_for_shen_mo_wan_mao(ling_hua: Ling_Hua_Ch):
 
     monster.add_jian_kang(0.4)
     # 万叶增伤消失
-    ling_hua.sub_all_bonus(get_wan_ye_q_bonus())
+    ling_hua.sub_all_bonus(Wan_Ye_Ch().get_q_bonus())
     
     all_damage += ling_hua.get_charged_a_damage(monster)
     

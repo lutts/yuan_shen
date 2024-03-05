@@ -407,6 +407,7 @@ class A:
             bb: int
 
         return Ints(self.a, self.b)
+    
 
 # Main body
 if __name__ == '__main__':

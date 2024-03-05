@@ -14,7 +14,7 @@ from ys_basic import Ys_Elem_Type, ys_expect_damage
 from ys_weapon import Ruo_Shui_Arrow
 from monster import Monster
 from characters import Ye_Lan_Ch, Ying_Bao_Ch, YeLan_Q_Bonus_Action, YeLanQBonus
-from wan_ye import get_wan_ye_e_bonus, get_wan_ye_q_bonus
+from character_impl.wan_ye import Wan_Ye_Ch
 from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
 enable_debug = True
@@ -306,7 +306,7 @@ def calc_score_for_ye_fu_wan_zhong(score_data: ShengYiWu_Score):
     # 芙芙 qeaa
     # 万叶 q
     monster.add_jian_kang(0.4)
-    ye_lan.add_all_bonus(get_wan_ye_e_bonus())
+    ye_lan.add_all_bonus(Wan_Ye_Ch().get_e_bonus())
 
     # 夜兰 eqe
     first_e_fufu_qi_bonus = 300 * 0.0031

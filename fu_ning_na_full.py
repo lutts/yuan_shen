@@ -12,7 +12,7 @@ from character import Character
 from characters import YeLan_Ming_4_Action, YeLan_Q_Bonus_Action
 from action import SwitchAction, Q_Animation_Start_Action, Q_Animation_Stop_Action
 from ch_zhong_li import ZhongLi_E_AttributeSupplier
-from wan_ye import WanYeAttributes
+from character_impl.wan_ye import WanYeAttributes
 from fu_ning_na_common import *
 
 

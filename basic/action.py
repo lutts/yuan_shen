@@ -7,7 +7,6 @@ Module documentation.
 import logging
 import typing
 import random
-import weakref
 
 from ys_basic import Ys_Elem_Type, ys_crit_damage, ys_expect_damage
 from attribute_hub import ActionPlanAttributeSupplier, AttributeHub
@@ -15,7 +14,9 @@ from monster import Monster
 from character import Character, Character_HP_Change_Data
 from events import Events
 
+
 ActionPlan = typing.NewType("ActionPlan", None)
+
 
 class ActionTimestampException(Exception):
     """ Action time already setted """
@@ -79,7 +80,7 @@ class Q_Animation_Start_Action(Action):
         self.ch.get_hp().set_in_q_animation(True)
 
 
-class Q_Animation_Stop_Action(Action):
+class Q_Animation_End_Action(Action):
     def __init__(self, ch: Character):
         super().__init__(f"{ch.name}大招动画结束")
         self.ch = ch
@@ -281,6 +282,11 @@ class ActionPlan:
         if prev_fore:
             prev_fore.switch_to_background(self.__current_action_time)
 
+    def add_switch_action(self, ch: Character, t):
+        action = SwitchAction(ch)
+        action.set_timestamp(t)
+        self.action_list.append(action)
+
     def switch_to_forground(self, character_name: str):
         if self.__forground_character:
             if self.__forground_character.name == character_name:
@@ -379,15 +385,30 @@ class ActionPlan:
         pass
         # self.__debug(fmt_str, *args, **kwargs)
 
+    def q_animation_start(self, ch: Character, t):
+        action = Q_Animation_Start_Action(ch)
+        action.set_timestamp(t)
+        self.action_list.append(action)
+
+    def q_animation_end(self, ch: Character, t):
+        action = Q_Animation_End_Action(ch)
+        action.set_timestamp(t)
+        self.action_list.append(action)
+
     def sort_action(self):
         self.action_list.sort(key=lambda a: a.get_timestamp())
 
-    def add_action(self, action:Action, min_t, max_t, base_action: Action = None, effective_delay=0) -> Action:
+    def append_action(self, action):
+        self.action_list.append(action)
+
+    def add_action(self, action:Action, min_t, max_t = None, base_action: Action = None, effective_delay=0) -> Action:
         base_time = 0 if base_action is None else base_action.get_timestamp()
 
-        t = random.randint(round(min_t * 1000), round(max_t * 1000)) / 1000
-        timestamp = base_time + t
-        action.set_timestamp(timestamp + effective_delay)
+        if not max_t:
+            t = base_time + min_t
+        else:
+            t = base_time + random.randint(round(min_t * 1000), round(max_t * 1000)) / 1000
+        action.set_timestamp(t + effective_delay)
 
         self.action_list.append(action)
 

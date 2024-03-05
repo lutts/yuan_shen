@@ -4,20 +4,15 @@
 Module documentation.
 """
 
-import sys
-import os
-import logging
-import itertools
-from attribute_hub import ActionPlanAttributeSupplier
-
+from character_impl.ban_ni_te import BanNiTe_Q_Action
 from ys_basic import Ys_Elem_Type, Ys_Weapon, ys_crit_damage
 from monster import Monster
 from character import Character
 from ys_weapon import Ti_Cao_Zhi_Dao_Guang
 from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 from action import Action, ActionPlan
-from wan_ye import get_wan_ye_q_bonus
-from characters import Ying_Bao_Ch, Jiu_Tiao_Sha_Luo_Ch, BanNiTe_Q_Action, YeLan_Q_Bonus_Action
+from character_impl.wan_ye import Wan_Ye_Ch
+from characters import Ying_Bao_Ch, Jiu_Tiao_Sha_Luo_Ch, YeLan_Q_Bonus_Action
 
 enable_debug = False
 use_5az = False
@@ -110,8 +105,9 @@ def add_action_for_only_normal_a(plan: ActionPlan, ying_bao: Ying_Bao_Ch, time_s
 
 def create_plan_for_lei_ye_wan_ban(ying_bao: Ying_Bao_Ch, monster: Monster) -> ActionPlan:
     # 假设万叶的风套和增伤一直在
+    wan_ye = Wan_Ye_Ch()
     monster.add_jian_kang(0.4)
-    ying_bao.add_all_bonus(get_wan_ye_q_bonus())
+    ying_bao.add_all_bonus(wan_ye.get_q_bonus())
 
     plan = ActionPlan([ying_bao], monster=monster)
 
@@ -153,8 +149,9 @@ def create_plan_for_lei_ye_wan_ban(ying_bao: Ying_Bao_Ch, monster: Monster) -> A
 
 def create_plan_for_lei_jiu_wan_ban(ying_bao: Ying_Bao_Ch, monster: Monster):
     # 假设万叶的风套和增伤一直在
+    wan_ye = Wan_Ye_Ch()
     monster.add_jian_kang(0.4)
-    ying_bao.add_all_bonus(get_wan_ye_q_bonus())
+    ying_bao.add_all_bonus(wan_ye.get_q_bonus())
 
     jiu_tiao = Jiu_Tiao_Sha_Luo_Ch.create_instance([])
     ying_bao.add_atk(jiu_tiao.get_atk_bonus())

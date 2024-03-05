@@ -4,11 +4,12 @@
 Module documentation.
 """
 
+from character_impl.ban_ni_te import BanNiTe_Q_Action
 from ys_basic import Ys_Elem_Type, ys_expect_damage, ys_crit_damage
 from monster import Monster
-from characters import Ying_Bao_Ch, Jiu_Tiao_Sha_Luo_Ch, BanNiTe_Q_Action
+from characters import Ying_Bao_Ch, Jiu_Tiao_Sha_Luo_Ch
 from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, set_score_threshold, Syw_Combine_Desc, find_syw_combine
-from wan_ye import get_wan_ye_q_bonus, get_wan_ye_e_bonus
+from character_impl.wan_ye import Wan_Ye_Ch
 
 
 enable_debug = False
@@ -22,8 +23,9 @@ def get_damage_in_lei_jiu_wan_ban(jiu_tiao: Jiu_Tiao_Sha_Luo_Ch, monster: Monste
     jiu_tiao.add_atk(ban_ni_te.atk_bonus)
 
     # 万叶 q
+    wan_ye = Wan_Ye_Ch()
     monster.add_jian_kang(0.4)
-    jiu_tiao.add_all_bonus(get_wan_ye_q_bonus())
+    jiu_tiao.add_all_bonus(wan_ye.get_q_bonus())
 
     crit_rate = jiu_tiao.get_crit_rate()
     cd = jiu_tiao.get_crit_damage()

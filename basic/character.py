@@ -42,12 +42,14 @@ class NormalAttackType(Enum):
     HIGH_PLUNGE = "高空坠地冲击"
 
 class CharacterBase:
-    def __init_subclass__(cls, name, elem_type: Ys_Elem_Type=None, ming_zuo_num=0, ch_level=90, a_level=1, e_level=1, q_level=1, q_energy=80,
+    def __init_subclass__(cls, name, elem_type: Ys_Elem_Type=None, ming_zuo_num=0, ch_level=90, 
+                          min_skill_level = 8, a_level=8, e_level=8, q_level=8, q_energy=80,
                           **kwargs):
         """
         初始化一些固定不变的属性
 
         ch_level: 角色等级
+        min_skill_level: 为了在抄录角色倍率表时少抄些，减少工作量，min_skil_level设定技能倍率表的最小技能等级
         """
         super().__init_subclass__(**kwargs)
 
@@ -55,9 +57,11 @@ class CharacterBase:
         cls.elem_type = elem_type
         cls.ming_zuo_num = ming_zuo_num
         cls.ch_level = ch_level
-        cls.a_level = a_level
-        cls.e_level = e_level
-        cls.q_level = q_level
+
+        cls.min_skill_level = min_skill_level
+        cls.a_level = a_level if a_level > min_skill_level else min_skill_level
+        cls.e_level = e_level if e_level > min_skill_level else min_skill_level
+        cls.q_level = q_level if q_level > min_skill_level else min_skill_level
         cls.q_energy = q_energy
 
     def __init__(self, **kwargs):
@@ -68,6 +72,15 @@ class CharacterBase:
                 setattr(self, k, v)
             else:
                 raise Exception("unknown attribute when init CharacterBase: " + k)
+            
+    def a_idx(self):
+        return self.a_level - self.min_skill_level
+    
+    def e_idx(self):
+        return self.e_level - self.min_skill_level
+    
+    def q_idx(self):
+        return self.q_level - self.min_skill_level
             
     def set_ming_zuo_num(self, ming_zuo_num):
         self.ming_zuo_num = ming_zuo_num

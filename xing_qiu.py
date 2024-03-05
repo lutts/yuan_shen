@@ -8,11 +8,12 @@ import sys
 import os
 import logging
 import itertools
+from character_impl.ban_ni_te import BanNiTe_Q_Action
 
 from ys_basic import Ys_Elem_Type, ys_crit_damage
 from character import Character
 from monster import Monster
-from characters import Ying_Bao_Ch, BanNiTe_Q_Action
+from characters import Ying_Bao_Ch
 from ys_weapon import Ji_Li_Sword
 from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
