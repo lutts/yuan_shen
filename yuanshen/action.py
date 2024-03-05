@@ -8,11 +8,11 @@ import logging
 import typing
 import random
 
-from ys_basic import Ys_Elem_Type, ys_crit_damage, ys_expect_damage
-from attribute_hub import ActionPlanAttributeSupplier, AttributeHub
-from monster import Monster
-from character import Character, Character_HP_Change_Data
-from events import Events
+from .basic import Ys_Elem_Type, ys_crit_damage, ys_expect_damage
+from .attribute_hub import ActionPlanAttributeSupplier, AttributeHub
+from .monster import Monster
+from .character import Character, Character_HP_Change_Data
+from .events import Events
 
 
 ActionPlan = typing.NewType("ActionPlan", None)

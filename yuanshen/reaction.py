@@ -5,7 +5,7 @@ Module documentation.
 """
 
 from enum import Enum
-from ys_basic import Ys_Elem_Type
+from basic import Ys_Elem_Type
 from character import Character
 from monster import Monster
 
