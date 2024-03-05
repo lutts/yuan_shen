@@ -5,7 +5,7 @@ Module documentation.
 """
 
 import logging
-from attribute_hub import AttributeHub
+from .attribute_hub import AttributeHub
 
 class Monster:
     def __init__(self, level = 100, kang_xin = 0.1, character_level=90):

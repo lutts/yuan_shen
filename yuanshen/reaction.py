@@ -5,9 +5,9 @@ Module documentation.
 """
 
 from enum import Enum
-from basic import Ys_Elem_Type
-from character import Character
-from monster import Monster
+from .basic import Ys_Elem_Type
+from .character import Character
+from .monster import Monster
 
 class Ys_Reaction:
     def __init__(self, ch: Character, monster: Monster):
