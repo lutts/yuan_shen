@@ -4,9 +4,9 @@
 Module documentation.
 """
 
-from action import Action, ActionPlan
-from attribute_hub import ActionPlanAttributeSupplier
-from character import Character
+from ..action import Action, ActionPlan
+from ..attribute_hub import ActionPlanAttributeSupplier
+from ..character import Character
 
 class ZhongLi_E_AttributeSupplier(ActionPlanAttributeSupplier):
     def __init__(self):

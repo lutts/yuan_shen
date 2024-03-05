@@ -11,13 +11,14 @@ import itertools
 import random
 from collections.abc import Callable
 
-from ys_basic import Ys_Elem_Type, ys_expect_damage
-from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine, set_qualifier_threshold
-from character import Character, Character_HP_Change_Data
-from monster import Monster
-from action import Action, ActionPlan
-from attribute_hub import ActionPlanAttributeSupplier
-from ys_weapon import Jing_Shui_Liu_Yong_Zhi_Hui
+from yuanshen.elem_type import Ys_Elem_Type
+from yuanshen.utils import ys_expect_damage
+from yuanshen.syw_finder import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine, set_qualifier_threshold
+from yuanshen.character import Character, Character_HP_Change_Data
+from yuanshen.monster import Monster
+from yuanshen.action import Action, ActionPlan
+from yuanshen.attribute_hub import ActionPlanAttributeSupplier
+from yuanshen.weapon_impl.jing_shui_liu_yong_zhi_hui import Jing_Shui_Liu_Yong_Zhi_Hui
 
 
 enable_debug = True

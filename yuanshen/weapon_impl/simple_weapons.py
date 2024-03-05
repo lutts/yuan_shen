@@ -4,8 +4,8 @@
 Module documentation.
 """
 
-from .context import Ys_Weapon
-from .context import Character
+from ..weapon import Ys_Weapon
+from ..character import Character
 
 
 class Yu_Huo(Ys_Weapon, name="渔获"):

@@ -5,11 +5,11 @@ Module documentation.
 """
 
 import random
-from ys_basic import Ys_Elem_Type
-from ys_weapon import Ys_Weapon
-from action import Action, ActionPlan
-from attribute_hub import ActionPlanAttributeSupplier
-from character import Character
+from ..elem_type import Ys_Elem_Type
+from ..weapon import Ys_Weapon
+from ..action import Action, ActionPlan
+from ..attribute_hub import ActionPlanAttributeSupplier
+from ..character import Character
 
 
 class Wan_Ye_Ch(ActionPlanAttributeSupplier, Character, name="枫原万叶", 
@@ -116,8 +116,10 @@ class Wan_Ye_Ch(ActionPlanAttributeSupplier, Character, name="枫原万叶",
         switch_to_next_ch_time = q_end_time + random.uniform(*q_end_to_switch)
 
         first_liu_feng_time = q_end_time + random.uniform(*q_end_to_first_liu_feng)
-        first_liu_feng_kuo_san = first_liu_feng_time + random.uniform(*liu_feng_kuo_san_delay)
-        self.__add_kuo_san_action(plan, first_liu_feng_kuo_san)
+
+        # 由于扩散反应内置冷却 1.2 秒的原因，目前录制的视频都显示第一次流风无法触发扩散，因此这里我们就直接省去了
+        # first_liu_feng_kuo_san = first_liu_feng_time + random.uniform(*liu_feng_kuo_san_delay)
+        # self.__add_kuo_san_action(plan, first_liu_feng_kuo_san)
 
         last_liu_feng_time = first_liu_feng_time
         for _ in range(0, 4):

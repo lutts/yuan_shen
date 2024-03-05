@@ -1,6 +1,6 @@
-from .context import Ys_Weapon
-from .context import Character, Character_HP_Change_Data
-from .context import Action, ActionPlan
+from ..weapon import Ys_Weapon
+from ..character import Character, Character_HP_Change_Data
+from ..action import Action, ActionPlan
 
 
 class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):

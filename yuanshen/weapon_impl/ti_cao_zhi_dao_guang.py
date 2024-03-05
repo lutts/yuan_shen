@@ -1,4 +1,5 @@
-from .context import Ys_Weapon, Character
+from ..weapon import Ys_Weapon
+from ..character import Character
 
 class Ti_Cao_Zhi_Dao_Guang(Ys_Weapon, name="薙草之稻光"):
     atk_per_multiplier = [

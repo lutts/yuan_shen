@@ -6,14 +6,15 @@ Module documentation.
 
 import random
 
-from attribute_hub import ActionPlanAttributeSupplier
-from ys_basic import Ys_Elem_Type, Ys_Weapon, ys_crit_damage, ys_expect_damage
-from character import Character
-from monster import Monster
-from action import Action, ActionPlan, AttributeAction
-from ys_syw import ShengYiWu
-
-import ys_weapon
+from ..attribute_hub import ActionPlanAttributeSupplier
+from ..elem_type import Ys_Elem_Type
+from ..weapon import Ys_Weapon
+from ..utils import ys_crit_damage, ys_expect_damage
+from ..character import Character
+from ..monster import Monster
+from ..action import Action, ActionPlan, AttributeAction
+from ..syw import ShengYiWu
+from ..weapon_impl import simple_weapons
 
 class Ye_Lan_Ch(Character, name="夜兰", elem_type=Ys_Elem_Type.SHUI, ming_zuo_num=6,
                 ch_level=90, a_level=10, e_level=13, q_level=13, q_energy=70):
@@ -493,5 +494,5 @@ class Jiu_Tiao_Sha_Luo_Ch(Character, name="九条裟罗", elem_type=Ys_Elem_Type
     
     @classmethod
     def create_instance(cls, syw_combine: list[ShengYiWu]):
-        weapon = ys_weapon.Tian_Kong_Zhi_Yi(base_atk=674, crit_rate=0.221)
+        weapon = simple_weapons.Tian_Kong_Zhi_Yi(base_atk=674, crit_rate=0.221)
         return Jiu_Tiao_Sha_Luo_Ch(weapon, syw_combine)

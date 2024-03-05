@@ -3,102 +3,6 @@ import math
 import numpy
 
 
-class Ys_Timestamp:
-    FORMAT = "%H:%M:%S.%f"
-
-    def __init__(self, timestamp_str):
-        try:
-            self.t = datetime.strptime(timestamp_str, Ys_Timestamp.FORMAT)
-        except:
-            self.t = None
-
-    def __sub__(self, other):
-        if self.t is None:
-            return "None"
-
-        if other.t is None:
-            return "None"
-
-        minus = False
-        if self.t > other.t:
-            diff = self.t - other.t
-        else:
-            diff = other.t - self.t
-            minus = True
-
-        seconds = diff.seconds
-        ms = diff.microseconds / 1000000
-        # print(diff)
-        # print("seconds: ", seconds)
-        # print("ms:", ms)
-        diff = seconds + ms
-        if minus:
-            diff = 0 - diff
-
-        return round(diff, 3)
-    
-    def __str__(self) -> str:
-        return str(self.t)
-    
-    def __repr__(self) -> str:
-        return repr(self.t)
-
-def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, list[str|list[str]]], get_intervals_func):
-    ys_timestamp_dict = {}
-    for name, times in timestamp_dict.items():
-        if len(Video_Timestamps_cls._fields) != len(times):
-            raise Exception("Video_Timestamps_cls field number not correct")
-
-        ys_timestamps = []
-        all_times = []
-        for idx in range(0, len(times)):
-            t = times[idx]
-            if isinstance(t, list):
-                all_times.extend(t)
-
-                sub_lst = []
-                for sub_t in t:
-                    sub_lst.append(Ys_Timestamp(sub_t))
-                ys_timestamps.append(sub_lst)
-            else:
-                all_times.append(t)
-
-                ys_timestamps.append(Ys_Timestamp(t))
-
-        times_set = set(all_times)
-        if len(all_times) != len(times_set):
-            print("{} has duplicate timestamps: {}".format(
-                name, [t for t in all_times if all_times.count(t) > 1]))
-            
-        ys_timestamp_dict[name] = Video_Timestamps_cls(*ys_timestamps)
-
-    intervals_dict = get_intervals_func(ys_timestamp_dict)
-
-    summary = {}
-    for name, intervals in intervals_dict.items():
-        for desc, interval in intervals.items():
-            if desc in summary:
-                summary[desc].append([name, interval])
-            else:
-                summary[desc] = [[name, interval]]
-
-    valid_intervals_dict = {}
-    for desc, intervals in summary.items():
-        valid_intervals = []
-        for interval in intervals:
-            it = interval[1]
-            if isinstance(it, list):
-                valid_intervals.extend([i for i in it if i != "None"])
-            else:
-                valid_intervals.append(it)
-        valid_intervals.sort()
-
-        print("{}: {}\n排序：{}\n".format(desc, intervals, valid_intervals))
-        valid_intervals_dict[desc] = valid_intervals
-
-    return valid_intervals_dict
-
-
 def quantile_exc(data, n):
     """
     n: 第几个四分位数
@@ -164,3 +68,104 @@ def print_avg_min_max(times):
     print("\tquantile range: ", valid_quantile_range(times))
     print("\t2-sigma range: ", valid_sigma_range(times))
     print("\t3-sigma range: ", valid_sigma_range(times, num_deviation=3))
+
+
+class Ys_Timestamp:
+    FORMAT = "%H:%M:%S.%f"
+
+    def __init__(self, timestamp_str):
+        try:
+            self.t = datetime.strptime(timestamp_str, Ys_Timestamp.FORMAT)
+        except:
+            self.t = None
+
+    def __sub__(self, other):
+        if self.t is None:
+            return None
+
+        if other.t is None:
+            return None
+
+        minus = False
+        if self.t > other.t:
+            diff = self.t - other.t
+        else:
+            diff = other.t - self.t
+            minus = True
+
+        seconds = diff.seconds
+        ms = diff.microseconds / 1000000
+        # print(diff)
+        # print("seconds: ", seconds)
+        # print("ms:", ms)
+        diff = seconds + ms
+        if minus:
+            diff = 0 - diff
+
+        return round(diff, 3)
+    
+    def __str__(self) -> str:
+        return str(self.t)
+    
+    def __repr__(self) -> str:
+        return repr(self.t)
+
+def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, list[str|list[str]]], 
+                             get_intervals_func, print_func=None):
+    ys_timestamp_dict = {}
+    for filename, times in timestamp_dict.items():
+        if len(Video_Timestamps_cls._fields) != len(times):
+            raise Exception("Video_Timestamps_cls field number not correct")
+
+        ys_timestamps = []
+        all_times = []
+        for idx in range(0, len(times)):
+            t = times[idx]
+            if isinstance(t, list):
+                all_times.extend(t)
+
+                sub_lst = []
+                for sub_t in t:
+                    sub_lst.append(Ys_Timestamp(sub_t))
+                ys_timestamps.append(sub_lst)
+            else:
+                all_times.append(t)
+
+                ys_timestamps.append(Ys_Timestamp(t))
+
+        times_set = set(all_times)
+        if len(all_times) != len(times_set):
+            print("{} has duplicate timestamps: {}".format(
+                filename, [t for t in all_times if all_times.count(t) > 1]))
+            
+        ys_timestamp_dict[filename] = Video_Timestamps_cls(*ys_timestamps)
+
+    intervals_dict = get_intervals_func(ys_timestamp_dict)
+
+    summary = {}
+    for filename, interval_dict in intervals_dict.items():
+        for description, interval in interval_dict.items():
+            if description in summary:
+                summary[description].append([filename, interval])
+            else:
+                summary[description] = [[filename, interval]]
+
+    valid_intervals_dict = {}
+    for description, raw_intervals in summary.items():
+        soreted_valid_intervals = []
+        for interval in raw_intervals:
+            it = interval[1]
+            if isinstance(it, list):
+                soreted_valid_intervals.extend([i for i in it if i is not None and i >= 0])
+            elif it is not None and it >= 0:
+                soreted_valid_intervals.append(it)
+        soreted_valid_intervals.sort()
+
+        if not print_func:
+            print("{}: {}\n排序：{}\n".format(description, raw_intervals, soreted_valid_intervals))
+        else:
+            print_func(description, raw_intervals, soreted_valid_intervals)
+
+        valid_intervals_dict[description] = soreted_valid_intervals
+
+    return valid_intervals_dict
