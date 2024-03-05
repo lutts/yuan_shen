@@ -15,8 +15,11 @@ import traceback
 from math import ceil
 from collections.abc import Callable
 
-from .context import Ys_Elem_Type, ys_expect_damage, ys_crit_damage
-from .context import ShengYiWu
+# from .context import Ys_Elem_Type, ys_expect_damage, ys_crit_damage
+# from .context import ShengYiWu
+from .elem_type import Ys_Elem_Type
+from .utils import ys_expect_damage, ys_crit_damage
+from .syw import ShengYiWu
 
 
 all_syw = {

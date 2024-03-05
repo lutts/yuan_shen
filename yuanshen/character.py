@@ -9,7 +9,9 @@ import weakref
 from enum import Enum
 
 from typing import Self
-from .basic import Ys_Elem_Type, Ys_Weapon
+
+from .elem_type import Ys_Elem_Type
+from .weapon import Ys_Weapon
 from .health_point import HealthPoint, HP_Change_Data
 from .syw import ShengYiWu
 from .attribute_hub import AttributeHub

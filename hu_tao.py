@@ -9,9 +9,9 @@ import os
 import logging
 import itertools
 
-from yuanshen.basic import Ys_Elem_Type
+from yuanshen.elem_type import Ys_Elem_Type
 from yuanshen.syw import ShengYiWu
-from syw_impl.syw_finder import ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
+from yuanshen.syw_finder import ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
 use_lie_ren = False
 

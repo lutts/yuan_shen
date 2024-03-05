@@ -3,7 +3,8 @@ Module documentation.
 """
 
 import uuid
-from .basic import Ys_Attribute_Supplier, Ys_Elem_Type
+from .attribute import Ys_Attribute_Supplier
+from .elem_type import Ys_Elem_Type
 
 class ShengYiWu(Ys_Attribute_Supplier):
     ALL_PARTS = ['h', 'y', 's', 'b', 't']
