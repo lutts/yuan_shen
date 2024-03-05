@@ -50,6 +50,7 @@ def find_syw(match_syw_callback):
                 matched_syw.append(s)
     return matched_syw
 
+
 qualifier_threshold = 1.5
 score_threshold = 1.8
 
