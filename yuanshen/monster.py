@@ -26,9 +26,6 @@ class Monster:
         self.__kang_xin = kang_xin
         self.__attribute_hub: AttributeHub = None
 
-        # 上一次被扩散反应的时间：扩散反应是有内置CD的，大约为1.2秒, 每个怪独立计时
-        self.last_kuo_san_time = None
-
     def set_attribute_hub(self, hub):
         self.__attribute_hub = hub
 
@@ -67,17 +64,6 @@ class Monster:
 
     def set_kang_xin(self, kx):
         self.__kang_xin = kx
-
-    def do_kuo_san(self, cur_time):
-        if not self.last_kuo_san_time:
-            self.last_kuo_san_time = cur_time
-            return True
-        
-        if cur_time - self.last_kuo_san_time > 1.2:
-            self.last_kuo_san_time = cur_time
-            return True
-        else:
-            return False
 
     # FIXME: 是否需要区分不同元素类型的抗性？ 目前我们还不支持整队伤害计算，原神也暂时没有双元素属性的主C，似乎暂时没必要支持
     def get_kang_xin_cheng_shang(self):

@@ -117,7 +117,13 @@ class Wan_Ye_Ch(ActionPlanAttributeSupplier, Character, name="枫原万叶",
 
         first_liu_feng_time = q_end_time + random.uniform(*q_end_to_first_liu_feng)
 
-        # 由于扩散反应内置冷却 1.2 秒的原因，目前录制的视频都显示第一次流风无法触发扩散，因此这里我们就直接省去了
+        # 万叶 q 后续的流风有以下特性：
+        # * 如果怪身上有元素附着，则先造成染伤，触发元素反应，再造成风伤，除非反应有元素残留，否则不会造成扩散
+        # * 如果怪身上没有元素附着，则先造成风伤，后造成染伤，不会造成扩散
+        # 非常奇怪并且反人类的特性，这些特性使得第一次流风一般造成不了扩散，
+        # 因为万叶 q 的斩击是强风（元素量2），一般能把怪头上元素吹没
+        # 而且万叶 q 后会被迅速切到后台
+        # 因为这些原因，我们这里省略第一次流风的 action
         # first_liu_feng_kuo_san = first_liu_feng_time + random.uniform(*liu_feng_kuo_san_delay)
         # self.__add_kuo_san_action(plan, first_liu_feng_kuo_san)
 
@@ -140,9 +146,6 @@ class WanYe_Kuo_San_Action(Action):
 
     def do_impl(self, plan: ActionPlan):
         cur_time = self.get_timestamp()
-        if not plan.monster.do_kuo_san(cur_time):
-            return
-        
         em = self.wan_ye.get_elem_mastery()
         if self.wan_ye.ming_zuo_num >= 2 and cur_time <= self.wan_ye.ming_2_end_time:
             em += 200

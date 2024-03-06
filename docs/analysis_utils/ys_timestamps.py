@@ -114,8 +114,10 @@ def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, lis
                              get_intervals_func, print_func=None):
     ys_timestamp_dict = {}
     for filename, times in timestamp_dict.items():
-        if len(Video_Timestamps_cls._fields) != len(times):
-            raise Exception("Video_Timestamps_cls field number not correct")
+        num_fields = len(Video_Timestamps_cls._fields)
+        num_times = len(times)
+        if num_fields != num_times:
+            raise Exception(f"Video_Timestamps_cls field number({num_fields}) not match with {filename} time number({num_times})")
 
         ys_timestamps = []
         all_times = []
