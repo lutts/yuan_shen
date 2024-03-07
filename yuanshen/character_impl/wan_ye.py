@@ -58,11 +58,11 @@ class Wan_Ye_Ch(ActionPlanAttributeSupplier, Character, name="枫原万叶",
         plan.append_action(action)
     
     def do_e(self, plan: ActionPlan, base_time,
-             switch_to_e_start=(0.2, 0.234),
-             e_start_to_up_kuo_san=(0.216, 0.283),
+             switch_to_e_start=(0.167, 0.234),
+             e_start_to_up_kuo_san=(0.217, 0.283),
              e_start_to_atk_button=(0.85, 0.885),
-             atk_button_to_down_kuo_san=(0.184, 0.267),
-             atk_button_to_switch=(0, 0)):
+             atk_button_to_down_kuo_san=(0.183, 0.267),
+             atk_button_to_switch=(0.366, 0.7)):
         """
         base_time: 切换到万叶的时间
         switch_to_e_start: 切万叶 -> 普攻按钮变为下落图标的时间，这个时间视为开始 e 的时间
@@ -85,15 +85,18 @@ class Wan_Ye_Ch(ActionPlanAttributeSupplier, Character, name="枫原万叶",
         return switch_to_next_ch_time
 
     def do_q(self, plan: ActionPlan, base_time,
-             q_start_to_kuo_san=(1.466, 1.5),
+             q_start_to_kuo_san=(1.45, 1.5),
              q_end_to_first_liu_feng=(0.733, 0.817),
-             q_end_to_switch=(0, 0),
+             q_start_to_switch=(1.767, 1.883),
              liu_feng_interval=(1.966, 2.0),
              liu_feng_kuo_san_delay=(0.183, 0.217)):
         """
         q_start_to_kuo_san: 大招动画开始 -> 扩散出伤
         q_end_to_first_liu_feng: 大招动画结束 -> 第一次流风开始
-        q_end_to_switch: 大招动画结束 -> 切人
+        q_start_to_switch: 大招动画开始 -> 切人
+
+            * 以动画开始为基准的原因是一般我们在万叶Q动画期间就疯狂按切人键了
+
         liu_feng_interval: 流风间隔
         liu_feng_kuo_san_delay: 流风开始 -> 流风扩散出伤
         """
@@ -113,7 +116,7 @@ class Wan_Ye_Ch(ActionPlanAttributeSupplier, Character, name="枫原万叶",
         q_end_time = q_start_time + 1.55
         plan.q_animation_end(self, self, q_end_time)
 
-        switch_to_next_ch_time = q_end_time + random.uniform(*q_end_to_switch)
+        switch_to_next_ch_time = q_start_time + random.uniform(*q_start_to_switch)
 
         first_liu_feng_time = q_end_time + random.uniform(*q_end_to_first_liu_feng)
 

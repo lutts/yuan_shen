@@ -354,7 +354,7 @@ class Apply_Qi_Fen_Zhi_Action(Action):
             return
 
         action = Apply_Qi_Fen_Zhi_Action(self.supervisor)
-        next_time = self.get_timestamp() + random.randint(429, 587) / 1000
+        next_time = self.get_timestamp() + random.uniform(0.45, 0.55)
         action.set_timestamp(next_time)
         plan.insert_action_runtime(action)
 
@@ -441,7 +441,7 @@ class FuFu_Q_Bonus_Action(Action):
 
     def set_timestamp(self, t):
         super().set_timestamp(t)
-        self.bonus_start_time = t + random.randint(1703, 1819) / 1000
+        self.bonus_start_time = t + random.uniform(1.649, 1.821)
 
     def do_impl(self, plan: FuFuActionPlan):
         plan.qi_fen_zhi_supervisor.start_supervise(plan, self.bonus_start_time)

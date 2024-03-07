@@ -82,15 +82,19 @@ class Ys_Timestamp:
     def __sub__(self, other):
         if self.t is None:
             return None
-
-        if other.t is None:
-            return None
+        
+        if isinstance(other, datetime):
+            other_t = other
+        else:
+            if other.t is None:
+                return None
+            other_t = other.t
 
         minus = False
-        if self.t > other.t:
-            diff = self.t - other.t
+        if self.t > other_t:
+            diff = self.t - other_t
         else:
-            diff = other.t - self.t
+            diff = other_t - self.t
             minus = True
 
         seconds = diff.seconds
@@ -103,6 +107,11 @@ class Ys_Timestamp:
             diff = 0 - diff
 
         return round(diff, 3)
+    
+    def to_float(self):
+        zero = datetime.strptime("00:00:00.000", Ys_Timestamp.FORMAT)
+
+        return self - zero
     
     def __str__(self) -> str:
         return str(self.t)
@@ -158,10 +167,16 @@ def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, lis
         for interval in raw_intervals:
             it = interval[1]
             if isinstance(it, list):
-                soreted_valid_intervals.extend([i for i in it if i is not None and i >= 0])
-            elif it is not None and it >= 0:
+                soreted_valid_intervals.extend([i for i in it if i is not None])
+            elif it is not None:
                 soreted_valid_intervals.append(it)
-        soreted_valid_intervals.sort()
+        def key_func(t):
+            if isinstance(t, tuple):
+                return t[0]
+            else:
+                return t
+            
+        soreted_valid_intervals.sort(key=key_func)
 
         if not print_func:
             print("{}: {}\n排序：{}\n".format(description, raw_intervals, soreted_valid_intervals))
@@ -171,3 +186,37 @@ def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, lis
         valid_intervals_dict[description] = soreted_valid_intervals
 
     return valid_intervals_dict
+
+# 使用模板：复制下面的代码
+# import sys
+# import os
+# import random
+# from collections import namedtuple
+# from typing import NamedTuple
+
+# sys.path.append(os.path.abspath('../..'))
+
+# from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, print_avg_min_max
+
+# timestamp_dict = {
+# }
+
+# class Video_Timestamps(NamedTuple):
+#     q_anim_start: Ys_Timestamp
+#     q_anim_end: Ys_Timestamp
+
+#     pao_pao_disappear: Ys_Timestamp
+
+#     ling_hua_last_bonused:  Ys_Timestamp
+#     ling_hua_first_unbonused: Ys_Timestamp
+
+
+# def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
+#     intervals_dict = {}
+#     for filename, t in ys_timestamp_dict.items():
+#         intervals_dict[filename] = {
+#         }
+    
+#     return intervals_dict
+
+# sorted_intervals = print_timestamps_summary(Video_Timestamps, timestamp_dict, get_intervals)
