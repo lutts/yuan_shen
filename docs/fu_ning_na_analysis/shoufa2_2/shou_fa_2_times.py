@@ -176,7 +176,7 @@ class Video_Timestamps(NamedTuple):
     zhong_li_e_start_1: Ys_Timestamp
     switch_to_fufu_1: Ys_Timestamp
     fufu_q_anim_start: Ys_Timestamp
-    fufu_a_damage: Ys_Timestamp
+    fufu_q_damage: Ys_Timestamp
     fufu_q_anim_end: Ys_Timestamp
 
     switch_to_wan_ye_1: Ys_Timestamp
@@ -207,16 +207,13 @@ class Video_Timestamps(NamedTuple):
 def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
     intervals_dict = {}
     for filename, t in ys_timestamp_dict.items():
-        fufu_pao_pao_disappear = round(t.fufu_q_anim_start.to_float() + random.uniform(1.636, 1.805) + 18, 3)
-        pao_pao_predict_actual_diff = round(t.pao_pao_actual_disappear.to_float() - fufu_pao_pao_disappear, 3)
-        fufu_q_bonus_end = round(fufu_pao_pao_disappear + random.uniform(0, 0.433), 3)
         ye_lan_q_bonus_end =  round(t.ye_lan_q_anim_start.to_float() + random.uniform(1.235, 1.27) + 15, 3)
         ye_lan_3rd_e_cd_ok_time = round(10 + t.ye_lan_1st_e_end.to_float(), 3)
 
         intervals_dict[filename] = {
             "钟离e - 切芙芙": t.switch_to_fufu_1 - t.zhong_li_e_start_1,
             "切芙芙 - 芙芙Q动画开始": t.fufu_q_anim_start - t.switch_to_fufu_1,
-            "Q动画开始 - Q出伤":  t.fufu_a_damage - t.fufu_q_anim_start,
+            "Q动画开始 - Q出伤":  t.fufu_q_damage - t.fufu_q_anim_start,
             "芙芙Q动画时长": t.fufu_q_anim_end - t.fufu_q_anim_start,
             "芙芙Q动画开始 - 切万叶": t.switch_to_wan_ye_1 - t.fufu_q_anim_start,
             "切万叶 - 万叶Q动画开始": t.wan_ye_q_anim_start - t.switch_to_wan_ye_1,
@@ -238,12 +235,11 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
             "夜兰第三个e CD转好": ye_lan_3rd_e_cd_ok_time,
             "切到夜兰时, e CD还差秒数": round(10 - (t.switch_to_ye_lan_2 - t.ye_lan_1st_e_end), 3),
             "芙芙Q动画开始 - 泡泡消失": t.pao_pao_actual_disappear - t.fufu_q_anim_start,
-            "预测芙芙大招泡泡消失时间": fufu_pao_pao_disappear,
-            "预测误差(实际-预测)": pao_pao_predict_actual_diff,
-            "芙芙Q增伤失效时间": fufu_q_bonus_end,
+            "Q出伤 - 泡泡消失 - 18": round(t.pao_pao_actual_disappear - t.fufu_q_damage - 18, 3),
             "夜兰大招结束时间": ye_lan_q_bonus_end,
             "芙芙泡泡消失 - 夜兰大招结束": round(ye_lan_q_bonus_end - t.pao_pao_actual_disappear.to_float(), 3),
             "芙芙泡泡消失 - 夜兰第三个e cd转好": round(ye_lan_3rd_e_cd_ok_time - t.pao_pao_actual_disappear.to_float(), 3),
+            
         }
 
     return intervals_dict

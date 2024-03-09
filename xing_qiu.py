@@ -8,14 +8,15 @@ import sys
 import os
 import logging
 import itertools
-from character_impl.ban_ni_te import BanNiTe_Q_Action
+from yuanshen.character_impl.ban_ni_te import BanNiTe_Q_Action
 
-from ys_basic import Ys_Elem_Type, ys_crit_damage
-from character import Character
-from monster import Monster
-from characters import Ying_Bao_Ch
-from ys_weapon import Ji_Li_Sword
-from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
+from yuanshen.elem_type import Ys_Elem_Type
+from yuanshen.utils import ys_crit_damage
+from yuanshen.character import Character
+from yuanshen.monster import Monster
+from yuanshen.character_impl.characters import Ying_Bao_Ch
+from yuanshen.weapon_impl.simple_weapons import Ji_Li_Sword
+from yuanshen.syw_finder import ShengYiWu, ShengYiWu_Score, calculate_score, Syw_Combine_Desc, find_syw_combine
 
 enable_debug = False
 

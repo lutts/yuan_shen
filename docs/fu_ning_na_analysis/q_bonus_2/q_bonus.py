@@ -50,8 +50,11 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
         intervals_dict[filename] = {
             "Q动画开始 - Q出伤": t.q_damage - t.q_anim_start,
             "Q动画开始 - 泡泡消失": t.pao_pao_dismiss - t.q_anim_start,
+            "Q动画开始 - 泡泡消失 - 减18": round(t.pao_pao_dismiss - t.q_anim_start - 18, 3),
+            "Q出伤 - 泡泡消失 - 减18 ": round(t.pao_pao_dismiss - t.q_damage - 18, 3),
             "泡泡消失 - 生命值上限重置": t.hp_restore - t.pao_pao_dismiss,
             "Q动画开始 - 生命值上限重置": t.hp_restore - t.q_anim_start,
+            "Q动画开始 - 生命值上限重置 - 减18": round(t.hp_restore - t.q_anim_start - 18, 3),
             "允许的最大Q动画开始-生命值上限重置": t.ling_hua_first_unbonused - t.q_anim_start
         }
     
@@ -64,67 +67,137 @@ a_multiplier = [70.3/100, 63.6/100, 80.1/100, 106.5/100, 107.9/100, 13.8/100]
 max_hp = [44764, 46817, 48960, 48960]
 e_bonus = [0.616, 0.616 + 0.08, 0.616 + 2 * 0.08, 0.616 + 3 * 0.08]
 salom_member_multiplier = [6.87/100, 12.67/100, 17.61/100]
+cd = 2.369
 
-def get_a_damage(phrase, zw_level, monster, hei_dao=True):
+
+def  get_hp_and_bonus(zw_hp_level, zw_e_level, qi, is_e):
+    hp = max_hp[zw_hp_level]
+    bonus = 0.466 + 0.15
+
+    if is_e:
+        bonus += 0.28   # 固有天赋
+        bonus += 0.08 * zw_e_level
+
+    if qi > 400:
+        hp += 15307 * (qi - 400) * 0.0035
+    
+    if qi > 0:
+        bonus += min(400, qi) * 0.0031
+
+    return (hp, bonus)
+
+
+def get_a_damage(zw_hp_level, zw_e_level, monster, qi=0, phrase=1, hei_dao=True):
     multiplier = a_multiplier[phrase - 1]
     if hei_dao:
         full_multiplier = 18/100
     else:
         full_multiplier = (18 + 25) / 100
-    damage = (1124 * multiplier + max_hp[zw_level] * full_multiplier) * (1 + 0.616)
-    return monster.attacked(damage)
+
+    hp, bonus = get_hp_and_bonus(zw_hp_level, 0, qi, is_e=False)
+    damage = (1124 * multiplier + hp * full_multiplier) * (1 + bonus)
+    damage = monster.attacked(damage)
+    return (int(damage), ys_crit_damage(damage, cd))
 
 
-def get_salon_member_damage(multiplier, zw_level, monster):
-    damage = max_hp[zw_level] * multiplier * (1 + 0.28 + e_bonus[zw_level]) * 1.4
-    return monster.attacked(damage)
-
-def get_e_damages():
-    cd = 2.369
-
-    monster = Monster(level=93, kang_xin=3.1)
-    monster.add_jian_kang(0.2)
-
-    print(monster)
-
-    for phrase in range(1, 7):
-        hei_str = f"普攻第{phrase}段: "
-        bai_str = "        : "
-        for zw_level in range(0, 3):
-            hei_damage = get_a_damage(phrase, zw_level, monster)
-            hei_crit = ys_crit_damage(hei_damage, cd)
-            hei_damage = round(hei_damage)
-
-            bai_damage = get_a_damage(phrase, zw_level, monster, hei_dao=False)
-            bai_crit = ys_crit_damage(bai_damage, cd)
-            bai_damage = round(bai_damage)
-
-            hei_str += f"黑: {hei_damage}/{hei_crit}\t\t"
-            bai_str += f"白: {bai_damage}/{bai_crit}\t\t"
-
-        print(hei_str)
-        print(bai_str)
-
-    e_str = "e伤害:"
-    for zw_level in range(0, 4):
-        e_damage = max_hp[zw_level] * 16.7/100 * (1 + e_bonus[zw_level])
-        e_damage = monster.attacked(e_damage)
-        e_crit = ys_crit_damage(e_damage, cd)
-        e_damage = round(e_damage)
-
-        e_str += f"{e_damage}/{e_crit}\t\t"
-
-    print(e_str)
+def get_e_damage(zw_hp_level, zw_e_level, monster, qi=0):
+    hp, bonus = get_hp_and_bonus(zw_hp_level, zw_e_level, qi, is_e=True)
+    bonus -= 0.28
+    damage = hp * 16.71 / 100 * (1 + bonus)
+    damage = monster.attacked(damage)
+    return (int(damage), ys_crit_damage(damage, cd))
 
 
-    for multiplier in salom_member_multiplier:
-        sl_str = ""
-        for zw_level in range(0, 4):
-            sl_damage = get_salon_member_damage(multiplier, zw_level, monster)
-            sl_crit = ys_crit_damage(sl_damage, cd)
-            sl_damage = round(sl_damage)
+def get_salon_member_damage(multiplier, zw_hp_level, zw_e_level, monster, qi=0):
+    hp, bonus = get_hp_and_bonus(zw_hp_level, zw_e_level, qi, is_e=True)
+    damage = hp * multiplier * (1 + bonus) * 1.4
+    damage = monster.attacked(damage)
+    return (int(damage), ys_crit_damage(damage, cd))
 
-            sl_str += f"{sl_damage}/{sl_crit}\t\t"
-        print(sl_str)
+def get_fu_ren_damage(zw_hp_level, zw_e_level, monster, qi=0):
+    return get_salon_member_damage(6.87/100, zw_hp_level, zw_e_level, monster, qi)
 
-get_e_damages()
+def get_xun_jue_damage(zw_hp_level, zw_e_level, monster, qi=0):
+    return get_salon_member_damage(12.67/100, zw_hp_level, zw_e_level, monster, qi)
+
+def get_pang_xie_damage(zw_hp_level, zw_e_level, monster, qi=0):
+    return get_salon_member_damage(17.61/100, zw_hp_level, zw_e_level, monster, qi)
+
+
+def get_q_damage(zw_hp_level, zw_e_level, monster, qi=0):
+    hp, bonus = get_hp_and_bonus(zw_hp_level=zw_hp_level, zw_e_level=0, qi=qi,  is_e=False)
+    damage = hp * 24.24 / 100 * (1 + bonus)
+    damage = monster.attacked(damage)
+    return (int(damage), ys_crit_damage(damage, cd))
+
+
+from enum import Enum
+class D_Compare_Result(Enum):
+    EQUAL = "equal"
+    LESS = "less"
+    GREATER = "greater"
+
+def damage_compare(damage, base_damage):
+    low =  base_damage - 3
+    high = base_damage + 3
+    if low <= damage and damage <= high:
+        return D_Compare_Result.EQUAL
+    elif damage < low:
+        return D_Compare_Result.LESS
+    else:
+        return D_Compare_Result.GREATER
+    
+
+def get_qi_from_damage(damage, monster: Monster, zw_hp_level, zw_e_level, damage_func, is_crit, **kwargs):
+    if is_crit:
+        damage /= (1 + cd)
+
+    d, _  = damage_func(zw_hp_level, zw_e_level, monster, qi=0, **kwargs)
+    if damage_compare(d, damage) is D_Compare_Result.EQUAL:
+        return 0
+    
+    d, _ = damage_func(zw_hp_level, zw_e_level, monster, qi=800, **kwargs)
+    if damage_compare(d, damage) is D_Compare_Result.EQUAL:
+        return 800
+
+    qi_low = 0
+    qi_high = 800
+    
+    while qi_low < qi_high:
+        qi = round((qi_low + qi_high) / 2, 3)
+
+        d, _ = damage_func(zw_hp_level, zw_e_level, monster, qi=qi, **kwargs)
+        if damage == d:
+            return qi
+        elif damage < d:
+            qi_high = qi - 0.001
+        else:
+            qi_low = qi + 0.001
+        # cr = damage_compare(damage, d)
+        # if cr is D_Compare_Result.EQUAL:
+        #     return qi
+        # elif cr is D_Compare_Result.LESS:
+        #     qi_high = qi - 0.001
+        # else:
+        #     qi_low = qi + 0.001
+
+    return qi_high
+
+
+monster = Monster(level=93, kang_xin=3.1)
+monster.add_jian_kang(0.2)  # 钟离
+
+
+print("e: ", get_e_damage(0, 0, monster))
+
+print("夫人出伤: ", get_fu_ren_damage(zw_hp_level=1, zw_e_level=0, monster=monster))
+print("勋爵出伤: ", get_xun_jue_damage(zw_hp_level=1, zw_e_level=0, monster=monster))
+print("螃蟹出伤: ", get_pang_xie_damage(zw_hp_level=1, zw_e_level=0, monster=monster))
+
+print("Q出伤: ", get_q_damage(zw_hp_level=1, zw_e_level=0, monster=monster, qi=150))
+
+print("第一刀: ", get_a_damage(zw_hp_level=2, zw_e_level=1, monster=monster, qi=172.4, phrase=1, hei_dao=True))
+
+
+print(get_qi_from_damage(929, monster, zw_hp_level=1, zw_e_level=0, damage_func=get_q_damage, is_crit=False))
+print(get_qi_from_damage(2739, monster, zw_hp_level=2, zw_e_level=1, damage_func=get_a_damage, is_crit=True, phrase=1, hei_dao=True))

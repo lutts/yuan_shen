@@ -1,5 +1,5 @@
-from action import Action, ActionPlan
-from attribute_hub import ActionPlanAttributeSupplier
+from ..action import Action, ActionPlan
+from ..attribute_hub import ActionPlanAttributeSupplier
 
 
 class BanNiTe_Q_Action(Action, ActionPlanAttributeSupplier):

@@ -431,6 +431,7 @@ class FuFu_GuYouTianFu_1_Action(Action):
         self.supervisor.do_cure(plan)
 
 
+# FIXME: 在动画开始多久后添加这个 Action?
 class FuFu_Q_Bonus_Action(Action):
     """
     注：plan.add_action 时，min_t 和 max_t 填写芙芙大招动画开始的时间，实际的增伤开始与结束时间会自动计算
