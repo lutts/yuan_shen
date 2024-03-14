@@ -11,6 +11,10 @@ kou_xue_per_str = ["f", "x", "p", "f/x", "f/p", "x/p", "f/x/p"]
 
 history = [(None, None, None)]
 
+def print_history():
+    h = [(h[0], h[1], None if h[2] is None else round(h[2], 3)) for h in history]
+    print(h)
+
 print("press p to print histories")
 print("press b to back to previous state")
 print("press u to back to un-initialized state")
@@ -25,7 +29,7 @@ while True:
         for i in range(0, len(kou_xue_percent)):
             per = kou_xue_percent[i]
             next_cur_hp = int(cur_hp - per * max_hp)
-            next_percent = round(next_cur_hp / max_hp, 3)
+            next_percent = next_cur_hp / max_hp
             next_possible.append((next_cur_hp, max_hp, next_percent))
             prompt_str += "{}: {}({}), ".format(i, next_cur_hp, kou_xue_per_str[i])
 
@@ -53,7 +57,7 @@ while True:
         print("回退到了未初始化状态")
         continue
     elif hps == 'p':
-        print(history)
+        print_history()
         continue
     elif hps == "z":
         if len(history) > 1:
@@ -66,7 +70,7 @@ while True:
             cur_hp = int(max_hp * cur_percent)
             history.append((cur_hp, max_hp, cur_percent))
             print("专武叠层完毕")
-            print(history)
+            print_history()
         else:
             print("请先初始化")
 
@@ -94,7 +98,7 @@ while True:
         except:
             continue
         
-        cur_percent = round(cur_hp / max_hp, 3)
+        cur_percent = cur_hp / max_hp
 
     prev_percent = history[-1][-1]
 

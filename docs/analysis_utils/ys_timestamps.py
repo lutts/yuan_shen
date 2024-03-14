@@ -118,8 +118,52 @@ class Ys_Timestamp:
     
     def __repr__(self) -> str:
         return repr(self.t)
+    
+null_timestamp = Ys_Timestamp("0")
 
-def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, list[str|list[str]]], 
+
+def generic_field_parser(t_lst):
+    parse_result = []
+    all_times = []
+    for t in t_lst:
+        if isinstance(t, str):
+            ys_t = Ys_Timestamp(t)
+            if ys_t.t:
+                parse_result.append(ys_t)
+                all_times.append(t)
+            else:
+                parse_result.append(t)
+        elif t is null_timestamp:
+            parse_result.append(t)
+        elif isinstance(t, list) or isinstance(t, tuple):
+            sub_result, sub_times = generic_field_parser(t)
+            parse_result.append(sub_result)
+            all_times.extend(sub_times)
+
+    if isinstance(t_lst, tuple):
+        parse_result = tuple(parse_result)
+
+    return parse_result, all_times
+
+
+def generic_print_func(description, raw_intervals, soreted_valid_intervals):
+    s = description + ": "
+
+    for filename, raw_interval in raw_intervals:
+        s += "[" + filename + ":"
+        if isinstance(raw_interval, list):
+            # 加上编号，避免太多时数数浪费时间
+            s += ", ".join([str(i+1) +":" + str(raw_interval[i]) for i in range(0, len(raw_interval))]) + "]"
+        else:
+            s += str(raw_interval)
+        s += '], '
+
+    s += "\n"
+    s += "排序: " + str(soreted_valid_intervals)
+    s += "\n"
+    print(s)
+
+def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, list], 
                              get_intervals_func, print_func=None):
     ys_timestamp_dict = {}
     for filename, times in timestamp_dict.items():
@@ -127,29 +171,15 @@ def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, lis
         num_times = len(times)
         if num_fields != num_times:
             raise Exception(f"Video_Timestamps_cls field number({num_fields}) not match with {filename} time number({num_times})")
-
-        ys_timestamps = []
-        all_times = []
-        for idx in range(0, len(times)):
-            t = times[idx]
-            if isinstance(t, list):
-                all_times.extend(t)
-
-                sub_lst = []
-                for sub_t in t:
-                    sub_lst.append(Ys_Timestamp(sub_t))
-                ys_timestamps.append(sub_lst)
-            else:
-                all_times.append(t)
-
-                ys_timestamps.append(Ys_Timestamp(t))
+        
+        parse_result, all_times = generic_field_parser(times)
 
         times_set = set(all_times)
         if len(all_times) != len(times_set):
             print("{} has duplicate timestamps: {}".format(
                 filename, [t for t in all_times if all_times.count(t) > 1]))
             
-        ys_timestamp_dict[filename] = Video_Timestamps_cls(*ys_timestamps)
+        ys_timestamp_dict[filename] = Video_Timestamps_cls(*parse_result)
 
     intervals_dict = get_intervals_func(ys_timestamp_dict)
 
@@ -170,6 +200,7 @@ def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, lis
                 soreted_valid_intervals.extend([i for i in it if i is not None])
             elif it is not None:
                 soreted_valid_intervals.append(it)
+
         def key_func(t):
             if isinstance(t, tuple):
                 return t[0]
@@ -179,7 +210,7 @@ def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, lis
         soreted_valid_intervals.sort(key=key_func)
 
         if not print_func:
-            print("{}: {}\n排序：{}\n".format(description, raw_intervals, soreted_valid_intervals))
+            generic_print_func(description, raw_intervals, soreted_valid_intervals)
         else:
             print_func(description, raw_intervals, soreted_valid_intervals)
 
@@ -195,7 +226,7 @@ def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, lis
 
 # sys.path.append(os.path.abspath('../..'))
 
-# from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, print_avg_min_max
+# from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, print_avg_min_max, null_timestamp
 
 # timestamp_dict = {
 # }

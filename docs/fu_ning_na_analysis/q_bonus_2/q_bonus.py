@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath('../../..'))
 
 print(sys.path)
 
-from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, print_avg_min_max
+from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, print_avg_min_max, null_timestamp
 from yuanshen.utils import ys_crit_damage
 from yuanshen.monster import Monster
 

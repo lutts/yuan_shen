@@ -6,7 +6,7 @@ from typing import NamedTuple
 
 sys.path.append(os.path.abspath('../..'))
 
-from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, print_avg_min_max
+from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, print_avg_min_max, null_timestamp
 
 timestamp_dict = {
     "BHDS8270": ['00:00:03.667', "00:00:05.352", '00:00:00.000', '00:00:23.388', '00:00:23.322', '00:00:23.555'],

@@ -3,13 +3,13 @@ import os
 
 sys.path.append(os.path.abspath('../..'))
 
-from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary
+from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, null_timestamp
 from typing import NamedTuple
 
 timestamp_dict = {
     "SCVE3726":
     ["00:00:02.333", "00:00:02.417", "00:00:03.900", "00:00:03.967",
-     ["00:00:04.752", "00:00:04.902", "00:00:00.000"],
+     ["00:00:04.752", "00:00:04.902", null_timestamp],
         ["00:00:06.735", "00:00:06.818", "00:00:06.935"],
         ["00:00:08.702", "00:00:08.818", "00:00:08.918"],
         ["00:00:10.702", "00:00:10.802", "00:00:10.918"],
@@ -69,7 +69,7 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
     intervals_dict = {}
     for name, t in ys_timestamp_dict.items():
         if len(t.liu_feng_first) < 3:
-            t.liu_feng_first.append(Ys_Timestamp("00:00:00.000"))
+            t.liu_feng_first.append(Ys_Timestamp(null_timestamp))
 
         intervals_dict[name] = {
             "切万叶 - Q动画开始": t.q_start - t.switch_to_wan_ye,
