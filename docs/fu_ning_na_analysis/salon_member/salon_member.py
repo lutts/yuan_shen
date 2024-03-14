@@ -365,4 +365,7 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
     
     return intervals_dict
 
-sorted_intervals = print_timestamps_summary(Video_Timestamps, timestamp_dict, get_intervals)
+def print_salon_member_sammary(td):
+    return print_timestamps_summary(Video_Timestamps, td, get_intervals)
+
+print_salon_member_sammary(timestamp_dict)
