@@ -3,7 +3,7 @@ import os
 from collections import namedtuple
 from typing import NamedTuple
 
-sys.path.append(os.path.abspath('../..'))
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../..'))
 
 from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, print_avg_min_max, null_timestamp
 
@@ -368,4 +368,5 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
 def print_salon_member_sammary(td):
     return print_timestamps_summary(Video_Timestamps, td, get_intervals)
 
-print_salon_member_sammary(timestamp_dict)
+if __name__ == "__main__":
+    print_salon_member_sammary(timestamp_dict)

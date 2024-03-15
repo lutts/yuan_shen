@@ -224,7 +224,7 @@ def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, lis
 # from collections import namedtuple
 # from typing import NamedTuple
 
-# sys.path.append(os.path.abspath('../..'))
+# sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../..'))
 
 # from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, print_avg_min_max, null_timestamp
 
