@@ -114,10 +114,13 @@ class Ys_Timestamp:
         return self - zero
     
     def __str__(self) -> str:
-        return str(self.t)
+        if not self.t:
+            return "00:00:00.000"
+        else:
+            return self.t.strftime("00:%M:%S.%f")[0:-3]
     
     def __repr__(self) -> str:
-        return repr(self.t)
+        return str(self)
     
 null_timestamp = Ys_Timestamp("0")
 

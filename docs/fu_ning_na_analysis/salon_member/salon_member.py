@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../..'))
 
-from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, print_avg_min_max, null_timestamp
+from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, print_avg_min_max, null_timestamp, generic_field_parser
 
 timestamp_dict = {
     "BRYG1101": ["00:00:03.133", "00:00:03.433", "00:00:03.533",
@@ -306,40 +306,46 @@ class Damage_State:
         else:
             raise Exception(f"unknown action after damage: {action} on {t}")
 
+def get_salon_member_action_sequence(action_times):
+    salon_member_action_sequences = {
+        "f": Salon_Member_Action_Sequence(),
+        "x": Salon_Member_Action_Sequence(),
+        "p": Salon_Member_Action_Sequence()
+    }
+
+    for action, time in action_times:
+        actions = action.split("/")
+        members = actions[:-1]
+        action = actions[-1]
+
+        for m in members:
+            salon_member_action_sequences[m].do_action(action, time)
+
+    for action_seq in salon_member_action_sequences.values():
+        action_seq.finish_cur_seq()
+
+    return salon_member_action_sequences
 
 def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
     intervals_dict = {}
     for filename, t in ys_timestamp_dict.items():
         action_times = t.action_times
 
-        salon_member_action_times = {
-            "f": Salon_Member_Action_Sequence(),
-            "x": Salon_Member_Action_Sequence(),
-            "p": Salon_Member_Action_Sequence()
-        }
-
-        for action, time in action_times:
-            actions = action.split("/")
-            members = actions[:-1]
-            action = actions[-1]
-
-            for m in members:
-                salon_member_action_times[m].do_action(action, time)
-
-        for action_seq in salon_member_action_times.values():
-            action_seq.finish_cur_seq()
+        salon_member_action_sequences = get_salon_member_action_sequence(action_times)
         
         intervals = {
             "点按e - e出伤": t.e_damage - t.press_e,
+            '所有击中-出伤间隔': []
         }
 
-        for sm, action_seq in salon_member_action_times.items():
+        for sm, action_seq in salon_member_action_sequences.items():
             times = action_seq.action_seqs
             num_times = len(times)
             kou_xue_intervals = [times[i]["k"] - times[i-1]["k"] for i in range(1, num_times)]
             damage_intervals = [times[i]["d"] - times[i-1]["d"] for i in range(1, num_times)]
             hit_intervals = [times[i]["h"] - times[i-1]["h"] for i in range(1, num_times)]
             hit_durations = [t['h'] - t['s'] for t in times]
+            hit_start_intervals = [times[i]["s"] - times[i-1]["s"] for i in range(1, num_times)]
             kou_xue_to_hit_start = [t['s'] - t['k'] for t in times]
             kou_xue_to_damage_intervals = [t["d"] - t["k"] for t in times]
             hit_to_damage_intervals = [t["d"] - t["h"] for t in times]
@@ -353,13 +359,17 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
                 member_name = "螃蟹"
 
             intervals[f"{member_name}扣血间隔"] = kou_xue_intervals
-            intervals[f"{member_name}出伤间隔"] = damage_intervals
+            intervals[f"{member_name}发动攻击间隔"] = hit_start_intervals
             intervals[f"{member_name}击中间隔"] = hit_intervals
+            intervals[f"{member_name}出伤间隔"] = damage_intervals
+
             intervals[f"{member_name}扣血-出伤间隔"] = kou_xue_to_damage_intervals
             intervals[f"{member_name}扣血-发动攻击间隔"] = kou_xue_to_hit_start
             intervals[f"{member_name}发动攻击-击中时长"] = hit_durations
             intervals[f"{member_name}击中-出伤间隔"] = hit_to_damage_intervals
             intervals[f"{member_name}出伤-下一次扣血"] = damage_to_next_kou_xue
+            intervals[f"{member_name}击中-下一次扣血"] = [times[i]['k'] - times[i - 1]['h'] for i in range(1, num_times)]
+            intervals[f'所有击中-出伤间隔'].extend(hit_to_damage_intervals)
 
         intervals_dict[filename] = intervals
     
@@ -368,5 +378,68 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
 def print_salon_member_sammary(td):
     return print_timestamps_summary(Video_Timestamps, td, get_intervals)
 
+def print_single_salon_member_action_seq(action_seqs):
+    s = ""
+    num_seqs = len(action_seqs)
+    for idx in range(0, num_seqs):
+        seq = action_seqs[idx]
+
+        ks_i = seq['s'] - seq['k']
+        if ks_i is None:
+            ks_i = 0
+
+        sh_i = seq['h'] - seq['s']
+        if sh_i is None:
+            sh_i = 0
+        hd_i = seq['d'] - seq['h']
+        if hd_i is None:
+            hd_i = 0
+        
+        s += f"{idx+1:2d}: k:{seq['k']} --{ks_i:.3f}--> s:{seq['s']} --{sh_i:.3f}--> h:{seq['h']} --{hd_i:.3f}--> d:{seq['d']}"
+        if idx < num_seqs - 1:
+            next_seq = action_seqs[idx + 1]
+
+            hk_i = next_seq['k'] - seq['h']
+            if hk_i is None:
+                hk_i = 0
+
+            dk_i = next_seq['k'] - seq['d']
+            if dk_i is None:
+                dk_i = 0
+            s += f' --{hk_i:.3f}/{dk_i:.3f}-->\n'
+
+            kk_i = next_seq['k'] - seq['k']
+            if kk_i is None:
+                kk_i = 0
+            ss_i = next_seq['s'] - seq['s']
+            if ss_i is None:
+                ss_i = 0
+            hh_i = next_seq['h'] - seq['h']
+            if hh_i is None:
+                hh_i = 0
+            dd_i = next_seq['d'] - seq['d']
+            if dd_i is None:
+                dd_i = 0
+            s += f'                  {kk_i:.3f}                                           {ss_i:.3f}                                          {hh_i:.3f}                                           {dd_i:.3f}\n'
+
+    
+    print(s)
+
+def print_single_salon_member_timestamps(td, filename, member_name=None):
+    parse_result, _ = generic_field_parser(td[filename])
+    vt = Video_Timestamps(*parse_result)
+    action_sequences = get_salon_member_action_sequence(vt.action_times)
+
+    if not member_name:
+        members = ['f', 'x', 'p']
+    else:
+        members = [member_name]
+
+    for m in members:
+        print(f"-----{filename}:{m}-----")
+        print_single_salon_member_action_seq(action_sequences[m].action_seqs)
+
+
 if __name__ == "__main__":
     print_salon_member_sammary(timestamp_dict)
+    # print_single_salon_member_timestamps(timestamp_dict, 'BRYG1101', 'f')

@@ -4,12 +4,13 @@
 Module documentation.
 """
 
-from character_impl.ban_ni_te import BanNiTe_Q_Action
-from ys_basic import Ys_Elem_Type, ys_expect_damage, ys_crit_damage
-from monster import Monster
-from characters import Ying_Bao_Ch, Jiu_Tiao_Sha_Luo_Ch
-from ys_syw import ShengYiWu, ShengYiWu_Score, calculate_score, set_score_threshold, Syw_Combine_Desc, find_syw_combine
-from character_impl.wan_ye import Wan_Ye_Ch
+from yuanshen.character_impl.ban_ni_te import BanNiTe_Q_Action
+from yuanshen.elem_type import Ys_Elem_Type
+from yuanshen.utils import ys_expect_damage, ys_crit_damage
+from yuanshen.monster import Monster
+from yuanshen.character_impl.characters import Ying_Bao_Ch, Jiu_Tiao_Sha_Luo_Ch
+from yuanshen.syw_finder import ShengYiWu, ShengYiWu_Score, calculate_score, set_score_threshold, Syw_Combine_Desc, find_syw_combine
+from yuanshen.character_impl.wan_ye import Wan_Ye_Ch
 
 
 enable_debug = False

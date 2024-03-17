@@ -3,7 +3,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 
-from salon_member import print_salon_member_sammary, null_timestamp
+from salon_member import print_salon_member_sammary, null_timestamp, print_single_salon_member_timestamps
 
 timestamp_dict = {
     "HXJB7993": ["00:00:00.833", "00:00:01.133", "00:00:01.200",
@@ -190,3 +190,5 @@ timestamp_dict = {
 }
 
 print_salon_member_sammary(timestamp_dict)
+
+print_single_salon_member_timestamps(timestamp_dict, 'HXJB7993')

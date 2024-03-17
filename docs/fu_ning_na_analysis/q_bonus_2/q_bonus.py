@@ -184,15 +184,16 @@ def get_qi_from_damage(damage, monster: Monster, zw_hp_level, zw_e_level, damage
     return qi_high
 
 
-monster = Monster(level=93, kang_xin=3.1)
+#monster = Monster(level=93, kang_xin=3.1)
+monster = Monster(level=93)
 monster.add_jian_kang(0.2)  # 钟离
 
 
 print("e: ", get_e_damage(0, 0, monster))
 
-print("夫人出伤: ", get_fu_ren_damage(zw_hp_level=1, zw_e_level=0, monster=monster))
-print("勋爵出伤: ", get_xun_jue_damage(zw_hp_level=1, zw_e_level=0, monster=monster))
-print("螃蟹出伤: ", get_pang_xie_damage(zw_hp_level=1, zw_e_level=0, monster=monster))
+print("夫人出伤: ", get_fu_ren_damage(zw_hp_level=1, zw_e_level=1, monster=monster))
+print("勋爵出伤: ", get_xun_jue_damage(zw_hp_level=1, zw_e_level=1, monster=monster))
+print("螃蟹出伤: ", get_pang_xie_damage(zw_hp_level=1, zw_e_level=1, monster=monster))
 
 print("Q出伤: ", get_q_damage(zw_hp_level=1, zw_e_level=0, monster=monster, qi=150))
 
