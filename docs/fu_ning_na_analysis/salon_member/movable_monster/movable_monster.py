@@ -189,6 +189,10 @@ timestamp_dict = {
                   ]],
 }
 
-print_salon_member_sammary(timestamp_dict)
+# print_salon_member_sammary(timestamp_dict)
 
-print_single_salon_member_timestamps(timestamp_dict, 'HXJB7993')
+# print_single_salon_member_timestamps(timestamp_dict, 'HXJB7993')
+
+import salon_member
+timestamp_dict.update(salon_member.timestamp_dict)
+print_salon_member_sammary(timestamp_dict)
