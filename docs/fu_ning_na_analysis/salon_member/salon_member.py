@@ -335,11 +335,32 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
         
         intervals = {
             "点按e - e出伤": t.e_damage - t.press_e,
+            "点按e - 第一次扣血": [],
+            "第一次同时扣血时间范围": [],
             '所有击中-出伤间隔': []
         }
 
+        first_kou_xue_min = null_timestamp
+        first_kou_xue_max = null_timestamp
+
         for sm, action_seq in salon_member_action_sequences.items():
             times = action_seq.action_seqs
+            k_time = times[0]['k']
+            if filename == 'VLZK6413':
+                print("k_time:",  k_time)
+            k_min_diff = k_time - first_kou_xue_min
+            k_max_diff = k_time - first_kou_xue_max
+
+            if first_kou_xue_min is null_timestamp:
+                first_kou_xue_min = k_time
+            elif k_min_diff and k_min_diff < 0:
+                first_kou_xue_min = k_time
+            
+            if first_kou_xue_max is null_timestamp:
+                first_kou_xue_max = k_time
+            elif k_max_diff and k_max_diff > 0:
+                first_kou_xue_max = k_time
+
             num_times = len(times)
             kou_xue_intervals = [times[i]["k"] - times[i-1]["k"] for i in range(1, num_times)]
             damage_intervals = [times[i]["d"] - times[i-1]["d"] for i in range(1, num_times)]
@@ -371,6 +392,13 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
             intervals[f"{member_name}击中-下一次扣血"] = [times[i]['k'] - times[i - 1]['h'] for i in range(1, num_times)]
             intervals[f'所有击中-出伤间隔'].extend(hit_to_damage_intervals)
 
+        if filename == 'VLZK6413':
+            print("min:", first_kou_xue_min)
+            print("max:", first_kou_xue_max)
+
+        intervals["点按e - 第一次扣血"].append(first_kou_xue_min - t.press_e)
+        intervals["第一次同时扣血时间范围"].append(first_kou_xue_max - first_kou_xue_min)
+        
         intervals_dict[filename] = intervals
     
     return intervals_dict
