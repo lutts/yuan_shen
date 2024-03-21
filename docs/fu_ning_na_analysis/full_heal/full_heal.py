@@ -330,9 +330,18 @@ class Video_Timestamps(NamedTuple):
 def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
     intervals_dict = {}
     for filename, t in ys_timestamp_dict.items():
+        first_times = [t.bg_heal_times[0], t.fufu_heal_times[0]]
+        last_times = [t.bg_heal_times[-1], t.fufu_heal_times[-1]]
+
         fg_heal_times = t.fg_heal_times
         if not fg_heal_times:
             fg_heal_times = t.fufu_heal_times
+        else:
+            first_times.append(fg_heal_times[0])
+            last_times.append(fg_heal_times[-1])
+        
+        min_time = min(first_times)
+        max_time = max(last_times)
 
         intervals_dict[filename] = {
             "第一刀 - 队友首次回血": t.bg_heal_times[0] - t.first_a_hit,
@@ -344,6 +353,7 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
             "芙芙首次-第二次回血": t.fufu_heal_times[1] - t.fufu_heal_times[0] if len(t.fufu_heal_times) > 1 else None,
             "芙芙第二次-第三次回血":  t.fufu_heal_times[2] - t.fufu_heal_times[1] if len(t.fufu_heal_times) > 2 else None,
             "芙芙第三次-第四次回血": t.fufu_heal_times[3] - t.fufu_heal_times[2] if len(t.fufu_heal_times) > 3 else None,
+            "最早-最晚回血时间间隔": max_time - min_time
         }
     
     return intervals_dict

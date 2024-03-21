@@ -113,6 +113,25 @@ class Ys_Timestamp:
 
         return self - zero
     
+  
+    def __eq__(self, __value: object) -> bool:
+        return (self - __value) == 0
+
+    def __ne__(self, __value: object) -> bool:
+        return (self - __value) != 0
+    
+    def __lt__(self, other):
+        return self - other < 0
+    
+    def __gt__(self, other):
+        return self - other > 0
+    
+    def __le__(self, other):
+        return self - other <= 0
+    
+    def __ge__(self, other):
+        return self - other >= 0
+    
     def __str__(self) -> str:
         if not self.t:
             return "00:00:00.000"
@@ -122,7 +141,9 @@ class Ys_Timestamp:
     def __repr__(self) -> str:
         return str(self)
     
+
 null_timestamp = Ys_Timestamp("0")
+zero_timestamp = Ys_Timestamp("00:00:00.000")
 
 
 def generic_field_parser(t_lst):
