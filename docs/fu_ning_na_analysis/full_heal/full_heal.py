@@ -87,7 +87,8 @@ zhong_li_in_front_dict = {
                   "00:00:20.938", "00:00:21.972"]],
 }
 
-next_day_dict = {
+# 上面数据不正常，第二天又录了几个视频
+next_day_dao_6_dict = {
     "IPUD9000": ["00:00:05.068", "00:00:05.185",
                  ["00:00:06.285", "00:00:07.335", "00:00:08.335", "00:00:09.252", "00:00:10.218",
                   "00:00:11.218", "00:00:12.187", "00:00:13.237", "00:00:14.187", "00:00:15.337",
@@ -109,6 +110,7 @@ next_day_dict = {
                   "00:00:17.970", "00:00:18.970", "00:00:20.003", "00:00:21.038", "00:00:22.005",
                   "00:00:22.988", "00:00:23.955"],
                  []],
+    # 关了 meta fx
     "WFFP6191": ["00:00:04.918", "00:00:04.985",
                  ["00:00:06.235", "00:00:07.202", "00:00:08.185", "00:00:09.168", "00:00:10.102",
                   "00:00:11.085", "00:00:12.137", "00:00:13.103", "00:00:14.137", "00:00:15.070",
@@ -337,11 +339,54 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
             "后台回血间隔": [t.bg_heal_times[i] - t.bg_heal_times[i-1] for i in range(1, len(t.bg_heal_times))],
             "第一刀 - 芙芙首次回血": t.fufu_heal_times[0] - t.first_a_hit,
             "芙芙回血间隔": [t.fufu_heal_times[i] - t.fufu_heal_times[i - 1] for i in range(1, len(t.fufu_heal_times))],
-            "前台回血间隔": [fg_heal_times[i] - fg_heal_times[i-1] for i in range(1, len(fg_heal_times))]
+            "前台回血间隔": [fg_heal_times[i] - fg_heal_times[i-1] for i in range(1, len(fg_heal_times))],
+            "芙芙首次回血落后队友": t.fufu_heal_times[0] - t.bg_heal_times[0],
+            "芙芙首次-第二次回血": t.fufu_heal_times[1] - t.fufu_heal_times[0] if len(t.fufu_heal_times) > 1 else None,
+            "芙芙第二次-第三次回血":  t.fufu_heal_times[2] - t.fufu_heal_times[1] if len(t.fufu_heal_times) > 2 else None,
+            "芙芙第三次-第四次回血": t.fufu_heal_times[3] - t.fufu_heal_times[2] if len(t.fufu_heal_times) > 3 else None,
         }
     
     return intervals_dict
 
-# dao_6_dict.update(zhong_li_in_front_dict)
-td = next_day_dict
-sorted_intervals = print_timestamps_summary(Video_Timestamps, td, get_intervals)
+all_td = {}
+all_td.update(dao_1_dict)
+all_td.update(dao_2_dict)
+all_td.update(dao_3_dict)
+all_td.update(dao_4_dict)
+all_td.update(dao_5_dict)
+all_td.update(next_day_dao_6_dict)
+
+print("=========只砍一刀=========")
+print_timestamps_summary(Video_Timestamps,
+                         dao_1_dict,
+                         get_intervals)
+
+print("=========砍二刀=========")
+print_timestamps_summary(Video_Timestamps,
+                         dao_2_dict,
+                         get_intervals)
+
+print("=========砍三刀=========")
+print_timestamps_summary(Video_Timestamps,
+                         dao_3_dict,
+                         get_intervals)
+
+print("=========砍四刀=========")
+print_timestamps_summary(Video_Timestamps,
+                         dao_4_dict,
+                         get_intervals)
+
+print("=========砍五刀=========")
+print_timestamps_summary(Video_Timestamps,
+                         dao_5_dict,
+                         get_intervals)
+
+print("=========砍六刀=========")
+print_timestamps_summary(Video_Timestamps,
+                         next_day_dao_6_dict,
+                         get_intervals)
+
+print("=========所有数据汇总=========")
+print_timestamps_summary(Video_Timestamps,
+                         all_td,
+                         get_intervals)
