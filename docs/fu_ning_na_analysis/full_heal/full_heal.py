@@ -385,9 +385,11 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
 
         intervals_dict[filename] = {
             "第一刀刀光 - 队友首次回血": t.bg_heal_times[0] - t.first_a_hit,
+            "第一刀刀光 - 第一刀出伤": t.first_a_damage - t.first_a_hit,
             "第一刀出伤 - 队友首次回血": t.bg_heal_times[0] - t.first_a_damage,
             "后台回血间隔": [t.bg_heal_times[i] - t.bg_heal_times[i-1] for i in range(1, len(t.bg_heal_times))],
-            "第一刀 - 芙芙首次回血": t.fufu_heal_times[0] - t.first_a_hit,
+            "第一刀刀光 - 芙芙首次回血": t.fufu_heal_times[0] - t.first_a_hit,
+            "第一刀出伤 - 芙芙首次回血": t.fufu_heal_times[0] - t.first_a_damage,
             "芙芙回血间隔": [t.fufu_heal_times[i] - t.fufu_heal_times[i - 1] for i in range(1, len(t.fufu_heal_times))],
             "前台回血间隔": [fg_heal_times[i] - fg_heal_times[i-1] for i in range(1, len(fg_heal_times))],
             "芙芙首次回血落后队友": t.fufu_heal_times[0] - t.bg_heal_times[0],
@@ -403,6 +405,7 @@ all_td = {}
 all_td.update(dao_1_dict)
 all_td.update(dao_2_dict)
 all_td.update(dao_3_dict)
+all_td.update(shou_fa_2_dict)
 all_td.update(dao_4_dict)
 all_td.update(dao_5_dict)
 all_td.update(next_day_dao_6_dict)
