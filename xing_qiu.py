@@ -99,6 +99,8 @@ def create_for_lei_guo(syw_combine):
     xing_qiu.add_atk_per(ban_ni_te.atk_per_bonus)
     xing_qiu.add_atk(ban_ni_te.atk_bonus)
 
+    return xing_qiu
+
 
 def calculate_score_callback(score_data: ShengYiWu_Score):
     xing_qiu = create_instance(score_data.syw_combine)

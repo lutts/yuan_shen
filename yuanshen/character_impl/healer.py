@@ -66,7 +66,7 @@ class Qin_Heal_Action(Action):
         self.qin = qin
 
     def get_cure_interval(self):
-        return random.randint(int(0.971 * 1000), int(1.035 * 1000)) / 1000
+        return random.uniform(0.969, 1.036)
 
     def do_impl(self, plan: ActionPlan):
         q_ratio = Qin_Heal_Action.q_level_to_ratio[self.qin.q_level]
@@ -76,13 +76,13 @@ class Qin_Heal_Action(Action):
         plan.regenerate_hp(targets=plan.characters, hp=cure_num, source=self.qin)
 
         cur_time = plan.get_current_action_time()
-        end_time = cur_time + 10
         next_cure_time = cur_time + self.get_cure_interval()
-        for _ in range(0, 10):
+        # 注：切人会导致第一次持续治疗被吞，不切人的话，大招奶后一般琴就满血了，治疗也是无效
+        # 所以这里按 9 次治疗来计算
+        next_cure_time += self.get_cure_interval
+        for _ in range(0, 9):
             action = Qin_Heal_Field_Action(self.qin)
             action.set_timestamp(next_cure_time)
             plan.insert_action_runtime(action)
 
             next_cure_time += self.get_cure_interval()
-            if next_cure_time > end_time:
-                next_cure_time = end_time
