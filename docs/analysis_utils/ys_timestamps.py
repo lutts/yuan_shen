@@ -281,6 +281,9 @@ import re
 
 def do_main():
     raw_timestamps = sys.argv[1:]
+    if not raw_timestamps:
+        return
+    
     timestamps = []
     for rt in raw_timestamps:
         rtm = re.search(r"[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}", rt)
@@ -291,9 +294,9 @@ def do_main():
     
     ys_ts = [Ys_Timestamp(t) for t in timestamps]
     intervals = [ys_ts[i] - ys_ts[i-1] for i in range(1,  len(ys_ts))]
+    print("num: ", len(ys_ts))
     print("intervals: ", intervals)
     print("sorted intervals: ", sorted([t for t in intervals if t is not None]))
 
 if __name__ == "__main__":
-    # do_main()
-    print_avg_min_max([0.966, 0.967, 0.967, 0.969, 0.983, 0.983, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.001, 1.002, 1.016, 1.016, 1.016, 1.016, 1.017, 1.017, 1.017, 1.017, 1.017, 1.017, 1.017, 1.017, 1.017, 1.033])
+    do_main()
