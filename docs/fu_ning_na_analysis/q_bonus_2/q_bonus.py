@@ -138,6 +138,9 @@ def get_e_damage(zw_hp_level, zw_e_level, monster, qi=0):
 
 def get_salon_member_damage(multiplier, zw_hp_level, zw_e_level, monster, qi=0):
     hp, bonus = get_hp_and_bonus(zw_hp_level, zw_e_level, qi, is_e=True)
+    print("hp:", round(hp))
+    hp = 70391
+    print("bonus:", round(bonus, 3))
     damage = hp * multiplier * (1 + bonus) * 1.4
     damage = monster.attacked(damage)
     return (int(damage), ys_crit_damage(damage, cd))
@@ -212,15 +215,15 @@ def get_qi_from_damage(damage, monster: Monster, zw_hp_level, zw_e_level, damage
     return qi_high
 
 
-#monster = Monster(level=93, kang_xin=3.1)
-monster = Monster(level=93)
+monster = Monster(level=93, kang_xin=3.1)
+# monster = Monster(level=93)
 monster.add_jian_kang(0.2)  # 钟离
 
 
 print("e: ", get_e_damage(0, 0, monster))
 
-print("夫人出伤: ", get_fu_ren_damage(zw_hp_level=1, zw_e_level=1, monster=monster))
-print("勋爵出伤: ", get_xun_jue_damage(zw_hp_level=1, zw_e_level=1, monster=monster))
+print("夫人出伤: ", get_fu_ren_damage(zw_hp_level=2, zw_e_level=3, monster=monster))
+print("勋爵出伤: ", get_xun_jue_damage(zw_hp_level=2, zw_e_level=3, monster=monster))
 print("螃蟹出伤: ", get_pang_xie_damage(zw_hp_level=1, zw_e_level=1, monster=monster))
 
 print("Q出伤: ", get_q_damage(zw_hp_level=1, zw_e_level=0, monster=monster, qi=150))
