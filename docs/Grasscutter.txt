@@ -1,0 +1,323 @@
+Grasscutter/src/main/java/emu/grasscutter/server/packet/recv/HandlerCombatInvocationsNotify.java
+@Opcodes(PacketOpcodes.CombatInvocationsNotify)
+public class HandlerCombatInvocationsNotify extends PacketHandler {
+
+    private float cachedLandingSpeed = 0;
+    private long cachedLandingTimeMillisecond = 0;
+    private boolean monitorLandingEvent = false;
+
+    @Override
+    public void handle(GameSession session, byte[] header, byte[] payload) throws Exception {
+        CombatInvocationsNotify notif = CombatInvocationsNotify.parseFrom(payload);
+        for (CombatInvokeEntry entry : notif.getInvokeListList()) {
+            // Handle combat invoke
+            switch (entry.getArgumentType()) {
+                case COMBAT_TYPE_ARGUMENT_EVT_BEING_HIT -> {
+                    EvtBeingHitInfo hitInfo = EvtBeingHitInfo.parseFrom(entry.getCombatData());
+                    AttackResult attackResult = hitInfo.getAttackResult();
+                    Player player = session.getPlayer();
+
+                    // Check if the player is invulnerable.  （这是处理一些不造成伤害的技能？）
+                    if (attackResult.getAttackerId()
+                                    != player.getTeamManager().getCurrentAvatarEntity().getId()
+                            && player.getAbilityManager().isAbilityInvulnerable()) break;
+
+                    // Handle damage
+                    player.getAttackResults().add(attackResult);
+                    player.getEnergyManager().handleAttackHit(hitInfo);
+                }
+
+
+关于 AttackResult:
+protobuff: /src/generated/main/java/emu/grasscutter/net/proto/AttackResultOuterClass.java
+/src/generated/main/java/emu/grasscutter/net/proto/EvtBeingHitInfoOuterClass.java
+./src/main/java/emu/grasscutter/server/packet/recv/HandlerCombatInvocationsNotify.java
+
+注意：这里是在 recv 里，说明是客户端发过来的，也就是说，客户端计算好了伤害，服务器端只是校验和广播，校验后修改相关属性，发回客户端
+从后面的实现可以看到：AttackResult里只是算好了伤害量，但并没有修改相关角色或怪的属性，这些属性的改变是服务器端返回的结果
+
+./src/main/java/emu/grasscutter/server/packet/recv/HandlerUnionCmdNotify.java:        while (!session.getPlayer().getAttackResults().isEmpty()) {
+./src/main/java/emu/grasscutter/server/packet/recv/HandlerUnionCmdNotify.java:            session.getPlayer().getScene().handleAttack(session.getPlayer().getAttackResults().poll());
+
+./src/main/java/emu/grasscutter/game/world/Scene.java:    public void handleAttack(AttackResult result) {
+public void handleAttack(AttackResult result) {
+        // GameEntity attacker = getEntityById(result.getAttackerId());
+        GameEntity target = getEntityById(result.getDefenseId());
+        ElementType attackType = ElementType.getTypeByValue(result.getElementType());
+
+        if (target == null) {
+            return;
+        }
+
+        // Godmode check
+        if (target instanceof EntityAvatar) {
+            if (((EntityAvatar) target).getPlayer().isInGodMode()) {
+                return;
+            }
+        }
+
+        // Sanity check
+        target.damage(result.getDamage(), result.getAttackerId(), attackType);
+    }
+
+
+$ find . -name '*.java' | xargs grep 'damage('
+./src/main/java/emu/grasscutter/game/ability/actions/ActionLoseHP.java:        target.damage(amountToLose);
+./src/main/java/emu/grasscutter/game/entity/EntityHomeAnimal.java:    public void damage(float amount, int killerId, ElementType attackType) {}
+./src/main/java/emu/grasscutter/game/entity/EntityMonster.java:    public void damage(float amount, int killerId, ElementType attackType) {
+./src/main/java/emu/grasscutter/game/entity/EntityMonster.java:        super.damage(amount, killerId, attackType);
+./src/main/java/emu/grasscutter/game/entity/GameEntity.java:    public void damage(float amount) {
+./src/main/java/emu/grasscutter/game/entity/GameEntity.java:        this.damage(amount, 0, ElementType.None);
+./src/main/java/emu/grasscutter/game/entity/GameEntity.java:    public void damage(float amount, ElementType attackType) {
+./src/main/java/emu/grasscutter/game/entity/GameEntity.java:        this.damage(amount, 0, attackType);
+./src/main/java/emu/grasscutter/game/entity/GameEntity.java:    public void damage(float amount, int killerId, ElementType attackType) {
+./src/main/java/emu/grasscutter/game/player/TeamManager.java:                            entity.damage(entity.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP) * .1f);
+./src/main/java/emu/grasscutter/game/world/Scene.java:        target.damage(result.getDamage(), result.getAttackerId(), attackType);
+
+伤害来源似乎有两个：LoseHP 和 AttackResult，前者由 AbilityManager 调用而来，是技能释放造成伤害，但 AttackResult 不知道是什么
+两者都是由客户端请求而来
+
+$ find . -name '*.java' | xargs grep 'LoseHP'
+./src/main/java/emu/grasscutter/data/binout/AbilityModifier.java:            LoseHP,
+./src/main/java/emu/grasscutter/game/ability/actions/ActionLoseHP.java:@AbilityAction(AbilityModifierAction.Type.LoseHP)
+./src/main/java/emu/grasscutter/game/ability/actions/ActionLoseHP.java:public final class ActionLoseHP extends AbilityActionHandler {
+
+$ find . -name '*.java' | xargs grep '\.execute('
+./src/main/java/emu/grasscutter/command/CommandMap.java:        Runnable runnable = () -> handlerF.execute(playerF, targetPlayerF, args);
+./src/main/java/emu/grasscutter/game/ability/AbilityManager.java:                    if (!handler.execute(ability, action, abilityData, target)) {
+./src/main/java/emu/grasscutter/game/ability/AbilityManager.java:                    if (!handler.execute(ability, mixinData, abilityData)) {
+./src/main/java/emu/grasscutter/game/activity/condition/BasicActivityConditionExecutor.java:                                                                .execute(activity, activityConfig, c.paramArray()))
+./src/main/java/emu/grasscutter/game/dungeons/DungeonSystem.java:        return handler.execute(condition, params);
+./src/main/java/emu/grasscutter/game/quest/QuestSystem.java:        return handler.execute(owner, questData, condition, paramStr, params);
+./src/main/java/emu/grasscutter/game/quest/QuestSystem.java:        return handler.execute(quest, condition, paramStr, params);
+./src/main/java/emu/grasscutter/game/quest/QuestSystem.java:                    if (!handler.execute(quest, execParam, params)) {
+./src/main/java/emu/grasscutter/game/talk/TalkSystem.java:        handler.execute(player, talkData, execParam);
+./src/main/java/emu/grasscutter/server/game/GameSessionManager.java:                    logicThread.execute(
+./src/main/java/emu/grasscutter/task/TaskMap.java:                task.execute(null);
+./src/test/java/io/grasscutter/GrasscutterTest.java:        try (var response = GrasscutterTest.httpClient.newCall(request).execute()) {
+
+@AbilityManager:
+
+public static void registerHandlers() {
+        var handlerClassesAction = Grasscutter.reflector.getSubTypesOf(AbilityActionHandler.class);    # ActionLostHp是AbilityAcitonHandler的子类
+
+        for (var obj : handlerClassesAction) {
+            try {
+                if (obj.isAnnotationPresent(AbilityAction.class)) {
+                    AbilityModifierAction.Type abilityAction = obj.getAnnotation(AbilityAction.class).value();
+                    actionHandlers.put(abilityAction, obj.getDeclaredConstructor().newInstance());
+                } else {
+                    return;
+                }
+            } catch (Exception e) {
+                Grasscutter.getLogger().error("Unable to register handler.", e);
+            }
+        }
+
+public void executeAction(
+            Ability ability, AbilityModifierAction action, ByteString abilityData, GameEntity target) {
+        var handler = actionHandlers.get(action.type);
+        ......
+        eventExecutor.submit(     // eventExecutor是一个线程池
+                () -> {
+                    if (!handler.execute(ability, action, abilityData, target)) {
+                        Grasscutter.getLogger()
+                                .debug("Ability execute action failed for {} at {}.", action.type, ability);
+                    }
+                });
+    }
+
+    onAbilityInvoke -》handleServerInvoke
+    public void handleServerInvoke(AbilityInvokeEntry invoke) {
+        var head = invoke.getHead();
+
+        var entity = this.player.getScene().getEntityById(invoke.getEntityId());
+        if (entity == null) {
+            Grasscutter.getLogger().trace("Entity not found: {}", invoke.getEntityId());
+            return;
+        }
+
+        var target = this.player.getScene().getEntityById(head.getTargetId());
+        if (target == null) target = entity;
+
+        Ability ability = null;
+
+        // Seems that target is used, but need to be sure, TODO: Research
+
+        // Find ability or modifier's ability
+        if (head.getInstancedModifierId() != 0
+                && entity.getInstancedModifiers().containsKey(head.getInstancedModifierId())) {
+            ability = entity.getInstancedModifiers().get(head.getInstancedModifierId()).getAbility();
+        }
+
+        if (ability == null
+                && head.getInstancedAbilityId() != 0
+                && (head.getInstancedAbilityId() - 1) < entity.getInstancedAbilities().size()) {
+            ability = entity.getInstancedAbilities().get(head.getInstancedAbilityId() - 1);
+        }
+
+        if (ability == null) {
+            Grasscutter.getLogger()
+                    .trace(
+                            "Ability not found: ability {} modifier {}",
+                            head.getInstancedAbilityId(),
+                            head.getInstancedModifierId());
+            return;
+        }
+
+        // Time to reach the handlers
+        var action = ability.getData().localIdToAction.get(head.getLocalId());
+        if (action != null) {
+            // Executing action
+            this.executeAction(ability, action, invoke.getAbilityData(), target);
+            return;
+        } else {
+            ......
+        }
+    }
+
+
+$ find . -name '*.java' | xargs grep -n 'onAbilityInvoke'
+./src/main/java/emu/grasscutter/game/ability/AbilityManager.java:180:    public void onAbilityInvoke(AbilityInvokeEntry invoke) throws Exception {
+./src/main/java/emu/grasscutter/server/packet/recv/HandlerAbilityInvocationsNotify.java:18:            player.getAbilityManager().onAbilityInvoke(entry);
+./src/main/java/emu/grasscutter/server/packet/recv/HandlerClientAbilitiesInitFinishCombineNotify.java:25:                player.getAbilityManager().onAbilityInvoke(ability);
+./src/main/java/emu/grasscutter/server/packet/recv/HandlerClientAbilityChangeNotify.java:15:            player.getAbilityManager().onAbilityInvoke(entry);
+./src/main/java/emu/grasscutter/server/packet/recv/HandlerClientAbilityInitFinishNotify.java:22:            player.getAbilityManager().onAbilityInvoke(entry);
+
+
+GameEntity.java里 damage 的实现简化如下：
+
+public void damage(float amount, int killerId, ElementType attackType) {
+        《计算伤害量effectiveDamage》
+
+        # 修改一些属性
+        // Add negative HP to the current HP property.
+        this.addFightProperty(FightProperty.FIGHT_PROP_CUR_HP, -effectiveDamage);
+
+        this.lastAttackType = attackType;
+        this.checkIfDead();
+        this.runLuaCallbacks(event);
+
+        # 把这些属性同步到服务端
+        // Packets
+        this.getScene()
+                .broadcastPacket(
+                        new PacketEntityFightPropUpdateNotify(this, FightProperty.FIGHT_PROP_CUR_HP));
+
+        // Check if dead.
+        if (this.isDead) {
+            this.getScene().killEntity(this, killerId);
+        }
+    }
+
+子弹
+D:\Data\python\projects\Grasscutter\src\main\java\emu\grasscutter\server\packet\send
+PacketEvtBulletDeactiveNotify.java  ---> 也只是简单地接收和转发
+PacketEvtBulletHitNotify.java         ---> 这个子弹命中有接收也有广播发送，但似乎没有伤害计算
+PacketEvtBulletMoveNotify.java  ---> 子弹移动也是有接收和广播发送，而且似乎也只是简单地转发给进入世界的其他玩家
+
+
+PacketServerBuffChangeNotify.java   ---> buff的状态改变是由服务端发往客户端的，则 PlayerBuffManager.java 管理
+    -> ./src/main/java/emu/grasscutter/game/player/PlayerBuffManager.java:
+    * clearBuffs
+    *  addBuff(int buffId, float duration, Avatar target) ---> PlayerBuff buff = new PlayerBuff(getNextBuffUid(), buffData, duration);
+    * removeBuff
+    * onTick：移除到时间的 buff
+        * ./src/main/java/emu/grasscutter/game/player/Player.java:        this.getBuffManager().onTick();
+        * ./src/main/java/emu/grasscutter/server/game/GameServer.java:        this.players.values().forEach(Player::onTick);
+            gameLoop.scheduleAtFixedRate(
+                new TimerTask() {
+                    @Override
+                    public void run() {
+                        try {
+                            onTick();
+                        } catch (Exception e) {
+                            Grasscutter.getLogger().error(translate("messages.game.game_update_error"), e);
+                        }
+                    }
+                },
+                new Date(),   // 首次执行时间
+                1000L);  // 执行周期: 1000ms，就是一秒一次了，实际原神服务器不可能一秒一次吧？
+
+HandlerAbilityInvocationsNotify：
+HandlerEvtDoSkillSuccNotify：技能释放开始
+
+-----------
+扣血：Grasscutter/src/main/java/emu/grasscutter/game/ability/actions/ActionLoseHP.java
+
+@AbilityAction(AbilityModifierAction.Type.LoseHP)
+public final class ActionLoseHP extends AbilityActionHandler
+...
+一通计算后
+---
+target.damage(amountToLose);
+
+Grasscutter/src/main/java/emu/grasscutter/game/entity/GameEntity.java
+
+public void damage(float amount, int killerId, ElementType attackType) {
+        // Check if the entity has properties.
+        if (this.getFightProperties() == null || !hasFightProperty(FightProperty.FIGHT_PROP_CUR_HP)) {
+            return;
+        }
+
+        // Invoke entity damage event.
+        EntityDamageEvent event =
+                new EntityDamageEvent(this, amount, attackType, this.getScene().getEntityById(killerId));
+        event.call();
+        if (event.isCanceled()) {
+            return; // If the event is canceled, do not damage the entity.
+        }
+
+        float effectiveDamage = 0;
+        float curHp = getFightProperty(FightProperty.FIGHT_PROP_CUR_HP);
+        if (limbo) {
+            float maxHp = getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+            float curRatio = curHp / maxHp;
+            if (curRatio > limboHpThreshold) {
+                // OK if this hit takes HP below threshold.
+                effectiveDamage = event.getDamage();
+            }
+            if (effectiveDamage >= curHp && limboHpThreshold > .0f) {
+                // Don't let entity die while in limbo.
+                effectiveDamage = curHp - 1;
+            }
+        } else if (curHp != Float.POSITIVE_INFINITY && !lockHP
+                || lockHP && curHp <= event.getDamage()) {
+            effectiveDamage = event.getDamage();
+        }
+
+
+        // Add negative HP to the current HP property.
+        this.addFightProperty(FightProperty.FIGHT_PROP_CUR_HP, -effectiveDamage);
+
+        this.lastAttackType = attackType;
+        this.checkIfDead();
+        this.runLuaCallbacks(event);
+
+        // Packets
+        this.getScene()
+                .broadcastPacket(
+                        new PacketEntityFightPropUpdateNotify(this, FightProperty.FIGHT_PROP_CUR_HP));
+
+        // Check if dead.
+        if (this.isDead) {
+            this.getScene().killEntity(this, killerId);
+        }
+    }
+
+Grasscutter/src/main/java/emu/grasscutter/game/entity/EntityMonster.java  （继承自GameEntity)
+ public void damage(float amount, int killerId, ElementType attackType) {
+        // Get HP before damage.
+        float hpBeforeDamage = this.getFightProperty(FightProperty.FIGHT_PROP_CUR_HP);
+
+        // Apply damage.
+        super.damage(amount, killerId, attackType);
+
+        // Get HP after damage.
+        float hpAfterDamage = this.getFightProperty(FightProperty.FIGHT_PROP_CUR_HP);
+
+        // Invoke energy drop logic.  (掉血到一定值时，会掉落元素球)
+        for (Player player : this.getScene().getPlayers()) {
+            player.getEnergyManager().handleMonsterEnergyDrop(this, hpBeforeDamage, hpAfterDamage);
+        }
+    }

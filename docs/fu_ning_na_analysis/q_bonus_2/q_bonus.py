@@ -97,10 +97,17 @@ e_bonus = [0.616, 0.616 + 0.08, 0.616 + 2 * 0.08, 0.616 + 3 * 0.08]
 salom_member_multiplier = [6.87/100, 12.67/100, 17.61/100]
 cd = 2.369
 
+wan_ye_em = 0
+
 
 def  get_hp_and_bonus(zw_hp_level, zw_e_level, qi, is_e):
     hp = max_hp[zw_hp_level]
     bonus = 0.466 + 0.15
+
+    hp += 15307 * 0.3 # 夜兰 3 个e
+
+    global wan_ye_em
+    bonus += wan_ye_em * 0.04 / 100  # 万叶 e
 
     if is_e:
         bonus += 0.28   # 固有天赋
@@ -108,6 +115,9 @@ def  get_hp_and_bonus(zw_hp_level, zw_e_level, qi, is_e):
 
     if qi > 400:
         hp += 15307 * (qi - 400) * 0.0035
+
+    if qi < 0: # 用于测试
+        hp += 15307 * 400 * 0.0035
     
     if qi > 0:
         bonus += min(400, qi) * 0.0031
@@ -139,7 +149,6 @@ def get_e_damage(zw_hp_level, zw_e_level, monster, qi=0):
 def get_salon_member_damage(multiplier, zw_hp_level, zw_e_level, monster, qi=0):
     hp, bonus = get_hp_and_bonus(zw_hp_level, zw_e_level, qi, is_e=True)
     print("hp:", round(hp))
-    hp = 70391
     print("bonus:", round(bonus, 3))
     damage = hp * multiplier * (1 + bonus) * 1.4
     damage = monster.attacked(damage)
@@ -217,14 +226,19 @@ def get_qi_from_damage(damage, monster: Monster, zw_hp_level, zw_e_level, damage
 
 monster = Monster(level=93, kang_xin=3.1)
 # monster = Monster(level=93)
-monster.add_jian_kang(0.2)  # 钟离
+#monster.add_jian_kang(0.2)  # 钟离
+
+# wan_ye_em = 994 + 200
+# monster.add_jian_kang(0.4) # 万叶
+
+qi = 0
 
 
 print("e: ", get_e_damage(0, 0, monster))
 
-print("夫人出伤: ", get_fu_ren_damage(zw_hp_level=2, zw_e_level=3, monster=monster))
-print("勋爵出伤: ", get_xun_jue_damage(zw_hp_level=2, zw_e_level=3, monster=monster))
-print("螃蟹出伤: ", get_pang_xie_damage(zw_hp_level=1, zw_e_level=1, monster=monster))
+print("夫人出伤: ", get_fu_ren_damage(zw_hp_level=2, zw_e_level=3, monster=monster, qi=qi))
+print("勋爵出伤: ", get_xun_jue_damage(zw_hp_level=2, zw_e_level=3, monster=monster, qi=qi))
+print("螃蟹出伤: ", get_pang_xie_damage(zw_hp_level=2, zw_e_level=3, monster=monster, qi=qi))
 
 print("Q出伤: ", get_q_damage(zw_hp_level=1, zw_e_level=0, monster=monster, qi=150))
 
