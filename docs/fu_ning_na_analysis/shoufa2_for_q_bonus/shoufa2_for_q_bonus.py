@@ -128,6 +128,10 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
             "泡泡消失 - 最后一次增伤命中": t.last_bonused_hit - t.pao_pao_disappear,
             "泡泡消失 - 第一次无增伤命中": t.first_unbonused_hit - t.pao_pao_disappear,
             "Q动画开始 - 最后一次增伤命中": t.last_bonused_hit - t.q_anim_start,
+
+            "Q动画开始 - Q出伤": t.q_damage - t.q_anim_start,
+            "沙龙成员命中 - 出伤": [t.last_bonused_damage - t.last_bonused_hit, 
+                            t.first_unbonused_damage - t.first_unbonused_hit]
         }
     
     return intervals_dict
