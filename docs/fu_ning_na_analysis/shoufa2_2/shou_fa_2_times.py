@@ -6,7 +6,7 @@ from typing import NamedTuple
 
 sys.path.append(os.path.abspath('../..'))
 
-from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, print_avg_min_max, null_timestamp
+from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, generic_field_parser, null_timestamp
     
 timestamp_dict = {
     "AAXH4358": ["00:00:03.083", "00:00:04.885", "00:00:04.952", "00:00:06.635", "00:00:06.852",
@@ -245,3 +245,92 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
     return intervals_dict
 
 sorted_intervals = print_timestamps_summary(Video_Timestamps, timestamp_dict, get_intervals)
+
+def get_single_process(video_name):
+    parse_result, _ = generic_field_parser(timestamp_dict[video_name])
+    t = Video_Timestamps(*parse_result)
+
+    intervals_dict = {
+            "钟离e - 切芙芙": t.switch_to_fufu_1 - t.zhong_li_e_start_1,
+            "切芙芙 - 芙芙Q动画开始": t.fufu_q_anim_start - t.switch_to_fufu_1,
+            "芙芙Q动画开始 - 切万叶": t.switch_to_wan_ye_1 - t.fufu_q_anim_start,
+            "切万叶 - 万叶Q动画开始": t.wan_ye_q_anim_start - t.switch_to_wan_ye_1,
+            "万叶Q动画开始 - 切芙芙": t.switch_to_fufu_2 -  t.wan_ye_q_anim_start,
+            "切芙芙 - 切夜兰": t.switch_to_ye_lan_1 - t.switch_to_fufu_2,
+            "切夜兰 - 第一个e结束": t.ye_lan_1st_e_end - t.switch_to_ye_lan_1,
+            "夜兰第一个e结束 - Q动画开始": t.ye_lan_q_anim_start - t.ye_lan_1st_e_end,
+            "夜兰Q动画结束 - 第二个e结束": t.ye_lan_4_ming_2 - t.ye_lan_q_anim_end,
+            "夜兰第二个e结束 - 切芙芙": t.switch_to_fufu_3 - t.ye_lan_4_ming_2,
+            "切芙芙 - 切万叶": t.switch_to_wan_ye_2 - t.switch_to_fufu_3,
+            "切万叶 - 万叶e开始":  t.wan_ye_e_start - t.switch_to_wan_ye_2,
+            "万叶e开始 - 变回攻击键": t.wan_ye_e_atk_btn - t.wan_ye_e_start,
+            "变回攻击键 - 切夜兰": t.switch_to_ye_lan_2 - t.wan_ye_e_atk_btn,
+            "切夜兰 - 切钟离": t.switch_to_zhong_li - t.switch_to_ye_lan_2,
+            "一轮输出时间": t.switch_to_zhong_li - t.zhong_li_e_start_1,
+        }
+    return intervals_dict
+
+def compare_video(video_name_1, video_name_2):
+    proc1 = get_single_process(video_name_1)
+    proc2 = get_single_process(video_name_2)
+    
+    print(f"======={video_name_1} - {video_name_2}=======")
+    for k in proc1.keys():
+        t1 = proc1[k]
+        t2 = proc2[k]
+        diff = round(t1 - t2, 3)
+        print(f"{k}:{t1} - {t2} = {diff}")
+
+
+compare_video("CXQW6779", "KVJG4578")
+
+ye_lan_e_dict = {
+    "AAXH4358": ["00:00:21.755", "00:00:21.905", "00:00:22.455"],
+    "ABCN2638": ["00:00:21.038", "00:00:21.588", "00:00:22.138"],
+    "AREY8421": ["00:00:21.680", "00:00:22.413", "00:00:22.980"],
+    "AZVW1609": ["00:00:20.805", "00:00:21.105", "00:00:21.822"],
+    "BWTQ6665": ["00:00:20.622", "00:00:21.338", "00:00:21.888"],
+    #"CDNL1631": ["00:00:19.920", ],
+    "CXQW6779": ["00:00:20.205", "00:00:20.322", "00:00:20.888"],
+    "EIXZ2855": ["00:00:20.588", "00:00:20.872", "00:00:21.505"],
+    "EMLK4661": ["00:00:21.305", "00:00:22.022", "00:00:22.588"],
+    "GZCR6234": ["00:00:21.038", "00:00:21.088", "00:00:21.655"],
+    # "ICKB3381": [] 失误点到瞄准了，但能看出来 e cd 好后不到一帧时间就反应过来了
+    # "IKQB9796": [] 操作失误了
+    "IRBN1676": ["00:00:21.722", "00:00:21.905", "00:00:22.455"],
+    "JWGO2927": ["00:00:22.505", "00:00:22.805", "00:00:23.372"],
+    "KVJG4578": ["00:00:21.055", "00:00:21.838", "00:00:22.388"],
+    "LITS1766": ["00:00:21.905", "00:00:22.655", "00:00:23.172"],
+    "NEPO1639": ["00:00:20.705", "00:00:20.805", "00:00:21.372"],
+    "PCLG8482": ["00:00:20.738", "00:00:20.922", "00:00:21.488"],
+    "PVIC2605": ["00:00:21.255", "00:00:21.405", "00:00:21.972"],
+    "QASK9303": ["00:00:20.405", "00:00:20.605", "00:00:21.172"],
+    "QHXX4110": ["00:00:19.853", "00:00:20.472", "00:00:21.022"],
+    "RJZS4611": ["00:00:19.303", "00:00:19.720", "00:00:20.272"],
+    "RLGH9027": ["00:00:21.438", "00:00:21.855", "00:00:22.405"],
+    "TLJU0085": ["00:00:22.022", "00:00:22.788", "00:00:23.355"],
+    "TQDD2462": ["00:00:19.587", "00:00:19.770", "00:00:20.338"],
+    "ULUO1558": ["00:00:20.672", "00:00:20.772", "00:00:21.338"],
+    "VIYZ9499": ["00:00:20.722", "00:00:21.155", "00:00:21.722"],
+    "VSEO2414": ["00:00:21.138", "00:00:21.722", "00:00:22.288"],
+    "WOKA8029": ["00:00:20.472", "00:00:21.022", "00:00:21.588"],
+    "XYUJ5817": ["00:00:20.355", "00:00:20.705", "00:00:21.272"],
+    "YGDJ5533": ["00:00:21.272", "00:00:21.622", "00:00:22.188"]
+}
+
+class Ye_Lan_E_Timestamps(NamedTuple):
+    e_cd_ok: Ys_Timestamp
+    e_start: Ys_Timestamp
+    e_end: Ys_Timestamp
+
+def get_ye_lan_e_intervals(ys_timestamp_dict: dict[str, Ye_Lan_E_Timestamps]):
+    intervals_dict = {}
+    for filename, t in ys_timestamp_dict.items():
+        intervals_dict[filename] = {
+            "e CD转好 - e开始": t.e_start - t.e_cd_ok,
+            "e开始 - e结束": t.e_end - t.e_start,
+        }
+
+    return intervals_dict
+
+sorted_intervals = print_timestamps_summary(Ye_Lan_E_Timestamps, ye_lan_e_dict, get_ye_lan_e_intervals)
