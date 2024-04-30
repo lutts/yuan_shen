@@ -163,6 +163,8 @@ def generic_field_parser(t_lst):
             sub_result, sub_times = generic_field_parser(t)
             parse_result.append(sub_result)
             all_times.extend(sub_times)
+        else:
+            parse_result.append(t)
 
     if isinstance(t_lst, tuple):
         parse_result = tuple(parse_result)

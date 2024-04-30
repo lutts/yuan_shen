@@ -320,3 +320,17 @@ def salon_member_damages():
 
 
 salon_member_damages()
+
+m1 = Monster(level=93, kang_xin=3.1)
+m2 = Monster(level=93, kang_xin=3.1)
+m2.add_jian_fang(0.3)
+
+mul = m2.get_fang_yu_xi_shu() / m1.get_fang_yu_xi_shu()
+
+print(1653 * mul)
+print(1628 * mul)
+print(291 * mul)
+print(1459 * mul)
+print(1630 * mul)
+print(1655 * mul)
+print(286 * mul)

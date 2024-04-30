@@ -75,6 +75,9 @@ class Ye_Lan_Ch(Character, name="夜兰", elem_type=Ys_Elem_Type.SHUI, ming_zuo_
             return 0
         
         return self.__get_damage(14/100, self.get_q_bonus(), monster)
+    
+    def do_q(self, plan: ActionPlan, q_anim_start_time, do_damage = False):
+        pass
 
 
 class YeLan_Ming_4_Action(Action, ActionPlanAttributeSupplier):
@@ -89,16 +92,8 @@ class YeLan_Ming_4_Action(Action, ActionPlanAttributeSupplier):
         return 0.1
 
 class YeLan_Q_Bonus_Action(AttributeAction):
-    """
-    注：plan.add_action 时，这个 Action 的 min_t 和 max_t 填写夜兰大招动画开始的时间，实际的增伤开始时间会自动计算
-    """
     def __init__(self):
         super().__init__("夜兰Q增伤开始")
-
-    def set_timestamp(self, t):
-        super().set_timestamp(t)
-        # 参见 ye_lan_readme.md
-        self.bonus_start_time = t + random.randint(1235, 1270) / 1000
 
     def do_impl(self, plan: ActionPlan):
         plan.add_extra_attr(self)
@@ -108,7 +103,7 @@ class YeLan_Q_Bonus_Action(AttributeAction):
             return 0
         
         cur_time = plan.get_current_action_time()
-        dur = cur_time - self.bonus_start_time
+        dur = cur_time - self.get_timestamp()
         if dur <= 0:
             return 0
         

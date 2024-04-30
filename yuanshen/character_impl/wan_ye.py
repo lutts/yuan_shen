@@ -57,6 +57,7 @@ class Wan_Ye_Ch(ActionPlanAttributeSupplier, Character, name="枫原万叶",
         action.set_timestamp(t)
         plan.append_action(action)
     
+    # FIXME: switch 还是应该独立出来,但 switch 之后立马放技能之间的间隔如何来表示?
     def do_e(self, plan: ActionPlan, base_time,
              switch_to_e_start=(0.167, 0.234),
              e_start_to_up_kuo_san=(0.217, 0.283),
@@ -91,6 +92,7 @@ class Wan_Ye_Ch(ActionPlanAttributeSupplier, Character, name="枫原万叶",
              liu_feng_interval=(1.966, 2.0),
              liu_feng_kuo_san_delay=(0.183, 0.217)):
         """
+        base_time: 切换到万叶的时间
         q_start_to_kuo_san: 大招动画开始 -> 扩散出伤
         q_end_to_first_liu_feng: 大招动画结束 -> 第一次流风开始
         q_start_to_switch: 大招动画开始 -> 切人
