@@ -334,3 +334,14 @@ print(1459 * mul)
 print(1630 * mul)
 print(1655 * mul)
 print(286 * mul)
+
+
+def ye_lan_q_damage():
+    d = 40166 * 15.53 / 100
+    d *= (1 + 0.616 + 0.2 + 0.01)
+    d *= 3.4
+    m = Monster(level=93, kang_xin=3.1)
+    d = m.attacked(d)
+    print(round(d))
+
+ye_lan_q_damage()
