@@ -172,6 +172,27 @@ def generic_field_parser(t_lst):
     return parse_result, all_times
 
 
+def range_print_func(description, raw_intervals, soreted_valid_intervals:list):
+    s = description + ": "
+
+    for filename, raw_interval in raw_intervals:
+        s += "[" + filename + ":"
+        if isinstance(raw_interval, list):
+            # 加上编号，避免太多时数数浪费时间
+            s += ", ".join([str(i+1) +":" + str(raw_interval[i]) for i in range(0, len(raw_interval))]) + "]"
+        else:
+            s += str(raw_interval)
+        s += '], '
+
+    s += "\n"
+    soreted_valid_intervals.sort(key=lambda x: x[0], reverse=True)
+    s += "按下限降序: " + str(soreted_valid_intervals)
+    s += "\n"
+    soreted_valid_intervals.sort(key=lambda x: x[1])
+    s += "按上限升序: " + str(soreted_valid_intervals)
+    s += "\n"
+    print(s)
+
 def generic_print_func(description, raw_intervals, soreted_valid_intervals):
     s = description + ": "
 
@@ -190,7 +211,7 @@ def generic_print_func(description, raw_intervals, soreted_valid_intervals):
     print(s)
 
 def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, list], 
-                             get_intervals_func, print_func=None):
+                             get_intervals_func, print_func=None, description_print_func: dict = None):
     ys_timestamp_dict = {}
     for filename, times in timestamp_dict.items():
         num_fields = len(Video_Timestamps_cls._fields)
@@ -235,10 +256,13 @@ def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, lis
             
         soreted_valid_intervals.sort(key=key_func)
 
-        if not print_func:
-            generic_print_func(description, raw_intervals, soreted_valid_intervals)
-        else:
+        if description_print_func and description in description_print_func:
+            description_print_func[description](description, raw_intervals, soreted_valid_intervals)
+        elif print_func:
             print_func(description, raw_intervals, soreted_valid_intervals)
+        else:
+            generic_print_func(description, raw_intervals, soreted_valid_intervals)
+            
 
         valid_intervals_dict[description] = soreted_valid_intervals
 
