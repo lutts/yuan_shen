@@ -2453,28 +2453,13 @@ k()
 让用户根据实际情况选
 注：专武叠层怎么办？
 
-TODO：普攻统计一下出刀光时间到出伤时间，不过似乎只有第二刀刀光比较明显
 
 TODO: 武器默认写好90级属性
 TODO： Character类添加 do_e(plan), do_q(), do_a(plan, phrase)，是否需要提供 eq连招，qe连招，qa，aq,  ea, ae这些连招的action，需要继续考察
-TODO：气氛值的调整间隔有什么办法能测得更准确些吗？电气水晶的攻击频率高 么？
 				
-TODO：不可叠加的武器或角色效果如何实现？风套如何实现？
-TODO：伤害好像是取整，不能用round
 TODO: 检查一下影宝的计算是否把忽视防御加到Monster上了，砍完是否取消了
 
 
-TODO: 关于attribute supplier:  未出战属性、出战属性、无条件触发属性、有条件触发属性
-    def apply_static_attributes(self, character):
-    def apply_combat_attributes(self, character):
-    def apply_passive(self, character, action_plan=None):
-	
-TODO：统计夜兰玄掷玲珑快消失的时间点
-
-TODO：记录扣血、回血以及生命值上限调整的时间，来更准确地验证猜想的逻辑是否正确
-			难点：后台扣血/回血有时候血条上会看不出来
-
 TODO：尽管万叶 e 在 q持续时间能吃到200精通加成，但不能严格按大招8秒来算，用7.5秒吧，因为一旦手慢了可能就吃不到了
 
-TODO：芒荒刀命中时间统计
-TODO：一轮的结算时间如何确定？以芙芙 e 技能CD为准么？
+
