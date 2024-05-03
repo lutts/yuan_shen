@@ -172,7 +172,7 @@ def generic_field_parser(t_lst):
     return parse_result, all_times
 
 
-def range_print_func(description, raw_intervals, soreted_valid_intervals:list):
+def range_print_func(description, raw_intervals, valid_intervals:list):
     s = description + ": "
 
     for filename, raw_interval in raw_intervals:
@@ -185,16 +185,28 @@ def range_print_func(description, raw_intervals, soreted_valid_intervals:list):
         s += '], '
 
     s += "\n"
-    soreted_valid_intervals.sort(key=lambda x: x[0], reverse=True)
-    s += "按下限降序: " + str(soreted_valid_intervals)
+
+    low_lst = [l for l in valid_intervals if l[0] is not None]
+    low_lst.sort(key=lambda x: x[0], reverse=True)
+    s += "按下限降序: " + str(low_lst)
     s += "\n"
-    soreted_valid_intervals.sort(key=lambda x: x[1])
-    s += "按上限升序: " + str(soreted_valid_intervals)
+
+    high_lst = [l for l in valid_intervals if l[-1 is not None]]
+    high_lst.sort(key=lambda x: x[1])
+    s += "按上限升序: " + str(high_lst)
     s += "\n"
     print(s)
 
-def generic_print_func(description, raw_intervals, soreted_valid_intervals):
+def generic_print_func(description, raw_intervals, valid_intervals):
     s = description + ": "
+
+    def key_func(t):
+        if isinstance(t, tuple):
+            return t[0]
+        else:
+            return t
+            
+    valid_intervals.sort(key=key_func)
 
     for filename, raw_interval in raw_intervals:
         s += "[" + filename + ":"
@@ -206,7 +218,7 @@ def generic_print_func(description, raw_intervals, soreted_valid_intervals):
         s += '], '
 
     s += "\n"
-    s += "排序: " + str(soreted_valid_intervals)
+    s += "排序: " + str(valid_intervals)
     s += "\n"
     print(s)
 
@@ -240,31 +252,22 @@ def print_timestamps_summary(Video_Timestamps_cls, timestamp_dict: dict[str, lis
 
     valid_intervals_dict = {}
     for description, raw_intervals in summary.items():
-        soreted_valid_intervals = []
+        valid_intervals = []
         for interval in raw_intervals:
             it = interval[1]
             if isinstance(it, list):
-                soreted_valid_intervals.extend([i for i in it if i is not None])
+                valid_intervals.extend([i for i in it if i is not None])
             elif it is not None:
-                soreted_valid_intervals.append(it)
-
-        def key_func(t):
-            if isinstance(t, tuple):
-                return t[0]
-            else:
-                return t
-            
-        soreted_valid_intervals.sort(key=key_func)
+                valid_intervals.append(it)
 
         if description_print_func and description in description_print_func:
-            description_print_func[description](description, raw_intervals, soreted_valid_intervals)
+            description_print_func[description](description, raw_intervals, valid_intervals)
         elif print_func:
-            print_func(description, raw_intervals, soreted_valid_intervals)
+            print_func(description, raw_intervals, valid_intervals)
         else:
-            generic_print_func(description, raw_intervals, soreted_valid_intervals)
-            
+            generic_print_func(description, raw_intervals, valid_intervals)
 
-        valid_intervals_dict[description] = soreted_valid_intervals
+        valid_intervals_dict[description] = valid_intervals
 
     return valid_intervals_dict
 

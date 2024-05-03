@@ -126,7 +126,7 @@ class Wan_Ye_Ch(ActionPlanAttributeSupplier, Character, name="枫原万叶",
         # * 如果怪身上有元素附着，则先造成染伤，触发元素反应，再造成风伤，除非反应有元素残留，否则不会造成扩散
         # * 如果怪身上没有元素附着，则先造成风伤，后造成染伤，不会造成扩散
         # 非常奇怪并且反人类的特性，这些特性使得第一次流风一般造成不了扩散，
-        # 因为万叶 q 的斩击是强风（元素量2），一般能把怪头上元素吹没
+        # 因为万叶 q 的斩击是强风（元素量2），一般能把怪头上元素吹没，短时间内也一般不会再挂上元素
         # 而且万叶 q 后会被迅速切到后台
         # 因为这些原因，我们这里省略第一次流风的 action
         # first_liu_feng_kuo_san = first_liu_feng_time + random.uniform(*liu_feng_kuo_san_delay)

@@ -3,7 +3,7 @@ import os
 from collections import namedtuple
 from typing import NamedTuple
 
-sys.path.append(os.path.abspath('../..'))
+sys.path.append(os.path.abspath('..'))
 
 from analysis_utils.ys_timestamps import Ys_Timestamp, print_timestamps_summary, print_avg_min_max, null_timestamp, range_print_func
 
@@ -94,8 +94,14 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
         intervals_dict[name] = {
             "切万叶 - 开始e": t.e_start - t.switch_to_wan_ye,
             "开始e - 上升命中": t.up_hit - t.e_start,
+            "上升命中 - 风伤": t.up_feng_damage - t.up_hit,
+            "上升命中 - 扩散伤害": t.up_kuo_san - t.up_hit,
+            "上升:风伤 - 扩散伤害": t.up_kuo_san - t.up_feng_damage,
             "开始e - 重新变为攻击键": t.atk_button_again - t.e_start,
             "重新变为攻击键 - 下落命中": t.down_hit - t.atk_button_again,
+            "下落命中 - 风伤": t.down_feng_damage - t.down_hit,
+            "下落命中 - 扩散伤害": t.down_kuo_san - t.down_hit,
+            "下落:风伤 - 扩散伤害": t.down_kuo_san - t.down_feng_damage,
             "下落命中 - 减抗消失": (round(t.ling_hua_last_bonused - t.down_hit + 0.001, 3), t.ling_hua_first_no_bonus - t.down_hit),
         }
 
