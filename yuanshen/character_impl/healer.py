@@ -75,7 +75,7 @@ class Qin_Heal_Action(Action):
         self.debug("琴治疗全队")
         plan.regenerate_hp(targets=plan.characters, hp=cure_num, source=self.qin)
 
-        cur_time = plan.get_current_action_time()
+        cur_time = plan.current_action_time()
         next_cure_time = cur_time + self.get_cure_interval()
         # 注：切人会导致第一次持续治疗被吞，不切人的话，大招奶后一般琴就满血了，治疗也是无效
         # 所以这里按 9 次治疗来计算

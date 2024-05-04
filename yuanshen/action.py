@@ -114,7 +114,7 @@ class ActionPlan:
         self.__current_action_time = 0
         self.action_list: list[Action] = []
 
-        self.__attribute_hub = BuffManager(self)
+        self.__buff_mamager = BuffManager(self)
         
         self.events = Events()
 
@@ -172,7 +172,7 @@ class ActionPlan:
     def prepare(self):
         self.__set_attribute_hub()
 
-    def finalize(self):
+    def finish(self):
         self.__unset_attribute_hub()
 
     def __enter__(self):
@@ -180,7 +180,7 @@ class ActionPlan:
         return self
     
     def __exit__(self, exc_type, exc_value, traceback):
-        self.finalize()
+        self.finish()
 
     @property
     def characters(self):
@@ -209,40 +209,26 @@ class ActionPlan:
     def get_p4(self):
         return self.get_character_by_position(3)
             
-    def get_foreground_character(self) -> Character:
+    @property
+    def forground_character(self):
         return self.__forground_character
 
     @property
     def monster(self):
         return self.__monster
-    
-    @staticmethod
-    def get_effective_delay():
-        """
-        例如：芙芙的专武，当我们看到队友血条变化被扣血或回血(吃料理)了的时候，理论上此时芙芙专武生命就会叠一层，
-        芙芙的生命值上限会立即增加，但实际上要过一段时间才会改变，即：队友回血/扣血 -> 芙芙生命值上限增加是不同步的，有延迟
 
-        一种解释是：扣血/回血会在客户端立即展示，给玩家一种即时的效果，但实际上还是要经过服务器端确认，服务器端确认无误后，
-        被扣血/回血队友的血条展现上已经提前展示了，无需改变，但芙芙生命值上限增加是一定要等服务器端确认才能进行修改的
-
-        再比如：芙芙大招到时间的时候，泡泡消失，但要过一段时间后二命芙芙的生命值上限才会回落，
-        泡泡消失是“因”，经过某个“过程”，生命值上限回落这个”果“才呈现在我们面前
-
-        一种解释是：泡泡消失是客户端行为，泡泡消失后，客户端通知服务器端确认，服务器端确认完毕后，客户端才改变生命值上限，
-        在这期间，我们如果对怪造成伤害，是按服务器端确认前的生命值上限来计算的，即：我们白嫖了一小段时间的大招效果
-
-        如果说这种生效延迟是网络延迟导致的，目前观察到30ms ping和60ms ping的生效延迟并没有显著的差别，
-        这其中的原因只有米哈游自已能解释了，暂时找不到生效延迟出现的根源
-        """
-        return random.uniform(0.05, 0.117)
-
-    def get_current_action_time(self):
+    @property
+    def current_action_time(self):
         return self.__current_action_time
     
+    @property
+    def buff_mamager(self):
+        return self.__buff_mamager
+    
     def __set_attribute_hub(self):
-        self.__monster.set_attribute_hub(self.__attribute_hub)
+        self.__monster.set_attribute_hub(self.__buff_mamager)
         for t in self.__characters:
-            t.set_attribute_hub(self.__attribute_hub)
+            t.set_attribute_hub(self.__buff_mamager)
 
     def __unset_attribute_hub(self):
         self.__monster.unset_attribute_hub()
@@ -250,11 +236,11 @@ class ActionPlan:
             t.unset_attribute_hub()
 
     def add_extra_attr(self, attr: Buff):
-        self.__attribute_hub.add_extra_attr(attr)
+        self.__buff_mamager.add_buff(attr)
 
     def remove_extra_attr(self, attr: Buff):
-        self.__attribute_hub.remove_extra_attr(attr)
-        if not self.__attribute_hub.has_extra_attr():
+        self.__buff_mamager.remove_buff(attr)
+        if not self.__buff_mamager.has_buff():
             self.__unset_attribute_hub()
 
     ##################################################
@@ -300,14 +286,6 @@ class ActionPlan:
         action = SwitchAction(ch)
         action.set_timestamp(t)
         self.action_list.append(action)
-
-    def switch_to_forground(self, character_name: str):
-        if self.__forground_character:
-            if self.__forground_character.name == character_name:
-                return
-            
-        ch = self.get_character_by_name(character_name)
-        self.switch_ch_to_forground(ch)
 
     def add_consume_hp_callback(self, callback):
         self.events.on_consume_hp += callback
@@ -392,7 +370,7 @@ class ActionPlan:
     regenerate_hp = modify_cur_hp
 
     def __debug(self, fmt_str, *args, **kwargs):
-        fmt_str = str(round(self.get_current_action_time(), 3)) + ": " + fmt_str
+        fmt_str = str(round(self.current_action_time(), 3)) + ": " + fmt_str
         logging.debug(fmt_str, *args, **kwargs)
 
     def debug(self, fmt_str, *args, **kwargs):

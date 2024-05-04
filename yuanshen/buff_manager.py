@@ -75,74 +75,74 @@ class Buff:
 class BuffManager:
     def __init__(self, plan):
         self.plan = plan
-        self.__extra_attrs: list[Buff] = []
+        self.__buff_lst: list[Buff] = []
 
-    def has_extra_attr(self):
-        return self.__extra_attrs
+    def has_buff(self):
+        return self.__buff_lst
 
-    def add_extra_attr(self, attr: Buff):
-        if attr not in self.__extra_attrs:
-            self.__extra_attrs.append(attr)
+    def add_buff(self, buff: Buff):
+        if buff not in self.__buff_lst:
+            self.__buff_lst.append(buff)
 
-    def remove_extra_attr(self, attr: Buff):
-        self.__extra_attrs.remove(attr)
+    def remove_buff(self, buff: Buff):
+        self.__buff_lst.remove(buff)
 
     def get_crit_rate(self, ch):
-        return sum([attr.get_crit_rate(self.plan, ch) for attr in self.__extra_attrs])
+        return sum([buff.get_crit_rate(self.plan, ch) for buff in self.__buff_lst])
 
     def get_crit_damage(self, ch):
-        return sum([attr.get_crit_damage(self.plan, ch) for attr in self.__extra_attrs])
+        return sum([buff.get_crit_damage(self.plan, ch) for buff in self.__buff_lst])
 
     def get_max_hp(self, ch):
-        extra_hp_per = sum([attr.get_hp_percent(self.plan, ch) for attr in self.__extra_attrs])
-        extra_hp = sum([attr.get_hp(self.plan, ch) for attr in self.__extra_attrs])
+        extra_hp_per = sum([buff.get_hp_percent(self.plan, ch) for buff in self.__buff_lst])
+        extra_hp = sum([buff.get_hp(self.plan, ch) for buff in self.__buff_lst])
 
         return extra_hp + ch.get_hp().get_base_hp() * extra_hp_per
 
     def get_atk(self, ch):
-        extra_atk_per = sum([attr.get_atk_per(self.plan, ch) for attr in self.__extra_attrs])
-        extra_atk = sum([attr.get_atk(self.plan, ch) for attr in self.__extra_attrs])
+        extra_atk_per = sum([buff.get_atk_per(self.plan, ch) for buff in self.__buff_lst])
+        extra_atk = sum([buff.get_atk(self.plan, ch) for buff in self.__buff_lst])
 
         return extra_atk + ch.get_base_atk() * extra_atk_per
 
     def get_defence(self, ch):
-        extra_def_per = sum([attr.get_def_per(self.plan, ch) for attr in self.__extra_attrs])
-        extra_def = sum([attr.get_def(self.plan, ch) for attr in self.__extra_attrs])
+        extra_def_per = sum([buff.get_def_per(self.plan, ch) for buff in self.__buff_lst])
+        extra_def = sum([buff.get_def(self.plan, ch) for buff in self.__buff_lst])
 
         return extra_def + ch.get_base_defence() * extra_def_per
 
     def get_elem_mastery(self, ch):
-        return sum([attr.get_elem_mastery(self.plan, ch) for attr in self.__extra_attrs])
+        return sum([buff.get_elem_mastery(self.plan, ch) for buff in self.__buff_lst])
     
     def get_healing_bonus(self, ch):
-        return sum([attr.get_healing_bonus(self.plan, ch) for attr in self.__extra_attrs])
+        return sum([buff.get_healing_bonus(self.plan, ch) for buff in self.__buff_lst])
     
     def get_incoming_healing_bonus(self, ch):
-        return sum([attr.get_incoming_healing_bonus(self, ch) for attr in self.__extra_attrs])
+        return sum([buff.get_incoming_healing_bonus(self, ch) for buff in self.__buff_lst])
 
     def get_energy_recharge(self, ch):
-        return sum([attr.get_energy_recharge(self.plan, ch) * 100 for attr in self.__extra_attrs])
+        return sum([buff.get_energy_recharge(self.plan, ch) * 100 for buff in self.__buff_lst])
 
     def get_normal_a_bonus(self, ch):
-        return sum([attr.get_elem_bonus(self.plan, ch) + attr.get_normal_a_bonus(self.plan, ch) for attr in self.__extra_attrs])
+        return sum([buff.get_elem_bonus(self.plan, ch) + buff.get_normal_a_bonus(self.plan, ch) for buff in self.__buff_lst])
 
     def get_charged_a_bonus(self, ch):
-        return sum([attr.get_elem_bonus(self.plan, ch) + attr.get_charged_a_bonus(self.plan, ch) for attr in self.__extra_attrs])
+        return sum([buff.get_elem_bonus(self.plan, ch) + buff.get_charged_a_bonus(self.plan, ch) for buff in self.__buff_lst])
 
     def get_plunging_bonus(self, ch):
-        return sum([attr.get_elem_bonus(self.plan, ch) + attr.get_plunging_bonus(self.plan, ch) for attr in self.__extra_attrs])
+        return sum([buff.get_elem_bonus(self.plan, ch) + buff.get_plunging_bonus(self.plan, ch) for buff in self.__buff_lst])
 
     def get_e_bonus(self, ch):
-        return sum([attr.get_elem_bonus(self.plan, ch) + attr.get_e_bonus(self.plan, ch) for attr in self.__extra_attrs])
+        return sum([buff.get_elem_bonus(self.plan, ch) + buff.get_e_bonus(self.plan, ch) for buff in self.__buff_lst])
 
     def get_q_bonus(self, ch):
-        return sum([attr.get_elem_bonus(self.plan, ch) + attr.get_q_bonus(self.plan, ch) for attr in self.__extra_attrs])
+        return sum([buff.get_elem_bonus(self.plan, ch) + buff.get_q_bonus(self.plan, ch) for buff in self.__buff_lst])
     
     def get_jian_kang(self):
-        return sum([attr.get_jian_kang(self.plan) for attr in self.__extra_attrs])
+        return sum([buff.get_jian_kang(self.plan) for buff in self.__buff_lst])
     
     def get_jian_fang(self):
-        return sum([attr.get_jian_fang(self.plan) for attr in self.__extra_attrs])
+        return sum([buff.get_jian_fang(self.plan) for buff in self.__buff_lst])
     
     def get_ignore_fang(self):
-        return sum([attr.get_ignore_fang(self.plan) for attr in self.__extra_attrs])
+        return sum([buff.get_ignore_fang(self.plan) for buff in self.__buff_lst])

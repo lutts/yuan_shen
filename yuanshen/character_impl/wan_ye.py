@@ -13,7 +13,7 @@ from ..character import Character
 
 class Wan_Ye_Bonus_Buff(Buff):
     def get_elem_bonus(self, plan: ActionPlan, target_character):
-        cur_time = plan.get_current_action_time()
+        cur_time = plan.current_action_time()
         if cur_time > self.bonus_end_time:
             plan.debug("万叶增伤效果已经在{}消失".format(self.bonus_end_time))
             return 0
@@ -22,7 +22,7 @@ class Wan_Ye_Bonus_Buff(Buff):
 
 class Feng_Tao_Buff(Buff):
     def get_jian_kang(self, plan: ActionPlan):
-        cur_time = plan.get_current_action_time()
+        cur_time = plan.current_action_time()
         if cur_time > self.jian_kang_end_time:
             plan.debug(f"万叶减抗效果已经在{self.jian_kang_end_time}消失")
             return 0
@@ -34,7 +34,7 @@ class Wan_Ye_Elem_Mastery_Buff(Buff):
         if self.ming_zuo_num < 2:
             return 0
         
-        cur_time = plan.get_current_action_time()
+        cur_time = plan.current_action_time()
         if self.ming_2_end_time and cur_time < self.ming_2_end_time:
             return 200
         else:

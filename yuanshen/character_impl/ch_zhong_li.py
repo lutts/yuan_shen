@@ -16,7 +16,7 @@ class ZhongLi_E_AttributeSupplier(Buff):
         return ZhongLi_E_Action(name, attr=self)
 
     def get_jian_kang(self, plan: ActionPlan):
-        cur_time = plan.get_current_action_time()
+        cur_time = plan.current_action_time()
         if cur_time <= self.end_time:
             return 0.2
         else:

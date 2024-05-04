@@ -102,7 +102,7 @@ class YeLan_Q_Bonus_Action(AttributeAction):
         if not target_character.is_in_foreground():
             return 0
         
-        cur_time = plan.get_current_action_time()
+        cur_time = plan.current_action_time()
         dur = cur_time - self.get_timestamp()
         if dur <= 0:
             return 0

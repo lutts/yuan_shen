@@ -222,7 +222,7 @@ class Qi_Fen_Zhi_Supervisor(Buff):
         self.__stopped = True
 
     def is_bonus_valid(self, plan: FuFuActionPlan):
-        cur_time = plan.get_current_action_time()
+        cur_time = plan.current_action_time()
         if cur_time < self.__start_time or cur_time > self.__bonus_end_time:
             plan.debug("超出芙芙增伤时间范围：{.3f} - {.3f}".format(self.__start_time, self.__bonus_end_time))
             return False
@@ -276,7 +276,7 @@ class Qi_Fen_Zhi_Supervisor(Buff):
         self.started = False
 
     def on_hp_changed(self, plan: FuFuActionPlan, source: Character, targets_with_data: list[Character_HP_Change_Data]):
-        cur_time = plan.get_current_action_time()
+        cur_time = plan.current_action_time()
         if cur_time > self.__pao_pao_end_time:
             print("泡泡消失了，停止监控生命值变动")
             self.stop_supervise(plan)
@@ -302,7 +302,7 @@ class Qi_Fen_Zhi_Supervisor(Buff):
             # 为了能处理三小只一开始的时候同时扣血的情形，因为三小只分属不同的Action，第一只扣血不能立即 apply qi fen zhi
             # insert_action_runtime会保证插入到最后一只扣血的后面
             action = Apply_Qi_Fen_Zhi_Action(self)
-            action.set_timestamp(plan.get_current_action_time())
+            action.set_timestamp(plan.current_action_time())
             plan.insert_action_runtime(action)
             self.blocking = False
 
@@ -315,7 +315,7 @@ class Qi_Fen_Zhi_Supervisor(Buff):
         self.apply_qi_fen_zhi(plan)
 
     def apply_qi_fen_zhi(self, plan: FuFuActionPlan):
-        cur_time = plan.get_current_action_time()
+        cur_time = plan.current_action_time()
         if cur_time > self.__pao_pao_end_time:
             return False
         
@@ -370,7 +370,7 @@ class FuFu_GuYouTianFu_1_Supervisor:
         if source is None or source is self.fufu:
             return
 
-        cur_time = plan.get_current_action_time()
+        cur_time = plan.current_action_time()
 
         if self.end_time is None:
             self.start_cure(plan, cur_time)
@@ -404,7 +404,7 @@ class FuFu_GuYouTianFu_1_Supervisor:
         return randtime(int(1.952 * 1000), int(2.047 * 1000))
 
     def do_cure(self, plan: FuFuActionPlan):
-        cur_time = plan.get_current_action_time()
+        cur_time = plan.current_action_time()
         can_cure = False
         if self.min_cure_num > 0:
             self.min_cure_num -= 1
@@ -476,7 +476,7 @@ class Hei_Fu_Cure_Supervisor:
         self.last_cure_teammate_effective_time = 0
 
     def on_hei_fu_damage(self, plan: FuFuActionPlan):
-        cur_action_time = plan.get_current_action_time()
+        cur_action_time = plan.current_action_time()
         if self.end_time is None:
             self.start_cure_teammate(plan, cur_action_time)
             return
@@ -517,7 +517,7 @@ class Hei_Fu_Cure_Supervisor:
         plan.insert_action_runtime(action)
 
     def on_consume_hp(self, plan: FuFuActionPlan, source: Character, targets_with_data: list[Character_HP_Change_Data]):
-        cur_action_time = plan.get_current_action_time()
+        cur_action_time = plan.current_action_time()
         if cur_action_time > self.end_time:
             plan.remove_consume_hp_callback(self.on_consume_hp)
             return
@@ -733,7 +733,7 @@ class Ge_Zhe_Cure_Action(Action):
 
     def do_impl(self, plan: FuFuActionPlan):
         cure_num = self.fufu.get_ge_zhe_cure_num(plan)
-        foreground_character = plan.get_foreground_character()
+        foreground_character = plan.forground_character()
         self.debug("歌者治疗 %s, 治疗量: %s", foreground_character.name, cure_num)
         plan.regenerate_hp(targets=[foreground_character], hp=cure_num)
 

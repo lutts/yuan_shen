@@ -53,7 +53,7 @@ class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
         if self.__e_bonus_level >= 3:
             return
         
-        cur_time = plan.get_current_action_time()
+        cur_time = plan.current_action_time()
 
         if self.__e_bonus_last_change_time and (cur_time - self.__e_bonus_last_change_time < 0.2):
             return
@@ -69,7 +69,7 @@ class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
         if self.__hp_bonus_level >= 2:
             return
         
-        cur_time = plan.get_current_action_time()
+        cur_time = plan.current_action_time()
 
         if self.__hp_bonus_last_change_time and (cur_time - self.__hp_bonus_last_change_time < 0.2):
             # 有0.2秒的CD
