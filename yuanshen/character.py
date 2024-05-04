@@ -183,7 +183,8 @@ class Character(CharacterBase, name="通用角色"):
 
         self.__teammates = None
 
-        self.__attribute_hub: BuffManager = None
+        self.__plan = None
+        self.__buff_manager: BuffManager = None
 
         if weapon:
             weapon.set_owner(self)
@@ -201,17 +202,13 @@ class Character(CharacterBase, name="通用角色"):
     def set_teammates(self, teammates: list[Self]):
         self.__teammates = [weakref.ref(t) for t in teammates]
 
-    def set_attribute_hub(self, hub):
-        self.__attribute_hub = hub
-
-        def inner():
-            return self.__attribute_hub.get_max_hp(self)
-        
-        self.__hp.set_extra_max_hp_func(inner)
-
-    def unset_attribute_hub(self):
-        self.__attribute_hub = None
-        self.__hp.unset_extra_max_hp_func()
+    def set_plan(self, plan):
+        self.__plan = plan
+        if plan:
+            self.__buff_manager = plan.buff_manager
+        else:
+            self.__buff_manager = None
+        self.__hp.set_plan(plan, self)
 
     def get_base_hp(self):
         return self.__hp.get_base_hp()
@@ -230,8 +227,8 @@ class Character(CharacterBase, name="通用角色"):
 
     def get_atk(self):
         atk = self.__all_atk
-        if self.__attribute_hub:
-            atk += self.__attribute_hub.get_atk(self)
+        if self.__buff_manager:
+            atk += self.__buff_manager.get_atk(self)
         
         return round(atk)
 
@@ -261,8 +258,8 @@ class Character(CharacterBase, name="通用角色"):
 
     def get_defence(self):
         defence = self.__all_defence
-        if self.__attribute_hub:
-            defence += self.__attribute_hub.get_defence(self)
+        if self.__buff_manager:
+            defence += self.__buff_manager.get_defence(self)
         
         return round(defence)
 
@@ -286,8 +283,8 @@ class Character(CharacterBase, name="通用角色"):
 
     def get_elem_mastery(self):
         em = self.__elem_mastery
-        if self.__attribute_hub:
-            em += self.__attribute_hub.get_elem_mastery(self)
+        if self.__buff_manager:
+            em += self.__buff_manager.get_elem_mastery(self)
 
         return em
 
@@ -305,8 +302,8 @@ class Character(CharacterBase, name="通用角色"):
 
     def get_crit_rate(self):
         cr = self.__crit_rate
-        if self.__attribute_hub:
-            cr += self.__attribute_hub.get_crit_rate(self)
+        if self.__buff_manager:
+            cr += self.__buff_manager.get_crit_rate(self)
 
         return cr
 
@@ -324,8 +321,8 @@ class Character(CharacterBase, name="通用角色"):
 
     def get_crit_damage(self):
         cd = self.__crit_damage
-        if self.__attribute_hub:
-            cd += self.__attribute_hub.get_crit_damage(self)
+        if self.__buff_manager:
+            cd += self.__buff_manager.get_crit_damage(self)
 
         return cd
 
@@ -343,8 +340,8 @@ class Character(CharacterBase, name="通用角色"):
 
     def get_healing_bonus(self):
         bonus = self.__healing_bonus
-        if self.__attribute_hub:
-            bonus += self.__attribute_hub.get_healing_bonus(self)
+        if self.__buff_manager:
+            bonus += self.__buff_manager.get_healing_bonus(self)
 
         return bonus
 
@@ -362,8 +359,8 @@ class Character(CharacterBase, name="通用角色"):
 
     def get_incoming_healing_bonus(self):
         bonus = self.__incomming_healing_bonus
-        if self.__attribute_hub:
-            bonus += self.__attribute_hub.get_incoming_healing_bonus(self)
+        if self.__buff_manager:
+            bonus += self.__buff_manager.get_incoming_healing_bonus(self)
 
         return bonus
 
@@ -381,8 +378,8 @@ class Character(CharacterBase, name="通用角色"):
 
     def get_energy_recharge(self):
         er = self.__energy_recharge
-        if self.__attribute_hub:
-            er += self.__attribute_hub.get_energy_recharge(self)
+        if self.__buff_manager:
+            er += self.__buff_manager.get_energy_recharge(self)
 
         return round(er, 1)
 
@@ -421,8 +418,8 @@ class Character(CharacterBase, name="通用角色"):
 
     def get_normal_a_bonus(self):
         bonus = self.__normal_a_bonus
-        if self.__attribute_hub:
-            bonus += self.__attribute_hub.get_normal_a_bonus(self)
+        if self.__buff_manager:
+            bonus += self.__buff_manager.get_normal_a_bonus(self)
 
         return bonus
 
@@ -440,8 +437,8 @@ class Character(CharacterBase, name="通用角色"):
 
     def get_charged_a_bonus(self):
         bonus = self.__charged_a_bonus
-        if self.__attribute_hub:
-            bonus += self.__attribute_hub.get_charged_a_bonus(self)
+        if self.__buff_manager:
+            bonus += self.__buff_manager.get_charged_a_bonus(self)
 
         return bonus
 
@@ -459,8 +456,8 @@ class Character(CharacterBase, name="通用角色"):
 
     def get_plunging_bonus(self):
         bonus = self.__plunging_bonus
-        if self.__attribute_hub:
-            bonus += self.__attribute_hub.get_plunging_bonus(self)
+        if self.__buff_manager:
+            bonus += self.__buff_manager.get_plunging_bonus(self)
         
         return bonus
 
@@ -501,8 +498,8 @@ class Character(CharacterBase, name="通用角色"):
 
     def get_e_bonus(self):
         bonus = self.__e_bonus
-        if self.__attribute_hub:
-            bonus += self.__attribute_hub.get_e_bonus(self)
+        if self.__buff_manager:
+            bonus += self.__buff_manager.get_e_bonus(self)
 
         return bonus
 
@@ -520,8 +517,8 @@ class Character(CharacterBase, name="通用角色"):
 
     def get_q_bonus(self):
         bonus = self.__q_bonus
-        if self.__attribute_hub:
-            bonus += self.__attribute_hub.get_q_bonus(self)
+        if self.__buff_manager:
+            bonus += self.__buff_manager.get_q_bonus(self)
 
         return bonus
 

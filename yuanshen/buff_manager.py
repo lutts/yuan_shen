@@ -5,8 +5,22 @@ Module documentation.
 """
 
 class Buff:
-    def get_buff_type():
+    def __init__(self, buff_type):
+        self.buff_type = buff_type
+
+    # buff 施加者
+    def get_caster(self):
+        return None
+
+    # buff 层数
+    def get_layer(self):
+        return 1
+
+    def get_duration(self):
         pass
+
+    def get_start_time(self):
+        return None
     
     def get_crit_rate(self, plan, target_character):
         return 0
@@ -73,9 +87,17 @@ class Buff:
 
 
 class BuffManager:
-    def __init__(self, plan):
+    def __init__(self):
+        self.plan = None
+        self.__buff_lst: list[Buff] = None
+
+    def init(self, plan):
         self.plan = plan
         self.__buff_lst: list[Buff] = []
+
+    def reset(self):
+        self.plan = None
+        self.__buff_lst = None
 
     def has_buff(self):
         return self.__buff_lst

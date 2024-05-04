@@ -4,6 +4,8 @@
 Module documentation.
 """
 
+from .buff_manager import BuffManager
+
 class HP_Change_Data:
     def __init__(self, hp, hp_per, over_heal_num):
         self.hp = hp
@@ -38,7 +40,9 @@ class HealthPoint:
         self.__cur_hp_per = 1.0
         self.__in_q_animation = False
 
-        self.__get_extra_max_hp_func = None
+        self.__plan = None
+        self.__buff_manager: BuffManager = None
+        self.__ch = None
 
         self.__maxest_hp_ever: int = max_hp
 
@@ -65,16 +69,19 @@ class HealthPoint:
     def set_in_q_animation(self, anim = False):
         self.__in_q_animation = anim
 
-    def set_extra_max_hp_func(self, func):
-        self.__get_extra_max_hp_func = func
-        self.__update_cur_hp_after_max_hp_changed()
-
-    def unset_extra_max_hp_func(self):
-        self.__get_extra_max_hp_func = None
+    def set_plan(self, plan, ch):
+        self.__plan = plan
+        if plan:
+            self.__buff_manager = plan.buff_manager
+            self.__ch = ch
+        else:
+            self.__buff_manager = None
+            self.__ch = None
+        
         self.__update_cur_hp_after_max_hp_changed()
 
     def get_max_hp(self):
-        if not self.__get_extra_max_hp_func:
+        if not self.__buff_manager:
             return self.__self_max_hp
         else:
             self.__update_cur_hp_after_max_hp_changed()
@@ -82,8 +89,8 @@ class HealthPoint:
 
     def __update_cur_hp_after_max_hp_changed(self):
         new_max_hp = self.__self_max_hp
-        if self.__get_extra_max_hp_func:
-            new_max_hp += round(self.__get_extra_max_hp_func())
+        if self.__buff_manager:
+            new_max_hp += round(self.__buff_manager.get_max_hp(self.__ch))
  
         if self.__cur_real_max_hp == new_max_hp:
             return

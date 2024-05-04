@@ -29,11 +29,8 @@ class Feng_Tao_Buff(Buff):
 
         return 0.4
      
-class Wan_Ye_Elem_Mastery_Buff(Buff):
+class Wan_Ye_Ming_2_Buff(Buff):
     def get_elem_mastery(self, plan: ActionPlan, target_character):
-        if self.ming_zuo_num < 2:
-            return 0
-        
         cur_time = plan.current_action_time()
         if self.ming_2_end_time and cur_time < self.ming_2_end_time:
             return 200

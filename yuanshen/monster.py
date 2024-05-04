@@ -24,13 +24,10 @@ class Monster:
         # 减抗
         self.__jian_kang = 0
         self.__kang_xin = kang_xin
-        self.__attribute_hub: BuffManager = None
+        self.__plan = None
 
-    def set_attribute_hub(self, hub):
-        self.__attribute_hub = hub
-
-    def unset_attribute_hub(self):
-        self.__attribute_hub = None
+    def set_plan(self, plan):
+        self.__plan = plan
 
     def set_level(self, lv):
         self.level = lv
@@ -68,8 +65,8 @@ class Monster:
     # FIXME: 是否需要区分不同元素类型的抗性？ 目前我们还不支持整队伤害计算，原神也暂时没有双元素属性的主C，似乎暂时没必要支持
     def get_kang_xin_cheng_shang(self):
         cur_kang_xin = self.__kang_xin - self.__jian_kang
-        if self.__attribute_hub:
-            cur_kang_xin -= self.__attribute_hub.get_jian_kang()
+        if self.__plan:
+            cur_kang_xin -= self.__plan.buff_manager.get_jian_kang()
 
         if cur_kang_xin >= 0:
             if cur_kang_xin > 0.75:
@@ -83,9 +80,9 @@ class Monster:
         jian_fang = self.__jian_fang
         ignore_defence_ratio = self.__ignore_defence_ratio
 
-        if self.__attribute_hub:
-            jian_fang += self.__attribute_hub.get_jian_fang()
-            ignore_defence_ratio += self.__attribute_hub.get_ignore_fang()
+        if self.__plan:
+            jian_fang += self.__plan.buff_manager.get_jian_fang()
+            ignore_defence_ratio += self.__plan.buff_manager.get_ignore_fang()
 
         return (self.character_level + 100) / ( (self.character_level + 100) + (self.level + 100) * (1 - jian_fang) * (1 - ignore_defence_ratio))
     

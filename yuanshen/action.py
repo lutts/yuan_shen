@@ -95,7 +95,6 @@ class AttributeAction(Action, Buff):
     def do_impl(self, plan: ActionPlan):
         plan.add_extra_attr(self)
 
-
 class ActionPlan:
     def __init__(self, characters: list[Character], monster: Monster):
         """
@@ -105,10 +104,9 @@ class ActionPlan:
         """
 
         self.__characters = characters if characters else []
-        self.__pre_process_characters()
-
         self.__forground_character: Character = None
-        self.__monster = monster
+
+        self.__monster = monster if monster else Monster()
 
         self.__current_index = 0
         self.__current_action_time = 0
@@ -122,11 +120,9 @@ class ActionPlan:
         self.__total_expect_damage = 0
         self.__total_crit_damage = 0
 
-    def __pre_process_characters(self):
+    def __process_characters(self, reset=False):
         num_chs = len(self.__characters)
-        if num_chs <= 1:
-            return
-        
+
         huo_num = 0
         shui_num = 0
         cao_num = 0
@@ -134,6 +130,7 @@ class ActionPlan:
 
         for i in range(0, num_chs):
             ch = self.__characters[i]
+
             if ch.elem_type is Ys_Elem_Type.HUO:
                 huo_num += 1
             elif ch.elem_type is Ys_Elem_Type.SHUI:
@@ -143,23 +140,47 @@ class ActionPlan:
             elif ch.elem_type is Ys_Elem_Type.BING:
                 bing_num += 1
 
-            ch.set_teammates(self.__characters[:i] + self.__characters[i+1:])
+            if not reset:
+                ch.set_plan(self)
+                ch.set_teammates(self.__characters[:i] + self.__characters[i+1:])
+            else:
+                ch.set_plan(None)
+                ch.set_teammates(None)
 
         if huo_num >= 2:
             for t in self.__characters:
-                t.add_atk_per(0.25)
+                if reset:
+                    t.sub_atk_per(0.25)
+                else:
+                    t.add_atk_per(0.25)
 
         if shui_num >= 2:
             for t in self.__characters:
-                t.get_hp().modify_max_hp_per(0.25)
+                if reset:
+                    t.get_hp().modify_max_hp_per(-0.25)
+                else:
+                    t.get_hp().modify_max_hp_per(0.25)
 
         if cao_num >= 2:
+            em = 50 + 30 + 20
             for t in self.__characters:
-                t.add_elem_mastery(50 + 30 + 20)
+                if reset:
+                    t.sub_elem_mastery(em)
+                else:
+                    t.add_elem_mastery()
 
         if bing_num >= 2:
             for t in self.__characters:
-                t.add_crit_rate(0.15)
+                if reset:
+                    t.sub_crit_rate(0.15)
+                else:
+                    t.add_crit_rate(0.15)
+
+    def __init_characters(self):
+        self.__process_characters()
+
+    def __reset_characters(self):
+        self.__process_characters(reset=True)
 
     def add_shuang_yan_buff(self):
         # 假设盾是常驻的
@@ -170,10 +191,14 @@ class ActionPlan:
         self.__monster.add_jian_kang(0.2)
 
     def prepare(self):
-        self.__set_attribute_hub()
-
+        self.__buff_mamager.init(self)
+        self.__init_characters()
+        self.__monster.set_plan(self)
+        
     def finish(self):
-        self.__unset_attribute_hub()
+        self.__monster.set_plan(None)
+        self.__reset_characters()
+        self.__buff_mamager.reset()
 
     def __enter__(self):
         self.prepare()
@@ -224,24 +249,6 @@ class ActionPlan:
     @property
     def buff_mamager(self):
         return self.__buff_mamager
-    
-    def __set_attribute_hub(self):
-        self.__monster.set_attribute_hub(self.__buff_mamager)
-        for t in self.__characters:
-            t.set_attribute_hub(self.__buff_mamager)
-
-    def __unset_attribute_hub(self):
-        self.__monster.unset_attribute_hub()
-        for t in self.__characters:
-            t.unset_attribute_hub()
-
-    def add_extra_attr(self, attr: Buff):
-        self.__buff_mamager.add_buff(attr)
-
-    def remove_extra_attr(self, attr: Buff):
-        self.__buff_mamager.remove_buff(attr)
-        if not self.__buff_mamager.has_buff():
-            self.__unset_attribute_hub()
 
     ##################################################
 
