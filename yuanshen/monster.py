@@ -5,7 +5,7 @@ Module documentation.
 """
 
 import logging
-from .attribute_hub import AttributeHub
+from .buff_manager import BuffManager
 
 class Monster:
     def __init__(self, level = 100, kang_xin = 0.1, character_level=90):
@@ -24,7 +24,7 @@ class Monster:
         # 减抗
         self.__jian_kang = 0
         self.__kang_xin = kang_xin
-        self.__attribute_hub: AttributeHub = None
+        self.__attribute_hub: BuffManager = None
 
     def set_attribute_hub(self, hub):
         self.__attribute_hub = hub

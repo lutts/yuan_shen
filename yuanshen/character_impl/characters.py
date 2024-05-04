@@ -6,7 +6,7 @@ Module documentation.
 
 import random
 
-from ..attribute_hub import ActionPlanAttributeSupplier
+from ..buff_manager import Buff
 from ..elem_type import Ys_Elem_Type
 from ..weapon import Ys_Weapon
 from ..utils import ys_crit_damage, ys_expect_damage
@@ -80,7 +80,7 @@ class Ye_Lan_Ch(Character, name="夜兰", elem_type=Ys_Elem_Type.SHUI, ming_zuo_
         pass
 
 
-class YeLan_Ming_4_Action(Action, ActionPlanAttributeSupplier):
+class YeLan_Ming_4_Action(Action, Buff):
     def __init__(self):
         super().__init__("夜兰四命生效一层")
 

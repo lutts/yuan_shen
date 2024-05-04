@@ -17,7 +17,7 @@ from yuanshen.syw_finder import ShengYiWu, ShengYiWu_Score, calculate_score, Syw
 from yuanshen.character import Character, Character_HP_Change_Data
 from yuanshen.monster import Monster
 from yuanshen.action import Action, ActionPlan
-from yuanshen.attribute_hub import ActionPlanAttributeSupplier
+from yuanshen.buff_manager import Buff
 from yuanshen.weapon_impl.jing_shui_liu_yong_zhi_hui import Jing_Shui_Liu_Yong_Zhi_Hui
 
 
@@ -216,7 +216,7 @@ class FuFuActionPlan(ActionPlan):
             self.events.on_hei_fu_damage(self)
 
 
-class Qi_Fen_Zhi_Supervisor(ActionPlanAttributeSupplier):
+class Qi_Fen_Zhi_Supervisor(Buff):
     def __init__(self, fufu: Character_FuFu):
         self.fufu = fufu
         self.__stopped = True

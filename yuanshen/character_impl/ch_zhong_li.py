@@ -5,10 +5,10 @@ Module documentation.
 """
 
 from ..action import Action, ActionPlan
-from ..attribute_hub import ActionPlanAttributeSupplier
+from ..buff_manager import Buff
 from ..character import Character
 
-class ZhongLi_E_AttributeSupplier(ActionPlanAttributeSupplier):
+class ZhongLi_E_AttributeSupplier(Buff):
     def __init__(self):
         self.end_time = None
 

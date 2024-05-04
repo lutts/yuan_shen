@@ -14,7 +14,7 @@ from .elem_type import Ys_Elem_Type
 from .weapon import Ys_Weapon
 from .health_point import HealthPoint, HP_Change_Data
 from .syw import ShengYiWu
-from .attribute_hub import AttributeHub
+from .buff_manager import BuffManager
 
 
 class Character_HP_Change_Data:
@@ -86,6 +86,31 @@ class CharacterBase:
             
     def set_ming_zuo_num(self, ming_zuo_num):
         self.ming_zuo_num = ming_zuo_num
+
+    # 按大招快速切人
+    def q_switch(self, plan, t):
+        """
+        * plan: 行动轴
+        * t: 角色被切到场上的时间
+
+        * 返回值：大招动画开始时间 
+        """
+        plan.add_switch_action(self, t)
+        return t + 0.066
+    
+    def switch_to_e_interval(self):
+        raise Exception("swtich to e interval not specified")
+
+    def switch_for_e(self, plan, t):
+        plan.add_switch_action(self, t)
+        return t + self.switch_to_e_interval()
+    
+    def switch_to_a_interval(self):
+        raise Exception("switch to a interval not specified")
+    
+    def switch_for_a(self, plan, t):
+        plan.add_switch_action(self, t)
+        return t + self.switch_to_a_interval()
         
 
 class Character(CharacterBase, name="通用角色"):
@@ -158,7 +183,7 @@ class Character(CharacterBase, name="通用角色"):
 
         self.__teammates = None
 
-        self.__attribute_hub: AttributeHub = None
+        self.__attribute_hub: BuffManager = None
 
         if weapon:
             weapon.set_owner(self)

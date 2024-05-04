@@ -8,11 +8,39 @@ import random
 from ..elem_type import Ys_Elem_Type
 from ..weapon import Ys_Weapon
 from ..action import Action, ActionPlan
-from ..attribute_hub import ActionPlanAttributeSupplier
+from ..buff_manager import Buff
 from ..character import Character
 
+class Wan_Ye_Bonus_Buff(Buff):
+    def get_elem_bonus(self, plan: ActionPlan, target_character):
+        cur_time = plan.get_current_action_time()
+        if cur_time > self.bonus_end_time:
+            plan.debug("万叶增伤效果已经在{}消失".format(self.bonus_end_time))
+            return 0
+        
+        return self.tian_fu_bonus
 
-class Wan_Ye_Ch(ActionPlanAttributeSupplier, Character, name="枫原万叶", 
+class Feng_Tao_Buff(Buff):
+    def get_jian_kang(self, plan: ActionPlan):
+        cur_time = plan.get_current_action_time()
+        if cur_time > self.jian_kang_end_time:
+            plan.debug(f"万叶减抗效果已经在{self.jian_kang_end_time}消失")
+            return 0
+
+        return 0.4
+     
+class Wan_Ye_Elem_Mastery_Buff(Buff):
+    def get_elem_mastery(self, plan: ActionPlan, target_character):
+        if self.ming_zuo_num < 2:
+            return 0
+        
+        cur_time = plan.get_current_action_time()
+        if self.ming_2_end_time and cur_time < self.ming_2_end_time:
+            return 200
+        else:
+            return 0
+
+class Wan_Ye_Ch(Buff, Character, name="枫原万叶", 
                 elem_type=Ys_Elem_Type.FENG, ming_zuo_num=2, q_energy=60):
     def __init__(self, elem_mastery = 994, weapon: Ys_Weapon=None):
         """
@@ -34,115 +62,82 @@ class Wan_Ye_Ch(ActionPlanAttributeSupplier, Character, name="枫原万叶",
         if self.ming_zuo_num >= 2:
             em += 200
 
-        return em * 0.04 / 100
-    
-    def get_elem_bonus(self, plan: ActionPlan, target_character):
-        cur_time = plan.get_current_action_time()
-        if cur_time > self.bonus_end_time:
-            plan.debug("万叶增伤效果已经在{}消失".format(self.bonus_end_time))
-            return 0
-        
-        return self.tian_fu_bonus
-
-    def get_jian_kang(self, plan: ActionPlan):
-        cur_time = plan.get_current_action_time()
-        if cur_time > self.jian_kang_end_time:
-            plan.debug(f"万叶减抗效果已经在{self.jian_kang_end_time}消失")
-            return 0
-
-        return 0.4
-    
+        return em * 0.04 / 100    
+            
     def __add_kuo_san_action(self, plan: ActionPlan, t):
         action = WanYe_Kuo_San_Action(self)
         action.set_timestamp(t)
         plan.append_action(action)
+
+    def switch_to_e_interval(self):
+        return random.uniform(0.167, 0.234)
     
-    # FIXME: switch 还是应该独立出来,但 switch 之后立马放技能之间的间隔如何来表示?
-    def do_e(self, plan: ActionPlan, base_time,
-             switch_to_e_start=(0.167, 0.234),
-             e_start_to_up_kuo_san=(0.217, 0.283),
-             e_start_to_atk_button=(0.85, 0.885),
-             atk_button_to_down_kuo_san=(0.183, 0.267),
-             atk_button_to_switch=(0.366, 0.7)):
+    def do_e(self, plan: ActionPlan, t, down_kuo_san=True):
         """
-        base_time: 切换到万叶的时间
-        switch_to_e_start: 切万叶 -> 普攻按钮变为下落图标的时间，这个时间视为开始 e 的时间
-        e_start_to_up_kuo_san: 开始 e -> e上升段触发扩散**出伤**时间
-        e_start_to_atk_button: 开始 e -> 普攻按钮重新变为普攻图标的时间
-        atk_button_to_down_kuo_san: 普攻下落 -> 扩散**出伤**时间
-        atk_button_to_switch: 普攻下落 -> 切下一个角色的时间
+        down_kuo_san: 如果 True, 则以下落触发的扩散为准，如果 False, 则以上升时触发的扩散为准
         """
-        plan.add_switch_action(self, base_time)
+        if not down_kuo_san:
+            up_hit = t + 0.116
+            self.__add_kuo_san_action(plan, up_hit)
 
-        e_start_time = base_time + random.uniform(*switch_to_e_start)
-        up_kuo_san_time = e_start_time +  random.uniform(*e_start_to_up_kuo_san)
-        self.__add_kuo_san_action(plan, up_kuo_san_time)
+        # atk_btn_again = t + random.uniform(0.85, 0.883)
+        atk_btn_again = t + 0.867
 
-        atk_button_time = e_start_time + random.uniform(*e_start_to_atk_button)
-        down_kuo_san_time = atk_button_time + random.uniform(*atk_button_to_down_kuo_san)
-        self.__add_kuo_san_action(plan, down_kuo_san_time)
+        if down_kuo_san:
+            down_hit = atk_btn_again + 0.083
+            self.__add_kuo_san_action(plan, down_hit)
 
-        switch_to_next_ch_time = atk_button_time + random.uniform(*atk_button_to_switch)
+        # 切下一个角色的时间
+        # TODO: eq连在考虑实现吗？
+        switch_to_next_ch_time = atk_btn_again + random.uniform(0.366, 0.7)
         return switch_to_next_ch_time
 
-    def do_q(self, plan: ActionPlan, base_time,
-             q_start_to_kuo_san=(1.45, 1.5),
-             q_end_to_first_liu_feng=(0.733, 0.817),
-             q_start_to_switch=(1.767, 1.883),
-             liu_feng_interval=(1.966, 2.0),
-             liu_feng_kuo_san_delay=(0.183, 0.217)):
+    def do_q(self, plan: ActionPlan, t, add_all_liu_feng=False):
         """
-        base_time: 切换到万叶的时间
-        q_start_to_kuo_san: 大招动画开始 -> 扩散出伤
-        q_end_to_first_liu_feng: 大招动画结束 -> 第一次流风开始
-        q_start_to_switch: 大招动画开始 -> 切人
-
-            * 以动画开始为基准的原因是一般我们在万叶Q动画期间就疯狂按切人键了
-
-        liu_feng_interval: 流风间隔
-        liu_feng_kuo_san_delay: 流风开始 -> 流风扩散出伤
+        add_all_liu_feng: 如果为 False(默认), 则只添加最后一次流风的 action, 如果为 True, 则添加所有流风的 action
         """
-        plan.add_switch_action(self, base_time)
 
-        # 点按大招切万叶到万叶放大的时间基本是固定的
-        q_start_time = base_time + 0.067
-        plan.q_animation_start(self, self, q_start_time)
+        plan.q_animation_start(self, self, t)
 
         # FIXME: 目前还没有手段能测出二命的200精通何时失效，目前观察到的数据大约是 11.6
-        self.ming_2_end_time = q_start_time + 11.6
+        self.ming_2_end_time = t + 11.6
 
-        q_kuo_san_time = q_start_time + random.uniform(*q_start_to_kuo_san)
-        self.__add_kuo_san_action(plan, q_kuo_san_time)
+        q_hit = t + 1.2
+        self.__add_kuo_san_action(plan, q_hit)
 
         # 大招动画的时间也基本是固定的
-        q_end_time = q_start_time + 1.55
+        q_end_time = t + 1.55
         plan.q_animation_end(self, self, q_end_time)
 
-        switch_to_next_ch_time = q_start_time + random.uniform(*q_start_to_switch)
-
-        first_liu_feng_time = q_end_time + random.uniform(*q_end_to_first_liu_feng)
+        # TODO: 是否要考虑 qe 连招？
+        switch_to_next_ch_time = t + random.uniform(1.767, 1.883)
 
         # 万叶 q 后续的流风有以下特性：
         # * 如果怪身上有元素附着，则先造成染伤，触发元素反应，再造成风伤，除非反应有元素残留，否则不会造成扩散
         # * 如果怪身上没有元素附着，则先造成风伤，后造成染伤，不会造成扩散
-        # 非常奇怪并且反人类的特性，这些特性使得第一次流风一般造成不了扩散，
-        # 因为万叶 q 的斩击是强风（元素量2），一般能把怪头上元素吹没，短时间内也一般不会再挂上元素
-        # 而且万叶 q 后会被迅速切到后台
-        # 因为这些原因，我们这里省略第一次流风的 action
-        # first_liu_feng_kuo_san = first_liu_feng_time + random.uniform(*liu_feng_kuo_san_delay)
-        # self.__add_kuo_san_action(plan, first_liu_feng_kuo_san)
 
-        last_liu_feng_time = first_liu_feng_time
+        first_liu_feng_hit = q_end_time + random.uniform(2.334, 2.434)
+        max_liu_feng_hit = first_liu_feng_hit + 8
+
+        if add_all_liu_feng:
+            self.__add_kuo_san_action(plan, first_liu_feng_hit)
+
+        last_liu_feng_hit = first_liu_feng_hit
         for _ in range(0, 4):
-            liu_feng_time = last_liu_feng_time + random.uniform(*liu_feng_interval)
-            if liu_feng_time - first_liu_feng_time > 8:
-                liu_feng_time = first_liu_feng_time + 8
+            liu_feng_hit  = last_liu_feng_hit + random.uniform(1.966, 2.033)
+            if liu_feng_hit > max_liu_feng_hit:
+                liu_feng_hit = max_liu_feng_hit
 
-            liu_feng_kuo_san = liu_feng_time + random.uniform(*liu_feng_kuo_san_delay)
-            self.__add_kuo_san_action(plan, liu_feng_kuo_san)
+            if add_all_liu_feng:
+                self.__add_kuo_san_action(plan, liu_feng_hit)
+
+            last_liu_feng_hit = liu_feng_hit
+
+        if not add_all_liu_feng:
+            self.__add_kuo_san_action(plan, last_liu_feng_hit)
         
         return switch_to_next_ch_time
-    
+
 
 class WanYe_Kuo_San_Action(Action):
     def __init__(self, wan_ye: Wan_Ye_Ch):

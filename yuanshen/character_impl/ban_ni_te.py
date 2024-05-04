@@ -1,8 +1,8 @@
 from ..action import Action, ActionPlan
-from ..attribute_hub import ActionPlanAttributeSupplier
+from ..buff_manager import Buff
 
 
-class BanNiTe_Q_Action(Action, ActionPlanAttributeSupplier):
+class BanNiTe_Q_Action(Action, Buff):
     q_atk_multiplier = [
         56/100, # 1
         60/100, # 2

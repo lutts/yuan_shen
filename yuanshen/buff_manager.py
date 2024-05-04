@@ -4,7 +4,10 @@
 Module documentation.
 """
 
-class ActionPlanAttributeSupplier:
+class Buff:
+    def get_buff_type():
+        pass
+    
     def get_crit_rate(self, plan, target_character):
         return 0
 
@@ -69,19 +72,19 @@ class ActionPlanAttributeSupplier:
         return 0
 
 
-class AttributeHub:
+class BuffManager:
     def __init__(self, plan):
         self.plan = plan
-        self.__extra_attrs: list[ActionPlanAttributeSupplier] = []
+        self.__extra_attrs: list[Buff] = []
 
     def has_extra_attr(self):
         return self.__extra_attrs
 
-    def add_extra_attr(self, attr: ActionPlanAttributeSupplier):
+    def add_extra_attr(self, attr: Buff):
         if attr not in self.__extra_attrs:
             self.__extra_attrs.append(attr)
 
-    def remove_extra_attr(self, attr: ActionPlanAttributeSupplier):
+    def remove_extra_attr(self, attr: Buff):
         self.__extra_attrs.remove(attr)
 
     def get_crit_rate(self, ch):

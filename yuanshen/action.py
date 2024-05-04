@@ -10,7 +10,7 @@ import random
 
 from .elem_type import Ys_Elem_Type
 from .utils import ys_crit_damage, ys_expect_damage
-from .attribute_hub import ActionPlanAttributeSupplier, AttributeHub
+from .buff_manager import Buff, BuffManager
 from .monster import Monster
 from .character import Character, Character_HP_Change_Data
 from .events import Events
@@ -91,7 +91,7 @@ class Q_Animation_End_Action(Action):
         self.ch.get_hp().set_in_q_animation(False)
 
 
-class AttributeAction(Action, ActionPlanAttributeSupplier):
+class AttributeAction(Action, Buff):
     def do_impl(self, plan: ActionPlan):
         plan.add_extra_attr(self)
 
@@ -114,7 +114,7 @@ class ActionPlan:
         self.__current_action_time = 0
         self.action_list: list[Action] = []
 
-        self.__attribute_hub = AttributeHub(self)
+        self.__attribute_hub = BuffManager(self)
         
         self.events = Events()
 
@@ -249,10 +249,10 @@ class ActionPlan:
         for t in self.__characters:
             t.unset_attribute_hub()
 
-    def add_extra_attr(self, attr: ActionPlanAttributeSupplier):
+    def add_extra_attr(self, attr: Buff):
         self.__attribute_hub.add_extra_attr(attr)
 
-    def remove_extra_attr(self, attr: ActionPlanAttributeSupplier):
+    def remove_extra_attr(self, attr: Buff):
         self.__attribute_hub.remove_extra_attr(attr)
         if not self.__attribute_hub.has_extra_attr():
             self.__unset_attribute_hub()
