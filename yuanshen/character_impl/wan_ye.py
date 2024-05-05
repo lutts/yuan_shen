@@ -11,31 +11,6 @@ from ..action import Action, ActionPlan
 from ..buff_manager import Buff
 from ..character import Character
 
-class Wan_Ye_Bonus_Buff(Buff):
-    def get_elem_bonus(self, plan: ActionPlan, target_character):
-        cur_time = plan.current_action_time()
-        if cur_time > self.bonus_end_time:
-            plan.debug("万叶增伤效果已经在{}消失".format(self.bonus_end_time))
-            return 0
-        
-        return self.tian_fu_bonus
-
-class Feng_Tao_Buff(Buff):
-    def get_jian_kang(self, plan: ActionPlan):
-        cur_time = plan.current_action_time()
-        if cur_time > self.jian_kang_end_time:
-            plan.debug(f"万叶减抗效果已经在{self.jian_kang_end_time}消失")
-            return 0
-
-        return 0.4
-     
-class Wan_Ye_Ming_2_Buff(Buff):
-    def get_elem_mastery(self, plan: ActionPlan, target_character):
-        cur_time = plan.current_action_time()
-        if self.ming_2_end_time and cur_time < self.ming_2_end_time:
-            return 200
-        else:
-            return 0
 
 class Wan_Ye_Ch(Buff, Character, name="枫原万叶", 
                 elem_type=Ys_Elem_Type.FENG, ming_zuo_num=2, q_energy=60):
@@ -51,15 +26,8 @@ class Wan_Ye_Ch(Buff, Character, name="枫原万叶",
 
         self.jian_kang_end_time =0
 
-    def get_e_bonus(self):
+    def get_tian_fu_bonus(self):
         return self.get_elem_mastery() * 0.04 / 100
-    
-    def get_q_bonus(self):
-        em = self.get_elem_mastery()
-        if self.ming_zuo_num >= 2:
-            em += 200
-
-        return em * 0.04 / 100    
             
     def __add_kuo_san_action(self, plan: ActionPlan, t):
         action = WanYe_Kuo_San_Action(self)
@@ -134,6 +102,26 @@ class Wan_Ye_Ch(Buff, Character, name="枫原万叶",
             self.__add_kuo_san_action(plan, last_liu_feng_hit)
         
         return switch_to_next_ch_time
+
+
+class Wan_Ye_Bonus_Buff(Buff):
+    def get_elem_bonus(self, plan: ActionPlan, target_character):
+        wan_ye: Wan_Ye_Ch = self.creator
+        return wan_ye.get_tian_fu_bonus()
+        
+
+class Feng_Tao_Buff(Buff):
+    def get_jian_kang(self, plan: ActionPlan):
+        return 0.4
+
+
+class Wan_Ye_Ming_2_Buff(Buff):
+    def get_elem_mastery(self, plan: ActionPlan, target_character: Character):
+        if target_character.is_in_foreground() or target_character is self.creator:
+            # 万叶自身及前台能吃到二命加成
+            return 200
+        
+        return 0
 
 
 class WanYe_Kuo_San_Action(Action):

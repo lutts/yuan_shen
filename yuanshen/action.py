@@ -439,7 +439,9 @@ class ActionPlan:
         self.__current_index = 0
         while self.__current_index < len(self.action_list):
             action = self.action_list[self.__current_index]
-            self.__current_action_time = action.get_timestamp()
+            cur_time = action.get_timestamp()
+            self.__current_action_time = cur_time
+            self.__buff_mamager.update(cur_time)
             action.do(self)
 
             self.__current_index += 1
