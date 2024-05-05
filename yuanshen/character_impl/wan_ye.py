@@ -20,12 +20,6 @@ class Wan_Ye_Ch(Buff, Character, name="枫原万叶",
         """
         super().__init__(elem_mastery=elem_mastery, weapon=weapon)
 
-        self.ming_2_end_time = 0
-        self.bonus_end_time = 0
-        self.tian_fu_bonus = 0
-
-        self.jian_kang_end_time =0
-
     def get_tian_fu_bonus(self):
         return self.get_elem_mastery() * 0.04 / 100
             
@@ -64,9 +58,6 @@ class Wan_Ye_Ch(Buff, Character, name="枫原万叶",
 
         plan.q_animation_start(self, self, t)
 
-        # FIXME: 目前还没有手段能测出二命的200精通何时失效，目前观察到的数据大约是 11.6
-        self.ming_2_end_time = t + 11.6
-
         q_hit = t + 1.2
         self.__add_kuo_san_action(plan, q_hit)
 
@@ -100,6 +91,10 @@ class Wan_Ye_Ch(Buff, Character, name="枫原万叶",
 
         if not add_all_liu_feng:
             self.__add_kuo_san_action(plan, last_liu_feng_hit)
+
+        # 二命的结束时间无法准确测量，目前观测到的数据显示第五次流风之后 1.5 秒效果消失
+        ming_2_buff = Wan_Ye_Ming_2_Buff("wan ye 2 ming", t, last_liu_feng_hit + 1.5, self)
+        plan.buff_mamager.add_buff(ming_2_buff)
         
         return switch_to_next_ch_time
 
@@ -131,15 +126,10 @@ class WanYe_Kuo_San_Action(Action):
 
     def do_impl(self, plan: ActionPlan):
         cur_time = self.get_timestamp()
-        em = self.wan_ye.get_elem_mastery()
-        if self.wan_ye.ming_zuo_num >= 2 and cur_time <= self.wan_ye.ming_2_end_time:
-            em += 200
-
-        self.wan_ye.bonus_end_time = cur_time + 8
-        self.wan_ye.tian_fu_bonus = em * 0.04 / 100
+        bonus_buf = Wan_Ye_Bonus_Buff("wan ye bonus", cur_time, cur_time + 8, creator=self.wan_ye)
+        plan.buff_mamager.add_buff(bonus_buf)
 
         # 减抗需要万叶在前台
         if self.wan_ye.is_in_foreground():
-            self.wan_ye.jian_kang_end_time = cur_time + 10
-
-        plan.add_extra_attr(self.wan_ye)
+            feng_tao_buff = Feng_Tao_Buff("feng tao", cur_time, cur_time + 10)
+            plan.buff_mamager.add_buff(feng_tao_buff)

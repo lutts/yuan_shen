@@ -6,7 +6,7 @@ Module documentation.
 
 
 class Buff:
-    def __init__(self, buff_type, start_time, end_time=None, creator=None):
+    def __init__(self, buff_type, start_time: float, end_time: float = None, creator=None):
         """
         end_time: None表示永久
         creator: buff 施加者，可能是某个 Character, 也可能是某件武器，也可能是圣遗物效果
