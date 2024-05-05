@@ -6,14 +6,17 @@ Module documentation.
 
 
 class Buff:
-    def __init__(self, buff_type, start_time: float, end_time: float = None, creator=None):
+    def __init__(self, buff_type, start_time: float, end_time: float = None, max_layer=0, creator=None):
         """
         end_time: None表示永久
+        max_layer: 最大允许叠层, 0 表示不允许重复存在(即: 后来的 buff_type 相同的会覆盖旧的)
         creator: buff 施加者，可能是某个 Character, 也可能是某件武器，也可能是圣遗物效果
         """
         self.buff_type = buff_type
         self.start_time = start_time
         self.end_time = end_time
+        self.max_layer = max_layer
+        self.cur_layer = 1
         self.creator = creator
 
     def get_crit_rate(self, plan, target_character):
@@ -94,7 +97,7 @@ class BuffManager:
         self.__buff_lst = None
 
     def update(self, cur_time):
-        new_lst = [buff for buff in self.__buff_lst if buff.end_time >= cur_time]
+        new_lst = [buff for buff in self.__buff_lst if buff.end_time is not None and buff.end_time >= cur_time]
         self.__buff_lst = new_lst
 
     def has_buff(self):
