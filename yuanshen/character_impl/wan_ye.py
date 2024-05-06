@@ -31,10 +31,7 @@ class Wan_Ye_Ch(Character, name="枫原万叶",
     def switch_to_e_interval(self):
         return random.uniform(0.167, 0.234)
     
-    def do_e(self, plan: ActionPlan, t, down_kuo_san=True):
-        """
-        down_kuo_san: 如果 True, 则以下落触发的扩散为准，如果 False, 则以上升时触发的扩散为准
-        """
+    def __do_raw_e(self, plan: ActionPlan, t, down_kuo_san=True):
         if not down_kuo_san:
             up_hit = t + 0.116
             self.__add_kuo_san_action(plan, up_hit)
@@ -46,16 +43,23 @@ class Wan_Ye_Ch(Character, name="枫原万叶",
             down_hit = atk_btn_again + 0.083
             self.__add_kuo_san_action(plan, down_hit)
 
+        return atk_btn_again
+    
+    def do_e(self, plan: ActionPlan, t, down_kuo_san=True):
+        """
+        down_kuo_san: 如果 True, 则以下落触发的扩散为准，如果 False, 则以上升时触发的扩散为准
+
+        返回值：切下一个角色的时间
+        """
+  
+        atk_btn_again = self.__do_raw_e(plan, t, down_kuo_san)
+
         # 切下一个角色的时间
         # TODO: eq连在考虑实现吗？
         switch_to_next_ch_time = atk_btn_again + random.uniform(0.366, 0.7)
         return switch_to_next_ch_time
 
-    def do_q(self, plan: ActionPlan, t, add_all_liu_feng=False):
-        """
-        add_all_liu_feng: 如果为 False(默认), 则只添加最后一次流风的 action, 如果为 True, 则添加所有流风的 action
-        """
-
+    def __do_raw_q(self, plan: ActionPlan, t, add_all_liu_feng=False):
         plan.q_animation_start(self, self, t)
 
         q_hit = t + 1.2
@@ -64,9 +68,6 @@ class Wan_Ye_Ch(Character, name="枫原万叶",
         # 大招动画的时间也基本是固定的
         q_end_time = t + 1.55
         plan.q_animation_end(self, self, q_end_time)
-
-        # TODO: 是否要考虑 qe 连招？
-        switch_to_next_ch_time = t + random.uniform(1.767, 1.883)
 
         # 万叶 q 后续的流风有以下特性：
         # * 如果怪身上有元素附着，则先造成染伤，触发元素反应，再造成风伤，除非反应有元素残留，否则不会造成扩散
@@ -95,7 +96,18 @@ class Wan_Ye_Ch(Character, name="枫原万叶",
         # 二命的结束时间无法准确测量，目前观测到的数据显示第五次流风之后 1.5 秒效果消失
         ming_2_buff = Wan_Ye_Ming_2_Buff(t, last_liu_feng_hit + 1.5, self)
         plan.buff_mamager.add_buff(ming_2_buff)
-        
+
+    def do_q(self, plan: ActionPlan, t, add_all_liu_feng=False):
+        """
+        add_all_liu_feng: 如果为 False(默认), 则只添加最后一次流风的 action, 如果为 True, 则添加所有流风的 action
+
+        返回值：切下一个角色的时机
+        """
+
+        self.__do_raw_q(plan, t, add_all_liu_feng)
+
+        # TODO: 是否要考虑 qe 连招？
+        switch_to_next_ch_time = t + random.uniform(1.767, 1.883)
         return switch_to_next_ch_time
 
 
