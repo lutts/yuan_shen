@@ -2,9 +2,9 @@ import math
 import numpy
 import itertools
 from datetime import datetime
-from ys_basic import ys_crit_damage
-from ys_syw import all_syw, ShengYiWu
-from monster import Monster
+# from ys_basic import ys_crit_damage
+# from ys_syw import all_syw, ShengYiWu
+# from monster import Monster
 from typing import NamedTuple
 
 
@@ -409,13 +409,41 @@ class A:
         return Ints(self.a, self.b)
     
 
+class Base:
+    pass
+
+class Base1(Base):
+    pass
+
+class Base2(Base):
+    pass
+
+def print_type(b: Base):
+    print(type(b))
+
+
 # Main body
 if __name__ == '__main__':
     #avg_min_max([7.135, 6.855, 7.834,  6.885,  7.935,  7.385,  7.169,  6.268])
     pass
     # get_e_damages()
 
-    a = A(5, 10)
-    aa, bb = a.get_ints()
+    b1 = Base1()
+    b2 = Base2()
+    b3 = Base1()
 
-    print(aa)
+    b_lst: list[Base] = [b1,  b2, b3]
+
+    print_type(b_lst[0])
+    print_type(b_lst[1])
+    print_type(b_lst[2])
+    
+    if type(b_lst[0]) is type(b_lst[1]):
+        print("b1 and b2 is the same type")
+    else:
+        print("b1 and b2 is not the same type")
+
+    if type(b_lst[0]) is type(b_lst[2]):
+        print("b1 and b3 is the same type")
+    else:
+        print("b1 and b3 is not the same type")

@@ -68,8 +68,8 @@ class CharacterBase:
 
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
-            if k in ["name", "elem_type", "ming_zuo_num", 
-                     "ch_level", "a_level", "e_level", "q_level", 
+            if k in ["name", "elem_type", "ming_zuo_num", "ch_level", 
+                     "min_skill_level", "a_level", "e_level", "q_level", 
                      "q_energy"]:
                 setattr(self, k, v)
             else:

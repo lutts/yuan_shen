@@ -12,7 +12,7 @@ from ..buff_manager import Buff
 from ..character import Character
 
 
-class Wan_Ye_Ch(Buff, Character, name="枫原万叶", 
+class Wan_Ye_Ch(Character, name="枫原万叶", 
                 elem_type=Ys_Elem_Type.FENG, ming_zuo_num=2, q_energy=60):
     def __init__(self, elem_mastery = 994, weapon: Ys_Weapon=None):
         """
@@ -93,7 +93,7 @@ class Wan_Ye_Ch(Buff, Character, name="枫原万叶",
             self.__add_kuo_san_action(plan, last_liu_feng_hit)
 
         # 二命的结束时间无法准确测量，目前观测到的数据显示第五次流风之后 1.5 秒效果消失
-        ming_2_buff = Wan_Ye_Ming_2_Buff("wan ye 2 ming", t, last_liu_feng_hit + 1.5, self)
+        ming_2_buff = Wan_Ye_Ming_2_Buff(t, last_liu_feng_hit + 1.5, self)
         plan.buff_mamager.add_buff(ming_2_buff)
         
         return switch_to_next_ch_time
@@ -126,10 +126,10 @@ class WanYe_Kuo_San_Action(Action):
 
     def do_impl(self, plan: ActionPlan):
         cur_time = self.get_timestamp()
-        bonus_buf = Wan_Ye_Bonus_Buff("wan ye bonus", cur_time, cur_time + 8, creator=self.wan_ye)
+        bonus_buf = Wan_Ye_Bonus_Buff(cur_time, cur_time + 8, creator=self.wan_ye)
         plan.buff_mamager.add_buff(bonus_buf)
 
         # 减抗需要万叶在前台
         if self.wan_ye.is_in_foreground():
-            feng_tao_buff = Feng_Tao_Buff("feng tao", cur_time, cur_time + 10)
+            feng_tao_buff = Feng_Tao_Buff(cur_time, cur_time + 10)
             plan.buff_mamager.add_buff(feng_tao_buff)
