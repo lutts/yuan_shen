@@ -165,7 +165,7 @@ def print_damages(xiang_ling_init: Xiang_Ling_Ch):
 
 
 def calculate_score_callback(score_data: ShengYiWu_Score):
-    weapon = Yu_Huo(base_atk=510, jing_lian_rank=5, energy_recharge=0.459)
+    weapon = Yu_Huo(base_atk=510, refinement_rank=5, energy_recharge=0.459)
     xiang_ling = Xiang_Ling_Ch(weapon, score_data.syw_combine)
 
     crit_rate = round(xiang_ling.get_crit_rate(), 3)

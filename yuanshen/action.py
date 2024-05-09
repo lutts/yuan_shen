@@ -252,6 +252,10 @@ class ActionPlan:
 
     ##################################################
 
+    def get_effective_delay(self):
+        # 生效延迟
+        return random.uniform(0.05, 0.15)
+
     def add_damage(self, damage, ch: Character):
         damage = self.monster.attacked(damage)
         cd = ch.get_crit_damage()
@@ -377,7 +381,7 @@ class ActionPlan:
     regenerate_hp = modify_cur_hp
 
     def __debug(self, fmt_str, *args, **kwargs):
-        fmt_str = str(round(self.current_action_time(), 3)) + ": " + fmt_str
+        fmt_str = str(round(self.current_action_time, 3)) + ": " + fmt_str
         logging.debug(fmt_str, *args, **kwargs)
 
     def debug(self, fmt_str, *args, **kwargs):

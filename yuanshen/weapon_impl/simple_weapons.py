@@ -20,8 +20,8 @@ class Yu_Huo(Ys_Weapon, name="渔获"):
         character.add_energy_recharge(self.energy_recharge)
     
     def apply_passive(self, character: Character, action_plan=None):
-        character.add_q_bonus(Yu_Huo.q_bonus[self.jing_lian_rank - 1])
-        character.add_crit_rate(Yu_Huo.crit_rate_bonus[self.jing_lian_rank - 1])
+        character.add_q_bonus(Yu_Huo.q_bonus[self.refinement_rank - 1])
+        character.add_crit_rate(Yu_Huo.crit_rate_bonus[self.refinement_rank - 1])
 
 
 class Tian_Kong_Zhi_Yi(Ys_Weapon, name="天空之翼"):
@@ -35,7 +35,7 @@ class Tian_Kong_Zhi_Yi(Ys_Weapon, name="天空之翼"):
 
     def apply_static_attributes(self, character: Character):
         character.add_crit_rate(self.crit_rate)
-        character.add_crit_damage(Tian_Kong_Zhi_Yi.crit_damage_bonus[self.jing_lian_rank - 1])
+        character.add_crit_damage(Tian_Kong_Zhi_Yi.crit_damage_bonus[self.refinement_rank - 1])
 
 
 class Ji_Li_Sword(Ys_Weapon, name="祭礼剑"):
@@ -57,11 +57,11 @@ class Wu_Qie_Zhi_Hui_Guang(Ys_Weapon, name="雾切之回光"):
     ]
     def apply_static_attributes(self, character: Character):
         character.add_crit_damage(self.crit_damage)
-        character.add_all_bonus(Wu_Qie_Zhi_Hui_Guang.elem_bonus_bonus[self.jing_lian_rank - 1])
+        character.add_all_bonus(Wu_Qie_Zhi_Hui_Guang.elem_bonus_bonus[self.refinement_rank - 1])
     
     def apply_passive(self, character: Character, action_plan=None):
         # TODO: 绫华配戴时能完美吃到被动，别的角色如何处理？
-        character.add_all_bonus(Wu_Qie_Zhi_Hui_Guang.ba_yin_bonus[self.jing_lian_rank - 1][2])
+        character.add_all_bonus(Wu_Qie_Zhi_Hui_Guang.ba_yin_bonus[self.refinement_rank - 1][2])
 
 
 class Ruo_Shui_Arrow(Ys_Weapon, name="若水"):
@@ -70,7 +70,7 @@ class Ruo_Shui_Arrow(Ys_Weapon, name="若水"):
 
     def apply_static_attributes(self, character: Character):
         character.add_crit_damage(self.crit_damage)
-        character.get_hp().modify_max_hp_per(Ruo_Shui_Arrow.MAX_HP_BONUS[self.jing_lian_rank - 1])
-        character.add_all_bonus(Ruo_Shui_Arrow.DAMAGE_BONUS[self.jing_lian_rank - 1])
+        character.get_hp().modify_max_hp_per(Ruo_Shui_Arrow.MAX_HP_BONUS[self.refinement_rank - 1])
+        character.add_all_bonus(Ruo_Shui_Arrow.DAMAGE_BONUS[self.refinement_rank - 1])
 
 

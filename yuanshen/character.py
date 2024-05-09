@@ -115,8 +115,9 @@ class CharacterBase:
 
 class Character(CharacterBase, name="通用角色"):
     def __init__(self, 
+                 weapon: Ys_Weapon = None,
                  base_hp=0, max_hp=0,
-                 base_atk=0, all_atk=0, weapon: Ys_Weapon = None,
+                 base_atk=0, all_atk=0, 
                  base_defence=0, all_defence=0,
                  elem_mastery=0,
 
@@ -166,14 +167,19 @@ class Character(CharacterBase, name="通用角色"):
         # 普通攻击
         self.__normal_a_bonus = base_bonus + normal_a_bonus
         # 重击
+        if not charged_a_bonus:
+            charged_a_bonus = normal_a_bonus
         self.__charged_a_bonus = base_bonus + charged_a_bonus
         # 下落攻击
+        if not plunging_bonus:
+            plunging_bonus = normal_a_bonus
         self.__plunging_bonus = base_bonus + plunging_bonus
 
         self.__e_bonus = base_bonus + e_bonus
         self.__q_bonus = base_bonus + q_bonus
 
         self.__in_foreground = False
+        # 最近一次前后台切换的时间，有些 buff 是在切到前台或后台时开始计时的
         self.__last_fore_back_switch_time = None
 
         self.__weapon: Ys_Weapon = weapon
@@ -601,13 +607,13 @@ class Character(CharacterBase, name="通用角色"):
     def get_weapon(self) -> Ys_Weapon:
         return self.__weapon
 
-    def set_weapon(self, weapon: Ys_Weapon):
-        if self.__weapon:
-            raise Exception("原神不支持战斗时切换武器")
+    # def set_weapon(self, weapon: Ys_Weapon):
+    #     if self.__weapon:
+    #         raise Exception("不支持战斗时切换武器")
         
-        self.__weapon = weapon
-        weapon.set_owner(self)
-        weapon.apply_static_attributes(self)
+    #     self.__weapon = weapon
+    #     weapon.set_owner(self)
+    #     weapon.apply_static_attributes(self)
         
 
     def __str__(self):

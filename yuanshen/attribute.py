@@ -1,3 +1,4 @@
+import weakref
 
 class Ys_Attribute_Supplier:
     def __init__(self,
@@ -5,14 +6,24 @@ class Ys_Attribute_Supplier:
                  hp_percent=0.0, hp=0,
                  atk_per=0.0, atk=0,
                  def_per=0.0, def_v=0,
-                 elem_mastery=0, elem_bonus=0.0,
+                 elem_mastery=0,
                  energy_recharge=0.0,
 
                  normal_a_bonus = 0.0,
                  charged_a_bonus = 0.0,
                  plunging_bonus = 0.0,
                  e_bonus = 0.0,
-                 q_bonus = 0.0):
+                 q_bonus = 0.0,
+                 elem_bonus=0.0):
+        """
+        这里的参数理应只包括静态属性，所谓静态属性是指：无需释放技能就可以拥有属性
+
+        例如：
+
+        * 圣遗物提供的属性
+        * 武器的主副词条
+        * 武器中一些只需要出战，但不需要进入战斗就能获得的属性，比如螭骨剑的叠层等等
+        """
         self.crit_rate = crit_rate
         self.crit_damage = crit_damage
         self.hp_percent = hp_percent
@@ -22,7 +33,6 @@ class Ys_Attribute_Supplier:
         self.def_per = def_per
         self.def_v = def_v
         self.elem_mastery = elem_mastery
-        self.elem_bonus = elem_bonus
         self.energy_recharge = energy_recharge
 
         self.normal_a_bonus = normal_a_bonus
@@ -30,24 +40,22 @@ class Ys_Attribute_Supplier:
         self.plunging_bonus = plunging_bonus
         self.e_bonus = e_bonus
         self.q_bonus = q_bonus
+        self.elem_bonus = elem_bonus
 
-    def apply_static_attributes(self, character):
-        """
-        设置没有和怪物进入战斗时的属性
-        """
-        pass
+        self.__owner = None
 
-    def apply_combat_attributes(self, character):
-        """
-        设置和怪物进入战斗时的属性
-        """
-        pass
+    def set_owner(self, owner):
+        self.__owner = weakref.ref(owner)
 
-    def apply_passive(self, character, action_plan=None):
-        """
-        有些属性是有条件触发的, 例如芙芙专武需要扣血叠层
+    def get_owner(self):
+        return self.__owner()
 
-        action_plan 如果为 None，需要假设条件达成，对 character 直接进行属性设置
+    def apply_passive(self, plan):
+        """
+        重载这个函数完成两件事
+
+        1. 为触发被动做准备，比如向 plan 监听某个事件
+        2. 有些武器或圣遗物特效能影响队友，重载这个函数进行设置
         """
         pass
 

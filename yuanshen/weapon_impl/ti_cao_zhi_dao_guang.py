@@ -31,15 +31,15 @@ class Ti_Cao_Zhi_Dao_Guang(Ys_Weapon, name="薙草之稻光"):
 
     def get_atk_per_bonus(self, character: Character):
         energy_recharge = character.get_energy_recharge()
-        return min(Ti_Cao_Zhi_Dao_Guang.atk_per_max[self.jing_lian_rank - 1],
-                      (energy_recharge - 100) * Ti_Cao_Zhi_Dao_Guang.atk_per_multiplier[self.jing_lian_rank - 1] / 100)
+        return min(Ti_Cao_Zhi_Dao_Guang.atk_per_max[self.refinement_rank - 1],
+                      (energy_recharge - 100) * Ti_Cao_Zhi_Dao_Guang.atk_per_multiplier[self.refinement_rank - 1] / 100)
 
     def apply_combat_attributes(self, character: Character):
         character.add_atk_per(self.get_atk_per_bonus(character))
 
     def apply_passive(self, character: Character, action_plan=None):
         old_atk_per = self.get_atk_per_bonus(character)
-        character.add_energy_recharge(Ti_Cao_Zhi_Dao_Guang.energy_recharge_bonus[self.jing_lian_rank - 1])
+        character.add_energy_recharge(Ti_Cao_Zhi_Dao_Guang.energy_recharge_bonus[self.refinement_rank - 1])
         new_atk_per = self.get_atk_per_bonus(character)
         if new_atk_per > old_atk_per:
             character.add_atk_per(new_atk_per - old_atk_per)

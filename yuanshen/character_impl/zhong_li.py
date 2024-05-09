@@ -16,18 +16,13 @@ class ZhongLi_E_AttributeSupplier(Buff):
         return ZhongLi_E_Action(name, attr=self)
 
     def get_jian_kang(self, plan: ActionPlan):
-        cur_time = plan.current_action_time()
+        cur_time = plan.current_action_time
         if cur_time <= self.end_time:
             return 0.2
         else:
             return 0
 
 class ZhongLi_E_Action(Action):
-    """
-    注1: 不要直接创建这个 Action 的实例，使用ZhongLi_E_AttributeSupplier.get_e_action获取
-
-    注2: plan.add_action时，min_t 和 max_t 使用钟离点按e时按钮变灰时的时间，实际减抗开始时间会自动计算
-    """
     def __init__(self, name, attr: ZhongLi_E_AttributeSupplier):
         if not name:
             name = "钟离 e"
