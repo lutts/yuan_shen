@@ -117,7 +117,7 @@ timestamp_dict = {
                   ("f/s", "00:00:14.087"), ("f/h", "00:00:14.253"), ("f/d", "00:00:14.353"), ("x/k", "00:00:14.270"),
                   ("p/k", "00:00:14.653"), ("x/s", "00:00:14.770"), ("x/h", "00:00:14.953"), ("p/s", "00:00:15.070"),
                   ("x/d", "00:00:15.103"), ("p/h", "00:00:15.437"), ("f/k", "00:00:15.420"), ("p/d", "00:00:15.620"),
-                  ("f/s", "00:00:15.637"), ("f/h", "00:00:15.837"), ("f/d", "00:00:15.970"), ("f/s", "00:00:17.187"),
+                  ("f/s", "00:00:15.637"), ("f/h", "00:00:15.837"), ("f/d", "00:00:15.970"), ("f/k", "00:00:16.953"), ("f/s", "00:00:17.187"),
                   ("f/h", "00:00:17.387"), ("x/k", "00:00:17.420"), ("f/d", "00:00:17.487"), ("x/s", "00:00:17.987"),
                   ("x/h", "00:00:18.153"), ("x/d", "00:00:18.337"), ("f/k", "00:00:18.537"), ("f/s", "00:00:18.753"),
                   ("f/h", "00:00:18.937"), ("f/d", "00:00:19.103"), ("p/k", "00:00:19.888"), ("f/k", "00:00:20.088"),
@@ -406,7 +406,7 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
 def print_salon_member_sammary(td):
     return print_timestamps_summary(Video_Timestamps, td, get_intervals)
 
-def print_single_salon_member_action_seq(action_seqs):
+def print_single_salon_member_action_seq(action_seqs, member):
     s = ""
     num_seqs = len(action_seqs)
     for idx in range(0, num_seqs):
@@ -465,7 +465,7 @@ def print_single_salon_member_timestamps(td, filename, member_name=None):
 
     for m in members:
         print(f"-----{filename}:{m}-----")
-        print_single_salon_member_action_seq(action_sequences[m].action_seqs)
+        print_single_salon_member_action_seq(action_sequences[m].action_seqs, m)
 
 
 if __name__ == "__main__":
