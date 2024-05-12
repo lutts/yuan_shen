@@ -326,6 +326,59 @@ def get_salon_member_action_sequence(action_times):
 
     return salon_member_action_sequences
 
+def check_first_kou_xue(filename, sm, press_e, first_k_delay, times):
+    if press_e is null_timestamp:
+        return
+    
+    if sm == "f":
+        member_name = "夫人"
+        min_interval = 1.567
+        max_interval = 1.6
+        return
+    elif sm == "x":
+        member_name = "勋爵"
+        min_interval = 3.25
+        max_interval = 3.25
+        return
+    else:
+        member_name = "螃蟹"
+        min_interval = 5.167
+        max_interval = 5.167
+
+    cur_min_total = 0
+    cur_max_total = 0
+
+    first_real_kou_xue = press_e.to_float() + 1.267
+    if first_k_delay:
+        print(f"{filename}:{member_name} first_k_delay: {first_k_delay}")
+        first_real_kou_xue += first_k_delay
+
+
+    if times[0]['k']:
+        first_delay = round(times[0]['k'].to_float() - first_real_kou_xue, 3)
+        if first_delay < 0.05 or first_delay > 0.15:
+            print(f"{filename}:{member_name} first delay failed:{first_delay}")
+    
+    for idx in range(1, len(times)):
+        k_time = times[idx]['k']
+        if k_time is null_timestamp:
+            min_i = min_interval
+            max_i = max_interval
+        else:
+            min_i = round(k_time.to_float() - first_real_kou_xue - cur_max_total - 0.15, 3)
+            if min_i < min_interval:
+                min_i = min_interval
+            max_i = round(k_time.to_float() - first_real_kou_xue - cur_min_total - 0.05, 3)
+            if max_i > max_interval:
+                max_i = max_interval
+
+            if min_i > max_i:
+                print(f"{filename}:{member_name}:{idx}: failed! {round(min_i, 3)},{round(max_i, 3)}")
+                break
+
+        cur_min_total += min_i
+        cur_max_total += max_i
+
 def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
     intervals_dict = {}
     for filename, t in ys_timestamp_dict.items():
@@ -346,8 +399,8 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
         for sm, action_seq in salon_member_action_sequences.items():
             times = action_seq.action_seqs
             k_time = times[0]['k']
-            if filename == 'VLZK6413':
-                print("k_time:",  k_time)
+            # if filename == 'VLZK6413':
+            #     print("k_time:",  k_time)
             k_min_diff = k_time - first_kou_xue_min
             k_max_diff = k_time - first_kou_xue_max
 
@@ -392,9 +445,15 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
             intervals[f"{member_name}击中-下一次扣血"] = [times[i]['k'] - times[i - 1]['h'] for i in range(1, num_times)]
             intervals[f'所有击中-出伤间隔'].extend(hit_to_damage_intervals)
 
-        if filename == 'VLZK6413':
-            print("min:", first_kou_xue_min)
-            print("max:", first_kou_xue_max)
+        for sm, action_seq in salon_member_action_sequences.items():
+            times = action_seq.action_seqs
+            k_time = times[0]['k']
+
+            check_first_kou_xue(filename, sm, t.press_e, k_time - first_kou_xue_min, times)
+
+        # if filename == 'VLZK6413':
+        #     print("min:", first_kou_xue_min)
+        #     print("max:", first_kou_xue_max)
 
         intervals["点按e - 第一次扣血"].append(first_kou_xue_min - t.press_e)
         intervals["第一次同时扣血时间范围"].append(first_kou_xue_max - first_kou_xue_min)
