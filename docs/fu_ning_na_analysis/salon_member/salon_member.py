@@ -2,6 +2,7 @@ import sys
 import os
 from collections import namedtuple
 from typing import NamedTuple
+import re
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../..'))
 
@@ -306,6 +307,9 @@ class Damage_State:
         else:
             raise Exception(f"unknown action after damage: {action} on {t}")
 
+
+kou_xue_re = re.compile(r"([0-9]+)(/)?((?(2)[0-9]+))(-)?((?(4)[0-9]+))(/)?((?(6)[0-9]+))")
+
 def get_salon_member_action_sequence(action_times):
     salon_member_action_sequences = {
         "f": Salon_Member_Action_Sequence(),
@@ -313,7 +317,62 @@ def get_salon_member_action_sequence(action_times):
         "p": Salon_Member_Action_Sequence()
     }
 
+    prev_hp = None
+    prev_max_hp = None
+
     for action, time in action_times:
+        m = kou_xue_re.match(action)
+        if m:
+            raw_action = action
+            # 第一次(开局或是中途切出来)，分两种情况：
+            #   * max_hp无变化：222/333-444 -> ('222', '/', '333', '-', '444', None, '')
+            #   * max_hp有变化：222/333-444/555 -> ('222', '/', '333', '-', '444', '/', '555')
+            # 不是第一次，分四种情况：
+            #   * prev_hp/prev_max_hp均无变化：444 -> ('444', None, '', None, '', None, '')
+            #   * prev_hp不变，prev_max_hp变化：444/555 -> ('444', '/', '555', None, '', None, '')
+            #   * prev_hp/max_hp均有变化(一般由专武导致): 222/333-444/555 -> ('222', '/', '333', '-', '444', '/', '555')
+            #   * prev_hp变化，prev_max_hp不变（一般由专武导致）：222-444/555 -> ('222', None, '', '-', '444', '/', '555')
+            
+            if m.group(4) is not None:
+                prev_hp = int(m.group(1))
+                if m.group(2) is not None:
+                    prev_max_hp = int(m.group(3))
+
+                cur_hp = int(m.group(5))
+                if m.group(6) is not None:
+                    cur_max_hp = int(m.group(7))
+                else:
+                    cur_max_hp = prev_max_hp
+            else:
+                cur_hp = int(m.group(1))
+                if m.group(2) is not None:
+                    cur_max_hp = int(m.group(3))
+                else:
+                    cur_max_hp = prev_max_hp
+
+            changed_per = round(prev_hp / prev_max_hp - cur_hp / cur_max_hp, 3)
+            if changed_per <= (0.016 + 0.001):
+                action = "f/k"
+            elif changed_per <= (0.024 + 0.001):
+                action = "x/k"
+            elif changed_per <= (0.036 + 0.001):
+                action = "p/k"
+            elif changed_per < (0.016 + 0.024 + 0.001):
+                action = "f/x/k"
+            elif changed_per < (0.016 + 0.036 + 0.001):
+                action = "f/p/k"
+            elif changed_per < (0.024 + 0.036 + 0.001):
+                action = "x/p/k"
+            elif changed_per < (0.016 + 0.024 + 0.036 + 0.001):
+                action = "f/x/p/k"
+            else:
+                raise Exception(f"unknown changed_per: {changed_per}, action:{action}, time:{time}, {prev_hp}/{prev_max_hp}-{cur_hp}/{cur_max_hp}")
+
+            print(f"{raw_action} -> {prev_hp}/{prev_max_hp}-{cur_hp}/{cur_max_hp}, changed_per={changed_per}, new_action={action}")
+            
+            prev_hp = cur_hp
+            prev_max_hp = cur_max_hp
+
         actions = action.split("/")
         members = actions[:-1]
         action = actions[-1]
