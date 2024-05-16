@@ -320,6 +320,14 @@ def get_salon_member_action_sequence(action_times):
     prev_hp = None
     prev_max_hp = None
 
+    # for idx in range(0, len(action_times)):
+    #     print(f"{idx}:", action_times[idx])
+    #     try:
+    #         action, time = action_times[idx]
+    #     except:
+    #         print("unpack failed")
+            
+
     for action, time in action_times:
         m = kou_xue_re.match(action)
         if m:
@@ -331,7 +339,7 @@ def get_salon_member_action_sequence(action_times):
             #   * prev_hp/prev_max_hp均无变化：444 -> ('444', None, '', None, '', None, '')
             #   * prev_hp不变，prev_max_hp变化：444/555 -> ('444', '/', '555', None, '', None, '')
             #   * prev_hp/max_hp均有变化(一般由专武导致): 222/333-444/555 -> ('222', '/', '333', '-', '444', '/', '555')
-            #   * prev_hp变化，prev_max_hp不变（一般由专武导致）：222-444/555 -> ('222', None, '', '-', '444', '/', '555')
+            #   * prev_hp变化，prev_max_hp不变（一般由专武导致）：222-444 -> ('222', None, '', '-', '444', None, '')
             
             if m.group(4) is not None:
                 prev_hp = int(m.group(1))
@@ -351,25 +359,30 @@ def get_salon_member_action_sequence(action_times):
                     cur_max_hp = prev_max_hp
 
             changed_per = round(prev_hp / prev_max_hp - cur_hp / cur_max_hp, 3)
-            if changed_per <= (0.016 + 0.001):
+            if changed_per <= 0.001:
+                prev_hp = cur_hp
+                prev_max_hp = cur_max_hp
+                # print(f"{action}@{time} discarded")
+                continue
+            elif (0.016 - 0.001) < changed_per and changed_per <= (0.016 + 0.001):
                 action = "f/k"
-            elif changed_per <= (0.024 + 0.001):
+            elif (0.024 - 0.001) < changed_per and changed_per <= (0.024 + 0.001):
                 action = "x/k"
-            elif changed_per <= (0.036 + 0.001):
+            elif (0.036 - 0.001) < changed_per and changed_per <= (0.036 + 0.001):
                 action = "p/k"
-            elif changed_per < (0.016 + 0.024 + 0.001):
+            elif (0.016 + 0.024 - 0.001) < changed_per and changed_per < (0.016 + 0.024 + 0.001):
                 action = "f/x/k"
-            elif changed_per < (0.016 + 0.036 + 0.001):
+            elif (0.016 + 0.036 - 0.001) < changed_per and changed_per < (0.016 + 0.036 + 0.001):
                 action = "f/p/k"
-            elif changed_per < (0.024 + 0.036 + 0.001):
+            elif (0.024 + 0.036 - 0.001) < changed_per and changed_per < (0.024 + 0.036 + 0.001):
                 action = "x/p/k"
-            elif changed_per < (0.016 + 0.024 + 0.036 + 0.001):
+            elif (0.016 + 0.024 + 0.036 - 0.001) < changed_per and changed_per < (0.016 + 0.024 + 0.036 + 0.001):
                 action = "f/x/p/k"
             else:
                 raise Exception(f"unknown changed_per: {changed_per}, action:{action}, time:{time}, {prev_hp}/{prev_max_hp}-{cur_hp}/{cur_max_hp}")
 
-            print(f"{raw_action} -> {prev_hp}/{prev_max_hp}-{cur_hp}/{cur_max_hp}, changed_per={changed_per}, new_action={action}")
-            
+            # print(f"{raw_action} -> {prev_hp}/{prev_max_hp}-{cur_hp}/{cur_max_hp}, changed_per={changed_per}, new_action={action}")
+
             prev_hp = cur_hp
             prev_max_hp = cur_max_hp
 
