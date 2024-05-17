@@ -362,7 +362,7 @@ def get_salon_member_action_sequence(action_times):
             if changed_per <= 0.001:
                 prev_hp = cur_hp
                 prev_max_hp = cur_max_hp
-                # print(f"{action}@{time} discarded")
+                print(f"{action}@{time} discarded")
                 continue
             elif (0.016 - 0.001) < changed_per and changed_per <= (0.016 + 0.001):
                 action = "f/k"
@@ -381,7 +381,7 @@ def get_salon_member_action_sequence(action_times):
             else:
                 raise Exception(f"unknown changed_per: {changed_per}, action:{action}, time:{time}, {prev_hp}/{prev_max_hp}-{cur_hp}/{cur_max_hp}")
 
-            # print(f"{raw_action} -> {prev_hp}/{prev_max_hp}-{cur_hp}/{cur_max_hp}, changed_per={changed_per}, new_action={action}")
+            print(f"{raw_action} -> {prev_hp}/{prev_max_hp}-{cur_hp}/{cur_max_hp}, changed_per={changed_per}, new_action={action}")
 
             prev_hp = cur_hp
             prev_max_hp = cur_max_hp
