@@ -497,4 +497,4 @@ normal_battle_dict = {
 
 print_salon_member_sammary(normal_battle_dict)
 
-# print_single_salon_member_timestamps(normal_battle_dict, 'NNVL1103')
+print_single_salon_member_timestamps(normal_battle_dict, 'BFLH8547')

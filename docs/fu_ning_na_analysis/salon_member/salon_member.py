@@ -200,7 +200,7 @@ timestamp_dict = {
 
 class Video_Timestamps(NamedTuple):
     press_e: Ys_Timestamp
-    chao_shi: Ys_Timestamp
+    e_hit: Ys_Timestamp
     e_damage: Ys_Timestamp
     action_times: list[tuple[str, Ys_Timestamp]]
 
@@ -365,7 +365,7 @@ def get_salon_member_action_sequence(action_times):
             if changed_per <= 0.001:
                 prev_hp = cur_hp
                 prev_max_hp = cur_max_hp
-                print(f"{action}@{time} discarded")
+                #print(f"{action}@{time} discarded")
                 continue
             elif (0.016 - 0.001) < changed_per and changed_per <= (0.016 + 0.001):
                 action = "f/k"
@@ -384,7 +384,7 @@ def get_salon_member_action_sequence(action_times):
             else:
                 raise Exception(f"unknown changed_per: {changed_per}, action:{action}, time:{time}, {prev_hp}/{prev_max_hp}-{cur_hp}/{cur_max_hp}")
 
-            print(f"{raw_action} -> {prev_hp}/{prev_max_hp}-{cur_hp}/{cur_max_hp}, changed_per={changed_per}, new_action={action}")
+            # print(f"{raw_action} -> {prev_hp}/{prev_max_hp}-{cur_hp}/{cur_max_hp}, changed_per={changed_per}, new_action={action}")
 
             prev_hp = cur_hp
             prev_max_hp = cur_max_hp
@@ -459,11 +459,12 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
     for filename, t in ys_timestamp_dict.items():
         action_times = t.action_times
 
-        print(f"get {filename} acton seqs")
+        #print(f"get {filename} acton seqs")
         salon_member_action_sequences = get_salon_member_action_sequence(action_times)
         
         intervals = {
-            "点按e - e出伤": t.e_damage - t.press_e,
+            "点按e - e命中": t.e_hit - t.press_e,
+            "e命中 - e出伤": t.e_damage - t.e_hit,
             "点按e - 第一次扣血": [],
             "第一次同时扣血时间范围": [],
             '所有击中-出伤间隔': []
@@ -512,10 +513,11 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
             intervals[f"{member_name}发动攻击间隔"] = hit_start_intervals
             intervals[f"{member_name}击中间隔"] = hit_intervals
             intervals[f"{member_name}出伤间隔"] = damage_intervals
-
             intervals[f"{member_name}扣血-出伤间隔"] = kou_xue_to_damage_intervals
-            intervals[f"{member_name}扣血-发动攻击间隔"] = kou_xue_to_hit_start
+            intervals[f"{member_name}扣血-发动攻击间隔"] = kou_xue_to_hit_start 
             intervals[f"{member_name}发动攻击-击中时长"] = hit_durations
+            for i in range(0, num_times):
+                intervals[f"{member_name}第{i+1}次发动攻击-击中时长"] = times[i]['h'] - times[i]['s']
             intervals[f"{member_name}击中-出伤间隔"] = hit_to_damage_intervals
             intervals[f"{member_name}出伤-下一次扣血"] = damage_to_next_kou_xue
             intervals[f"{member_name}击中-下一次扣血"] = [times[i]['k'] - times[i - 1]['h'] for i in range(1, num_times)]
