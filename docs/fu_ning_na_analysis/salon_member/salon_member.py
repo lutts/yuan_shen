@@ -213,12 +213,15 @@ class Salon_Member_Action_Sequence:
 
     def set_action_time(self, action, t):
         if not self.cur_seq:
-            self.cur_seq = {"k": null_timestamp, "s": null_timestamp, "h": null_timestamp, "d": null_timestamp}
+            self.cur_seq = {"k": null_timestamp, "s": null_timestamp, "h": null_timestamp, "d": None}
 
         self.cur_seq[action] = t
 
     def finish_cur_seq(self):
         if self.cur_seq:
+            if self.cur_seq['h'] is not null_timestamp:
+                if self.cur_seq['d'] is None:
+                    raise Exception(f"Error: not damage after hit@{self.cur_seq['h']}")
             self.action_seqs.append(self.cur_seq)
             self.cur_seq = None
 
@@ -456,6 +459,7 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
     for filename, t in ys_timestamp_dict.items():
         action_times = t.action_times
 
+        print(f"get {filename} acton seqs")
         salon_member_action_sequences = get_salon_member_action_sequence(action_times)
         
         intervals = {
