@@ -191,7 +191,7 @@ def range_print_func(description, raw_intervals, valid_intervals:list):
     s += "按下限降序: " + str(low_lst)
     s += "\n"
 
-    high_lst = [l for l in valid_intervals if l[-1 is not None]]
+    high_lst = [l for l in valid_intervals if l[-1] is not None]
     high_lst.sort(key=lambda x: x[1])
     s += "按上限升序: " + str(high_lst)
     s += "\n"
