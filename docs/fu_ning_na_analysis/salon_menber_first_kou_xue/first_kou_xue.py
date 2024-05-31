@@ -185,6 +185,7 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
             "点按e - 命中": t.e_hit - t.press_e,
             "命中 - 出伤": t.e_damage - t.e_hit,
             "点按e - 首次扣血": t.first_kou_xue[0] - t.press_e,
+            "点按e - 首次最后扣血": t.first_kou_xue[-1] - t.press_e,
             "命中 - 首次扣血": t.first_kou_xue[0] - t.e_hit,
             "三小只首次扣血范围": t.first_kou_xue[-1] - t.first_kou_xue[0],
         }

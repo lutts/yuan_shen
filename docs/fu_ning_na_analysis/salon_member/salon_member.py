@@ -533,7 +533,8 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
         #     print("min:", first_kou_xue_min)
         #     print("max:", first_kou_xue_max)
 
-        intervals["点按e - 第一次扣血"].append(first_kou_xue_min - t.press_e)
+        intervals["点按e - 第一次最先扣血"].append(first_kou_xue_min - t.press_e)
+        intervals["点按e - 第一次最后扣血"].append(first_kou_xue_max - t.press_e)
         intervals["第一次同时扣血时间范围"].append(first_kou_xue_max - first_kou_xue_min)
         
         intervals_dict[filename] = intervals
