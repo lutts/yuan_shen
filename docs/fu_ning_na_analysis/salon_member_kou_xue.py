@@ -18,6 +18,8 @@ def print_history():
 print("press p to print histories")
 print("press b to back to previous state")
 print("press u to back to un-initialized state")
+print("+xxx: heal xxx")
+print("/xxx: 生命值上限变为 xxx")
 print("输入 z 表示专武叠层生效一层")
 
 while True:
@@ -39,17 +41,61 @@ while True:
         next_possible = None
         hps = input("input initial cur_hp/max_hp: ")
 
-    if hps == "b":
+    if not hps:
+        continue
+
+    if hps[0] == '/':
+        hps = hps[1:]
+        prev_max_hp = history[-1][1]
+        if not prev_max_hp:
+            print("max hp unknown.")
+        else:
+            prev_percent = history[-1][-1]
+            try:
+                max_hp = int(hps)
+                cur_hp = round(prev_percent * max_hp)
+                history.append((cur_hp, max_hp, cur_percent))
+                print_history()
+            except:
+                pass
+
+        continue
+    elif hps[0] == '+':
+        if len(history) < 2:
+            print("not initialized")
+        else:
+            cur_hp = history[-1][0]
+            max_hp = history[-1][1]
+            cur_percent = history[-1][2]
+
+            try:
+                heal_num = int(hps[1:])
+
+                cur_hp += heal_num
+                if cur_hp >= max_hp:
+                    cur_hp = max_hp
+                    cur_percent = 1.0
+                else:
+                    cur_percent = cur_hp / max_hp
+
+                history.append((cur_hp, max_hp, cur_percent))
+                print_history()
+            except:
+                pass
+        
+        continue
+    elif hps == "b":
         if len(history) < 2:
             print("无可回退了")
         else:
             history.pop()
-        if history[-1][-1]:
-            prev_cur_hp = history[-1][0]
-            prev_max_hp = history[-1][1]
-            print(f"回退到前一个状态:{prev_cur_hp}/{prev_max_hp}")
-        else:
-            print("回退到了未初始化状态")
+
+            if history[-1][-1]:
+                prev_cur_hp = history[-1][0]
+                prev_max_hp = history[-1][1]
+                print(f"回退到前一个状态:{prev_cur_hp}/{prev_max_hp}")
+            else:
+                print("回退到了未初始化状态")
 
         continue
     elif hps == 'u':

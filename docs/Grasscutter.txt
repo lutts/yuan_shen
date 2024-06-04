@@ -1,3 +1,9 @@
+关于EvtBeingHitInfo：
+src/main/java/emu/grasscutter/game/managers/energy/EnergyManager.java:209:    public void handleAttackHit(EvtBeingHitInfo hitInfo) {
+src/main/java/emu/grasscutter/server/packet/recv/HandlerCombatInvocationsNotify.java:36:                    EvtBeingHitInfo hitInfo = EvtBeingHitInfo.parseFrom(entry.getCombatData());
+
+注意，这个类在 recv 里！
+
 Grasscutter/src/main/java/emu/grasscutter/server/packet/recv/HandlerCombatInvocationsNotify.java
 @Opcodes(PacketOpcodes.CombatInvocationsNotify)
 public class HandlerCombatInvocationsNotify extends PacketHandler {
@@ -27,17 +33,21 @@ public class HandlerCombatInvocationsNotify extends PacketHandler {
                     player.getEnergyManager().handleAttackHit(hitInfo);
                 }
 
+注意：这里是在 recv 里，说明是客户端发过来的，也就是说，客户端计算好了伤害，服务器端只是校验和广播，校验后修改相关属性，发回客户端
+从后面的实现可以看到：AttackResult里只是算好了伤害量，但并没有修改相关角色或怪的属性，这些属性的改变是服务器端返回的结果
+
+src/main/java/emu/grasscutter/game/managers/energy/EnergyManager.java:209:    
+public void handleAttackHit(EvtBeingHitInfo hitInfo) {
+        原神普攻或重击能回复少许能量
 
 关于 AttackResult:
 protobuff: /src/generated/main/java/emu/grasscutter/net/proto/AttackResultOuterClass.java
 /src/generated/main/java/emu/grasscutter/net/proto/EvtBeingHitInfoOuterClass.java
-./src/main/java/emu/grasscutter/server/packet/recv/HandlerCombatInvocationsNotify.java
-
-注意：这里是在 recv 里，说明是客户端发过来的，也就是说，客户端计算好了伤害，服务器端只是校验和广播，校验后修改相关属性，发回客户端
-从后面的实现可以看到：AttackResult里只是算好了伤害量，但并没有修改相关角色或怪的属性，这些属性的改变是服务器端返回的结果
-
-./src/main/java/emu/grasscutter/server/packet/recv/HandlerUnionCmdNotify.java:        while (!session.getPlayer().getAttackResults().isEmpty()) {
-./src/main/java/emu/grasscutter/server/packet/recv/HandlerUnionCmdNotify.java:            session.getPlayer().getScene().handleAttack(session.getPlayer().getAttackResults().poll());
+src/main/java/emu/grasscutter/server/packet/recv/HandlerCombatInvocationsNotify.java:37:                    AttackResult attackResult = hitInfo.getAttackResult();
+src/main/java/emu/grasscutter/game/managers/energy/EnergyManager.java:211:        AttackResult attackRes = hitInfo.getAttackResult();
+src/main/java/emu/grasscutter/game/world/Scene.java:476:    public void handleAttack(AttackResult result) {
+src/main/java/emu/grasscutter/server/packet/recv/HandlerUnionCmdNotify.java:38:        while (!session.getPlayer().getAttackResults().isEmpty()) {
+src/main/java/emu/grasscutter/server/packet/recv/HandlerUnionCmdNotify.java:39:            session.getPlayer().getScene().handleAttack(session.getPlayer().getAttackResults().poll());
 
 ./src/main/java/emu/grasscutter/game/world/Scene.java:    public void handleAttack(AttackResult result) {
 public void handleAttack(AttackResult result) {
@@ -198,7 +208,7 @@ public void damage(float amount, int killerId, ElementType attackType) {
         this.checkIfDead();
         this.runLuaCallbacks(event);
 
-        # 把这些属性同步到服务端
+        # 把这些属性同步到客户
         // Packets
         this.getScene()
                 .broadcastPacket(
@@ -209,6 +219,102 @@ public void damage(float amount, int killerId, ElementType attackType) {
             this.getScene().killEntity(this, killerId);
         }
     }
+
+FightProperty这个类似乎是所有会广播到客户端的属性列表
+
+我们来关注一下FIGHT_PROP_MAX_HP，只关注 setFightProperty
+ entry("maxhp", FIGHT_PROP_MAX_HP)
+src/main/java/emu/grasscutter/command/commands/EntityCommand.java:93:            setFightProperty(entity, FightProperty.FIGHT_PROP_MAX_HP, param.maxHP, changedFields);
+src/main/java/emu/grasscutter/command/commands/SpawnCommand.java:175:            entity.setFightProperty(FightProperty.FIGHT_PROP_MAX_HP, param.maxHP);
+src/main/java/emu/grasscutter/game/entity/EntityBaseGadget.java:88:        setFightProperty(FightProperty.FIGHT_PROP_MAX_HP, targetHp);
+src/main/java/emu/grasscutter/game/managers/blossom/BlossomActivity.java:135:            rewardGadget.setFightProperty(FightProperty.FIGHT_PROP_MAX_HP, Float.POSITIVE_INFINITY);
+src/main/java/emu/grasscutter/game/world/Scene.java:861:                    gadget.setFightProperty(FightProperty.FIGHT_PROP_MAX_HP, Float.POSITIVE_INFINITY);
+    Gadget是指背包里的一些道具，从这里可见，道具的血量是无限的
+
+为什么没有改变角色生命值上限的命令呢？有夜兰四命在，这功能肯定会有呀
+
+src/main/java/emu/grasscutter/command/commands/EntityCommand.java:93:            setFightProperty(entity, FightProperty.FIGHT_PROP_MAX_HP, param.maxHP, changedFields);
+src/main/java/emu/grasscutter/command/commands/HealCommand.java:28:                                    entity.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP));
+src/main/java/emu/grasscutter/command/commands/SpawnCommand.java:175:            entity.setFightProperty(FightProperty.FIGHT_PROP_MAX_HP, param.maxHP);
+src/main/java/emu/grasscutter/game/ability/AbilityManager.java:634:                    entity.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP));
+src/main/java/emu/grasscutter/game/ability/actions/ActionHealHP.java:56:                amountByCasterMaxHPRatio * owner.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+src/main/java/emu/grasscutter/game/ability/actions/ActionHealHP.java:71:                amountByTargetMaxHPRatio * target.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+src/main/java/emu/grasscutter/game/ability/actions/ActionLoseHP.java:46:                amountByCasterMaxHPRatio * owner.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+src/main/java/emu/grasscutter/game/ability/actions/ActionLoseHP.java:53:        var maxHp = target.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:141:        this.currentHp = getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:522:                this.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP) <= 0
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:525:                                / this.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:722:                this.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP) * hpPercent);
+src/main/java/emu/grasscutter/game/entity/EntityBaseGadget.java:88:        setFightProperty(FightProperty.FIGHT_PROP_MAX_HP, targetHp);
+src/main/java/emu/grasscutter/game/entity/EntityGadget.java:116:                    FightProperty.FIGHT_PROP_MAX_HP,
+src/main/java/emu/grasscutter/game/entity/EntityMonster.java:352:                this.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP) <= 0
+src/main/java/emu/grasscutter/game/entity/EntityMonster.java:355:                                / this.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+src/main/java/emu/grasscutter/game/entity/EntityMonster.java:401:                    FightProperty.FIGHT_PROP_MAX_HP,
+src/main/java/emu/grasscutter/game/entity/EntityMonster.java:402:                    this.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP) * (1 + additionalScaleFactor));
+src/main/java/emu/grasscutter/game/entity/EntityMonster.java:408:                this.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP) * hpPercent);
+src/main/java/emu/grasscutter/game/entity/GameEntity.java:150:        float maxHp = this.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+src/main/java/emu/grasscutter/game/entity/GameEntity.java:191:            float maxHp = getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+src/main/java/emu/grasscutter/game/managers/blossom/BlossomActivity.java:135:            rewardGadget.setFightProperty(FightProperty.FIGHT_PROP_MAX_HP, Float.POSITIVE_INFINITY);
+src/main/java/emu/grasscutter/game/managers/energy/EnergyManager.java:317:        float maxHp = monster.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+src/main/java/emu/grasscutter/game/managers/SotSManager.java:114:        int maxHP = (int) (entity.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP) * 100);
+src/main/java/emu/grasscutter/game/player/PlayerBuffManager.java:106:                                            var maxHp = target.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+src/main/java/emu/grasscutter/game/player/TeamManager.java:819:                            entity.damage(entity.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP) * .1f);
+src/main/java/emu/grasscutter/game/player/TeamManager.java:907:                                                + entity.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP)
+src/main/java/emu/grasscutter/game/player/TeamManager.java:911:                                        entity.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP)));
+src/main/java/emu/grasscutter/game/player/TeamManager.java:939:                    entity.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP) * .4f);
+src/main/java/emu/grasscutter/game/props/FightProperty.java:79:    FIGHT_PROP_MAX_HP(2000),
+src/main/java/emu/grasscutter/game/props/FightProperty.java:144:                    entry("maxhp", FIGHT_PROP_MAX_HP),
+src/main/java/emu/grasscutter/game/props/FightProperty.java:176:                    FIGHT_PROP_MAX_HP,
+src/main/java/emu/grasscutter/game/props/FightProperty.java:182:                            FIGHT_PROP_MAX_HP,
+src/main/java/emu/grasscutter/game/props/FightProperty.java:184:                                    FIGHT_PROP_MAX_HP, FIGHT_PROP_BASE_HP, FIGHT_PROP_HP_PERCENT, FIGHT_PROP_HP)),
+src/main/java/emu/grasscutter/game/systems/InventorySystem.java:893:                                    / params.targetAvatar.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+src/main/java/emu/grasscutter/game/world/Scene.java:861:                    gadget.setFightProperty(FightProperty.FIGHT_PROP_MAX_HP, Float.POSITIVE_INFINITY);
+src/main/java/emu/grasscutter/plugin/api/PlayerHook.java:96:        return this.getCurrentAvatarEntity().getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+src/main/java/emu/grasscutter/server/packet/recv/HandlerCombatInvocationsNotify.java:143:        float maxHP = entity.getFightProperty(FightProperty.FIGHT_PROP_MAX_HP);
+
+
+src/main/java/emu/grasscutter/game/entity/EntityAvatar.java:183:        this.getScene().broadcastPacket(new PacketEntityFightPropUpdateNotify(this, curEnergyProp));
+src/main/java/emu/grasscutter/game/entity/EntityAvatar.java:204:        this.getScene().broadcastPacket(new PacketEntityFightPropUpdateNotify(this, curEnergyProp));
+src/main/java/emu/grasscutter/game/entity/GameEntity.java:161:                        new PacketEntityFightPropUpdateNotify(this, FightProperty.FIGHT_PROP_CUR_HP));
+src/main/java/emu/grasscutter/game/entity/GameEntity.java:216:                        new PacketEntityFightPropUpdateNotify(this, FightProperty.FIGHT_PROP_CUR_HP));
+src/main/java/emu/grasscutter/game/managers/SotSManager.java:148:                        .send(new PacketEntityFightPropUpdateNotify(entity, FightProperty.FIGHT_PROP_CUR_HP));
+src/main/java/emu/grasscutter/game/managers/stamina/StaminaManager.java:317:        entity.getWorld().broadcastPacket(new PacketEntityFightPropUpdateNotify(entity, FightProperty.FIGHT_PROP_CUR_HP));
+src/main/java/emu/grasscutter/server/packet/recv/HandlerCombatInvocationsNotify.java:183:                        new PacketEntityFightPropUpdateNotify(entity, FightProperty.FIGHT_PROP_CUR_HP));
+src/main/java/emu/grasscutter/server/packet/send/PacketEntityFightPropUpdateNotify.java:9:public class PacketEntityFightPropUpdateNotify extends BasePacket {
+src/main/java/emu/grasscutter/server/packet/send/PacketEntityFightPropUpdateNotify.java:10:    public PacketEntityFightPropUpdateNotify(GameEntity entity, FightProperty prop) {
+src/main/java/emu/grasscutter/server/packet/send/PacketEntityFightPropUpdateNotify.java:22:    public PacketEntityFightPropUpdateNotify(GameEntity entity, Collection<FightProperty> props) {
+
+
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:548:                this.addFightProperty(fightPropData.getProp(), fightPropData.getValue());
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:569:                    this.addFightProperty(
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:577:                    this.addFightProperty(affixData.getFightProp(), affixData.getPropValue());
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:606:                            this.addFightProperty(prop.getProp(), prop.getValue());
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:621:                    this.addFightProperty(
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:635:                    this.addFightProperty(prop.getProp(), prop.getValue());
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:654:                        this.addFightProperty(prop.getProp(), prop.getValue());
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:690:                this.addFightProperty(prop.getProp(), prop.getValue());
+
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:140:        this.recalcStats();
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:280:        this.recalcStats();
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:325:        this.recalcStats(true);
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:452:            otherAvatar.recalcStats();
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:482:            this.recalcStats();
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:500:    public void recalcStats() {
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:501:        recalcStats(false);
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:504:    public void recalcStats(boolean forceSendAbilityChange) {
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:944:        this.recalcStats(true);
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:954:            this.recalcStats();
+src/main/java/emu/grasscutter/game/avatar/Avatar.java:961:        this.recalcStats();
+                Avatar类本身里的一些调用都是装备Item之类的，关系不大
+src/main/java/emu/grasscutter/game/avatar/AvatarStorage.java:182:            avatar.recalcStats();
+            背包相关，关系不大
+src/main/java/emu/grasscutter/game/player/Player.java:936:                avatar.recalcStats();
+src/main/java/emu/grasscutter/game/player/Player.java:1167:                    avatar.recalcStats();
+src/main/java/emu/grasscutter/game/player/TeamManager.java:1132:        avatar.recalcStats();
+            组队相关
+
+这个私服不会没实现max hp的改变这个功能吧？但攻击力之类的fight property改变在哪里呢？
+FightProperty的各个常量的ID值似乎是有特殊意义的，比如FIGHT_PROP_MAX_HP(2000)，难道是策划在各个角色的技能里写明了会影响的 fight property? 那这样也太难分析了
 
 子弹
 D:\Data\python\projects\Grasscutter\src\main\java\emu\grasscutter\server\packet\send
