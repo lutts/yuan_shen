@@ -4,6 +4,8 @@
 Module documentation.
 """
 
+from typing import Self
+
 class HP_Change_Data:
     def __init__(self, hp, hp_per, over_heal_num):
         self.hp = hp
@@ -29,6 +31,10 @@ class HpBuffAttributes:
         self.hp_per = 0
         self.hp = 0
 
+    def merge(self, other: Self):
+        self.hp_per += other.hp_per
+        self.hp += other.hp
+
     def get_max_hp(self, base_hp):
         return base_hp * self.hp_per + self.hp
 
@@ -51,6 +57,7 @@ class HealthPoint:
         self.__in_q_animation = False
 
         self.buff_attrs = HpBuffAttributes()
+        self.un_convertable_attrs = HpBuffAttributes()
 
         self.__maxest_hp_ever: int = max_hp
 

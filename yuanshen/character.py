@@ -65,6 +65,25 @@ class ChBuffAttributes:
         self.e_bonus = 0
         self.q_bonus = 0
 
+    def merge(self, other: Self):
+        self.crit_rate += other.crit_rate
+        self.crit_damage += other.crit_damage
+        self.atk_per += other.atk_per
+        self.atk += other.atk
+        self.def_per += other.def_per
+        self.def_v += other.def_v
+        self.elem_mastery += other.elem_mastery
+        self.healing_bonus += other.healing_bonus
+        self.incoming_healing_bonus += other.incoming_healing_bonus
+        self.energy_recharge +=  other.energy_recharge
+
+        self.elem_bonus += other.elem_bonus
+        self.normal_a_bonus += other.normal_a_bonus
+        self.charged_a_bonus += other.charged_a_bonus
+        self.plunging_bonus += other.plunging_bonus
+        self.e_bonus += other.e_bonus
+        self.q_bonus += other.q_bonus
+
     def get_atk(self, base_atk):
         return base_atk * self.atk_per + self.atk
     
@@ -203,6 +222,7 @@ class Character(CharacterBase, name="通用角色"):
         self.__syw_name_count: dict[str, int] = None
 
         self.buff_attrs = ChBuffAttributes()
+        self.un_convertable_attrs = ChBuffAttributes() 
 
         if weapon:
             weapon.set_owner(self)
@@ -210,7 +230,12 @@ class Character(CharacterBase, name="通用角色"):
 
     def reset_buff_attrs(self):
         self.buff_attrs.reset()
+        self.un_convertable_attrs.reset()
         self.__hp.buff_attrs.reset()
+
+    def sync_un_convertable_attrs(self):
+        self.buff_attrs.merge(self.un_convertable_attrs)
+        self.__hp.buff_attrs.merge(self.__hp.un_convertable_attrs)
 
     def get_base_hp(self):
         return self.__hp.get_base_hp()

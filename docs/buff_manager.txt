@@ -1,0 +1,29 @@
+            # （注：即便时用旧的方案，从 Character 拿属性的时候，也要考虑是否 re_convertable）
+            # 设 new_buff 为 A，现有 buff_lst 为 B <- C，D，E，其中：C 依赖 B，D 和 B毫无关系，E是不可转化的
+            # 假设 B 依赖 A，则 A 应该插入到 B 前面，即 A <- B <- C, D, E
+            # 如果 A 依赖 C，就形成依赖循环，这时应该如何处理？(TODO)
+            # 如果 A 依赖 D，则 D 应该在 B 前面，这相当于 B 通过 A “间接”依赖了 D
+            # 这涉及到一个问题，B 和 D 毫无关系，D应该放在哪？
+            #  如果 D 放在 B 后面，就会出现上面所说的情形，某个时候可能要将 D 挪到 B 前面
+            #  如果 D 放在 B 前面，如果某个时候插入了一个 ”依赖 B，被 D依赖的”，我们又得将 D 挪到 B 的后面，这相当于 D 通过 A ”间接“依赖了 B
+            # 所以，一开始两个互不依赖的，以后可能能过新 buff 间接地产生依赖关系
+            # 我们是否将 buff_lst 拆成两个或三个：1) 彼此有依赖关系的(coupling_lst)，2) 不依赖别人也不被别人依赖的(independent_lst); 3) 不可二次转化的(un_reusable_lst)
+            # 或者用 树形结构？其实有可能会是网状结构
+            #   * 根节点放置 1)不依赖别的 buff；2) 和其他 buff 毫无关系的；3) 不可二次转化的
+            #   * 如果依赖别的 buff，则挂到那个 buff 的 child 下，并且从根节点的 child 移除
+            # 接下来就涉及 update 时的遍历顺序问题了，如果广度优先，则： A <- C, D <- B <- C, ，如果是按 A-> D -> C -> B 执行的话，顺序就错了，如何解决？
+            # 也许我们还需要记录 level 值，C 的 level 值是 3，所以不会在遍历完 level_1 的 A 和 D 后被遍历，最终结果：A -> D -> B -> C
+            # C 在加入 B的 childs 时，因为 B 的 level 为 2，所以 C 的 level 为 3
+            # 接下来是解决删除的问题了：删除一个 buff，将使得依赖他的所有 buff (childs)都会被重新评估---以便挂载到合适的 buff 或 root 下
+            # 还要解决一个问题: A <- C，此时插入 B, 依赖 A, 且被 C 依赖, 理论上会形成 A <- B <- C，但 A <- C 的“链路”还在，如何解除？
+            #   -》不需要解除，因为 C 的 level 为 2 了，肯定在 B 之后才会执行
+            # 还有其他问题：纳西妲开大的时候，要从队友中找出精通值最大的来决定转化多少精通，即 attrs = 精通，depend_attrs = 精通
+            #   -》 这其实涉及到另一个问题：re_convertable 的 buff 何时将他们的值加到角色身上？ 如果有另一个 re_convertable 的 buff 提供了精通属性，如何确保它在纳西妲大招 Buff 结算完才结算呢？
+            #       -》处理 re_convertable 为 True 的 buff 时，属性值会直接写入到 Character
+            #       -》处理 re_convertable 为 False 的 Buff 时，属性值不会直接写入到 Character，而是缓存在 BuffManager 里，所有 un-re_convertable 的都处理完后，才统一写入到 Character
+            # 算法：1) 一层(level)一层处理，如果遇到了 un-re_convertable 的，先按遇到的顺序缓存起来，2) 处理 un-re_convertable 的，先写入 BuffManager 缓存，最后统一写入 Character
+            # 在这种树形结构中，如何将一个 buff 替换成另一个 buff ?
+            # class BuffNode:
+            #   level: int
+            #   childs: list[BuffNode]
+            #   buff: Buff

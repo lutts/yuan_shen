@@ -5,10 +5,16 @@ Module documentation.
 """
 
 import logging
+from typing import Self
 
 class MonsterBuffAttributs:
     def __init__(self):
         self.reset()
+
+    def merge(self, other: Self):
+        self.jian_kang += other.jian_kang
+        self.jian_fang += other.jian_fang
+        self.ignore_fang += other.ignore_fang
 
     def reset(self):
         self.jian_kang = 0
@@ -34,6 +40,10 @@ class Monster:
         self.__kang_xin = kang_xin
         
         self.buff_attrs = MonsterBuffAttributs()
+        self.un_convertable_attrs = MonsterBuffAttributs()
+
+    def sync_un_convertable_attrs(self):
+        self.buff_attrs.merge(self.un_convertable_attrs)
 
     def set_level(self, lv):
         self.level = lv
