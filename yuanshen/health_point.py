@@ -4,8 +4,6 @@
 Module documentation.
 """
 
-from .buff_manager import BuffManager
-
 class HP_Change_Data:
     def __init__(self, hp, hp_per, over_heal_num):
         self.hp = hp
@@ -23,6 +21,18 @@ class HP_Change_Data:
     
 not_changed_data = HP_Change_Data(0, 0, 0)
 
+class HpBuffAttributes:
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.hp_per = 0
+        self.hp = 0
+
+    def get_max_hp(self, base_hp):
+        return base_hp * self.hp_per + self.hp
+
+
 class HealthPoint:
     def __init__(self, base_hp: int, max_hp: int = 0):
         # 确保为整数
@@ -34,15 +44,13 @@ class HealthPoint:
             # 最少为白字生命值 + 圣遗物花
             max_hp = base_hp + 4780
         
-        self.__self_max_hp: int = max_hp
-        self.__cur_real_max_hp: int = max_hp
+        self.__max_hp: int = max_hp
+        self.__max_hp_with_buff: int = max_hp
         self.__cur_hp: int = max_hp
         self.__cur_hp_per = 1.0
         self.__in_q_animation = False
 
-        self.__plan = None
-        self.__buff_manager: BuffManager = None
-        self.__ch = None
+        self.buff_attrs = HpBuffAttributes()
 
         self.__maxest_hp_ever: int = max_hp
 
@@ -69,30 +77,12 @@ class HealthPoint:
     def set_in_q_animation(self, anim = False):
         self.__in_q_animation = anim
 
-    def set_plan(self, plan, ch):
-        self.__plan = plan
-        if plan:
-            self.__buff_manager = plan.buff_manager
-            self.__ch = ch
-        else:
-            self.__buff_manager = None
-            self.__ch = None
-        
-        self.__update_cur_hp_after_max_hp_changed()
-
     def get_max_hp(self):
-        if not self.__buff_manager:
-            return self.__self_max_hp
-        else:
-            self.__update_cur_hp_after_max_hp_changed()
-            return self.__cur_real_max_hp
-
-    def __update_cur_hp_after_max_hp_changed(self):
-        new_max_hp = self.__self_max_hp
-        if self.__buff_manager:
-            new_max_hp += round(self.__buff_manager.get_max_hp(self.__ch))
- 
-        if self.__cur_real_max_hp == new_max_hp:
+        return self.__max_hp_with_buff
+        
+    def on_max_hp_changed(self):
+        new_max_hp = self.__max_hp + self.buff_attrs.get_max_hp(self.__base_hp)
+        if self.__max_hp_with_buff == new_max_hp:
             return
         
         # 不直接乘法，避免可能的浮点运算问题
@@ -101,21 +91,21 @@ class HealthPoint:
         else:
             self.__cur_hp = new_max_hp * self.__cur_hp_per
         
-        self.__cur_real_max_hp = new_max_hp
+        self.__max_hp_with_buff = new_max_hp
 
         if new_max_hp > self.__maxest_hp_ever:
             self.__maxest_hp_ever = new_max_hp
 
     def set_max_hp(self, max_hp):
-        self.__self_max_hp = round(max_hp)
-        self.__update_cur_hp_after_max_hp_changed()
+        self.__max_hp = round(max_hp)
+        self.on_max_hp_changed()
 
     def modify_max_hp(self, hp):
         if hp == 0:
             return
         
-        self.__self_max_hp += round(hp)
-        self.__update_cur_hp_after_max_hp_changed()
+        self.__max_hp += round(hp)
+        self.on_max_hp_changed()
 
     def modify_max_hp_per(self, hp_per):
         if hp_per == 0:

@@ -14,7 +14,6 @@ from .elem_type import Ys_Elem_Type
 from .weapon import Ys_Weapon
 from .health_point import HealthPoint, HP_Change_Data
 from .syw import ShengYiWu
-from .buff_manager import BuffManager
 
 
 class Character_HP_Change_Data:
@@ -42,6 +41,36 @@ class NormalAttackType(Enum):
     PLUNGE = "下坠期间"
     LOW_PLUNGE = "低空坠地冲击"
     HIGH_PLUNGE = "高空坠地冲击"
+
+class ChBuffAttributes:
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.crit_rate = 0
+        self.crit_damage = 0
+        self.atk_per = 0
+        self.atk = 0
+        self.def_per = 0
+        self.def_v = 0
+        self.elem_mastery = 0
+        self.healing_bonus = 0
+        self.incoming_healing_bonus = 0
+        self.energy_recharge = 0
+
+        self.elem_bonus = 0
+        self.normal_a_bonus = 0
+        self.charged_a_bonus = 0
+        self.plunging_bonus = 0
+        self.e_bonus = 0
+        self.q_bonus = 0
+
+    def get_atk(self, base_atk):
+        return base_atk * self.atk_per + self.atk
+    
+    def get_defence(self, base_def):
+        return base_def * self.def_per + self.def_v
+
 
 class CharacterBase:
     def __init_subclass__(cls, name, elem_type: Ys_Elem_Type=None, ming_zuo_num=0, ch_level=90, 
@@ -97,21 +126,6 @@ class CharacterBase:
         """
         plan.add_switch_action(self, t)
         return t + 0.066
-    
-    def switch_to_e_interval(self):
-        raise Exception("swtich to e interval not specified")
-
-    def switch_for_e(self, plan, t):
-        plan.add_switch_action(self, t)
-        return t + self.switch_to_e_interval()
-    
-    def switch_to_a_interval(self):
-        raise Exception("switch to a interval not specified")
-    
-    def switch_for_a(self, plan, t):
-        plan.add_switch_action(self, t)
-        return t + self.switch_to_a_interval()
-        
 
 class Character(CharacterBase, name="通用角色"):
     def __init__(self, 
@@ -164,19 +178,20 @@ class Character(CharacterBase, name="通用角色"):
 
         self.__energy_recharge = energy_recharge
 
+        self.__base_bonus = base_bonus
         # 普通攻击
-        self.__normal_a_bonus = base_bonus + normal_a_bonus
+        self.__normal_a_bonus = normal_a_bonus
         # 重击
         if not charged_a_bonus:
             charged_a_bonus = normal_a_bonus
-        self.__charged_a_bonus = base_bonus + charged_a_bonus
+        self.__charged_a_bonus = charged_a_bonus
         # 下落攻击
         if not plunging_bonus:
             plunging_bonus = normal_a_bonus
-        self.__plunging_bonus = base_bonus + plunging_bonus
+        self.__plunging_bonus = plunging_bonus
 
-        self.__e_bonus = base_bonus + e_bonus
-        self.__q_bonus = base_bonus + q_bonus
+        self.__e_bonus = e_bonus
+        self.__q_bonus = q_bonus
 
         self.__in_foreground = False
         # 最近一次前后台切换的时间，有些 buff 是在切到前台或后台时开始计时的
@@ -187,34 +202,15 @@ class Character(CharacterBase, name="通用角色"):
         self.__syw_combine: list[ShengYiWu] = None
         self.__syw_name_count: dict[str, int] = None
 
-        self.__teammates = None
-
-        self.__plan = None
-        self.__buff_manager: BuffManager = None
+        self.buff_attrs = ChBuffAttributes()
 
         if weapon:
             weapon.set_owner(self)
             weapon.apply_static_attributes(self)
 
-    def get_teammates(self) -> list[Self|None]:
-        tms = []
-        for t in self.__teammates:
-            ch = t()
-            if ch is not None:
-                tms.append(ch)
-
-        return tms
-    
-    def set_teammates(self, teammates: list[Self]):
-        self.__teammates = [weakref.ref(t) for t in teammates]
-
-    def set_plan(self, plan):
-        self.__plan = plan
-        if plan:
-            self.__buff_manager = plan.buff_manager
-        else:
-            self.__buff_manager = None
-        self.__hp.set_plan(plan, self)
+    def reset_buff_attrs(self):
+        self.buff_attrs.reset()
+        self.__hp.buff_attrs.reset()
 
     def get_base_hp(self):
         return self.__hp.get_base_hp()
@@ -232,10 +228,7 @@ class Character(CharacterBase, name="通用角色"):
         return self.__base_atk
 
     def get_atk(self):
-        atk = self.__all_atk
-        if self.__buff_manager:
-            atk += self.__buff_manager.get_atk(self)
-        
+        atk = self.__all_atk + self.buff_attrs.get_atk(self.__base_atk)
         return round(atk)
 
     def set_atk(self, atk):
@@ -263,10 +256,7 @@ class Character(CharacterBase, name="通用角色"):
         return self.__base_defence
 
     def get_defence(self):
-        defence = self.__all_defence
-        if self.__buff_manager:
-            defence += self.__buff_manager.get_defence(self)
-        
+        defence = self.__all_defence + self.buff_attrs.get_defence(self.__base_defence)
         return round(defence)
 
     def modify_defence(self, defence):
@@ -288,11 +278,7 @@ class Character(CharacterBase, name="通用角色"):
         self.modify_defence_per(0 - def_per)
 
     def get_elem_mastery(self):
-        em = self.__elem_mastery
-        if self.__buff_manager:
-            em += self.__buff_manager.get_elem_mastery(self)
-
-        return em
+        return self.__elem_mastery + self.buff_attrs.elem_mastery
 
     def set_elem_mastery(self, em):
         self.__elem_mastery = em
@@ -307,11 +293,7 @@ class Character(CharacterBase, name="通用角色"):
         self.modify_elem_mastery(0 - em)
 
     def get_crit_rate(self):
-        cr = self.__crit_rate
-        if self.__buff_manager:
-            cr += self.__buff_manager.get_crit_rate(self)
-
-        return cr
+        return self.__crit_rate + self.buff_attrs.crit_rate
 
     def set_crit_rate(self, crit_rate):
         self.__crit_rate = crit_rate
@@ -326,11 +308,7 @@ class Character(CharacterBase, name="通用角色"):
         self.modify_crit_rate(0 - crit_rate)
 
     def get_crit_damage(self):
-        cd = self.__crit_damage
-        if self.__buff_manager:
-            cd += self.__buff_manager.get_crit_damage(self)
-
-        return cd
+        return self.__crit_damage + self.buff_attrs.crit_damage
 
     def set_crit_damage(self, crit_damage):
         self.__crit_damage = crit_damage
@@ -345,11 +323,7 @@ class Character(CharacterBase, name="通用角色"):
         self.modify_crit_damage(0 - cd)
 
     def get_healing_bonus(self):
-        bonus = self.__healing_bonus
-        if self.__buff_manager:
-            bonus += self.__buff_manager.get_healing_bonus(self)
-
-        return bonus
+        return self.__healing_bonus + self.buff_attrs.healing_bonus
 
     def set_healing_bonus(self, bonus):
         self.__healing_bonus = bonus
@@ -364,11 +338,7 @@ class Character(CharacterBase, name="通用角色"):
         self.modify_healing_bonus(0 - bonus)
 
     def get_incoming_healing_bonus(self):
-        bonus = self.__incomming_healing_bonus
-        if self.__buff_manager:
-            bonus += self.__buff_manager.get_incoming_healing_bonus(self)
-
-        return bonus
+        return self.__incomming_healing_bonus + self.buff_attrs.incoming_healing_bonus
 
     def set_incoming_headling_bonus(self, bonus):
         self.__incomming_healing_bonus = bonus
@@ -383,10 +353,7 @@ class Character(CharacterBase, name="通用角色"):
         self.modify_incoming_healing_bonus(0 - bonus)
 
     def get_energy_recharge(self):
-        er = self.__energy_recharge
-        if self.__buff_manager:
-            er += self.__buff_manager.get_energy_recharge(self)
-
+        er = self.__energy_recharge + self.buff_attrs.energy_recharge
         return round(er, 1)
 
     def set_energy_recharge(self, er):
@@ -423,11 +390,7 @@ class Character(CharacterBase, name="通用角色"):
         return Character_HP_Change_Data(self, self.__hp.modify_cur_hp_per(hp_per))
 
     def get_normal_a_bonus(self):
-        bonus = self.__normal_a_bonus
-        if self.__buff_manager:
-            bonus += self.__buff_manager.get_normal_a_bonus(self)
-
-        return bonus
+        return self.__normal_a_bonus + self.__base_bonus + self.buff_attrs.elem_bonus + self.buff_attrs.normal_a_bonus
 
     def set_normal_a_bonus(self, bonus):
         self.__normal_a_bonus = bonus
@@ -442,11 +405,7 @@ class Character(CharacterBase, name="通用角色"):
         self.modify_normal_a_bonus(0 - bonus)
 
     def get_charged_a_bonus(self):
-        bonus = self.__charged_a_bonus
-        if self.__buff_manager:
-            bonus += self.__buff_manager.get_charged_a_bonus(self)
-
-        return bonus
+        return self.__charged_a_bonus + self.__base_bonus + self.buff_attrs.elem_bonus + self.buff_attrs.charged_a_bonus
 
     def set_charged_a_bonus(self, bonus):
         self.__charged_a_bonus = bonus
@@ -461,11 +420,7 @@ class Character(CharacterBase, name="通用角色"):
         self.__charged_a_bonus -= bonus
 
     def get_plunging_bonus(self):
-        bonus = self.__plunging_bonus
-        if self.__buff_manager:
-            bonus += self.__buff_manager.get_plunging_bonus(self)
-        
-        return bonus
+        return self.__plunging_bonus + self.__base_bonus + self.buff_attrs.elem_bonus + self.buff_attrs.plunging_bonus
 
     def set_plunging_bonus(self, bonus):
         self.__plunging_bonus = bonus
@@ -503,11 +458,7 @@ class Character(CharacterBase, name="通用角色"):
         self.sub_plunging_bonus(bonus)
 
     def get_e_bonus(self):
-        bonus = self.__e_bonus
-        if self.__buff_manager:
-            bonus += self.__buff_manager.get_e_bonus(self)
-
-        return bonus
+        return self.__e_bonus + self.__base_bonus + self.buff_attrs.elem_bonus + self.buff_attrs.e_bonus
 
     def set_e_bonus(self, bonus):
         self.__e_bonus = bonus
@@ -522,11 +473,7 @@ class Character(CharacterBase, name="通用角色"):
         self.__e_bonus -= bonus
 
     def get_q_bonus(self):
-        bonus = self.__q_bonus
-        if self.__buff_manager:
-            bonus += self.__buff_manager.get_q_bonus(self)
-
-        return bonus
+        bonus = self.__q_bonus + self.__base_bonus + self.buff_attrs.elem_bonus + self.buff_attrs.q_bonus
 
     def set_q_bonus(self, bonus):
         self.__q_bonus = bonus

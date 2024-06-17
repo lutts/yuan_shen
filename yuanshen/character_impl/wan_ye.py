@@ -24,13 +24,9 @@ class Wan_Ye_Ch(Character, name="枫原万叶",
         return self.get_elem_mastery() * 0.04 / 100
             
     def __add_kuo_san_action(self, plan: ActionPlan, t):
-        action = WanYe_Kuo_San_Action(self)
-        action.set_timestamp(t)
-        plan.append_action(action)
+        action = WanYe_Kuo_San_Action(self, t)
+        plan.add_action(action)
 
-    def switch_to_e_interval(self):
-        return random.uniform(0.167, 0.234)
-    
     def __do_raw_e(self, plan: ActionPlan, t, down_kuo_san=True):
         if not down_kuo_san:
             up_hit = t + 0.116
@@ -47,33 +43,37 @@ class Wan_Ye_Ch(Character, name="枫原万叶",
     
     def do_e(self, plan: ActionPlan, t, down_kuo_san=True):
         """
-        down_kuo_san: 如果 True, 则以下落触发的扩散为准，如果 False, 则以上升时触发的扩散为准
+        * t: 切万叶出来的时间
 
-        返回值：切下一个角色的时间
+        * down_kuo_san: 如果 True, 则以下落触发的扩散为准，如果 False, 则以上升时触发的扩散为准
+
+        * 返回值：切下一个角色的时间
         """
-  
-        atk_btn_again = self.__do_raw_e(plan, t, down_kuo_san)
+        plan.add_switch_action(self, t)
+
+        e_start = t + random.uniform(0.167, 0.234)
+
+        atk_btn_again = self.__do_raw_e(plan, e_start, down_kuo_san)
 
         # 切下一个角色的时间
-        # TODO: eq连在考虑实现吗？
         switch_to_next_ch_time = atk_btn_again + random.uniform(0.366, 0.7)
         return switch_to_next_ch_time
 
-    def __do_raw_q(self, plan: ActionPlan, t, add_all_liu_feng=False):
-        plan.q_animation_start(self, self, t)
+    def __do_raw_q(self, plan: ActionPlan, q_start_time, add_all_liu_feng=False):
+        plan.q_animation_start(self, self, q_start_time)
 
-        q_hit = t + 1.2
+        q_hit = q_start_time + 1.2
         self.__add_kuo_san_action(plan, q_hit)
 
-        # 大招动画的时间也基本是固定的
-        q_end_time = t + 1.55
+        # 大招动画的时间也基本是固定的(TODO：在按钮变亮前就会受伤，0.2是预估的，需要实测)
+        q_end_time = q_start_time + 1.55 - 0.2
         plan.q_animation_end(self, self, q_end_time)
 
         # 万叶 q 后续的流风有以下特性：
         # * 如果怪身上有元素附着，则先造成染伤，触发元素反应，再造成风伤，除非反应有元素残留，否则不会造成扩散
         # * 如果怪身上没有元素附着，则先造成风伤，后造成染伤，不会造成扩散
 
-        first_liu_feng_hit = q_end_time + random.uniform(2.334, 2.434)
+        first_liu_feng_hit = q_start_time + random.uniform(2.334, 2.434)
         max_liu_feng_hit = first_liu_feng_hit + 8
 
         if add_all_liu_feng:
@@ -94,24 +94,36 @@ class Wan_Ye_Ch(Character, name="枫原万叶",
             self.__add_kuo_san_action(plan, last_liu_feng_hit)
 
         # 二命的结束时间无法准确测量，目前观测到的数据显示第五次流风之后 1.5 秒效果消失
-        ming_2_buff = Wan_Ye_Ming_2_Buff(t, last_liu_feng_hit + 1.5, self)
+        ming_2_buff = Wan_Ye_Ming_2_Buff(q_start_time, last_liu_feng_hit + 1.5, self)
         plan.buff_mamager.add_buff(ming_2_buff)
 
     def do_q(self, plan: ActionPlan, t, add_all_liu_feng=False):
         """
-        add_all_liu_feng: 如果为 False(默认), 则只添加最后一次流风的 action, 如果为 True, 则添加所有流风的 action
-
-        返回值：切下一个角色的时机
+        * t: 切万叶出来的时间
+        * add_all_liu_feng: 如果为 False(默认), 则只添加最后一次流风的 action, 如果为 True, 则添加所有流风的 action
+        * 返回值：切下一个角色的时机
         """
+        t = self.q_switch(plan, t)
 
         self.__do_raw_q(plan, t, add_all_liu_feng)
 
         # TODO: 是否要考虑 qe 连招？
         switch_to_next_ch_time = t + random.uniform(1.767, 1.883)
         return switch_to_next_ch_time
+    
+    def do_eq(self, plan: ActionPlan, t, add_all_liu_feng=False):
+        pass
+
+    def do_qe(self, plan: ActionPlan, t,  add_all_liu_feng=False):
+        pass
 
 
 class Wan_Ye_Bonus_Buff(Buff):
+    def update(self, buff_manager):
+        wan_ye: Wan_Ye_Ch = self.creator
+        bonus = wan_ye.get_tian_fu_bonus()
+        return super().update(buff_manager)
+    
     def get_elem_bonus(self, plan: ActionPlan, target_character):
         wan_ye: Wan_Ye_Ch = self.creator
         return wan_ye.get_tian_fu_bonus()
@@ -137,7 +149,7 @@ class WanYe_Kuo_San_Action(Action):
         self.wan_ye = wan_ye
 
     def do_impl(self, plan: ActionPlan):
-        cur_time = self.get_timestamp()
+        cur_time = plan.current_action_time
         bonus_buf = Wan_Ye_Bonus_Buff(cur_time, cur_time + 8, creator=self.wan_ye)
         plan.buff_mamager.add_buff(bonus_buf)
 

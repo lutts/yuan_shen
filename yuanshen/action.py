@@ -18,86 +18,67 @@ from .events import Events
 
 ActionPlan = typing.NewType("ActionPlan", None)
 
-
-class ActionTimestampException(Exception):
-    """ Action time already setted """
-
-
 class Action:
     enable_debug = False
     enable_record = False
 
-    def __init__(self, name):
+    def __init__(self, name, start_time):
         self.name = name
-        # timestamp是动态计算出来的，这里只是放一个占位符
-        self.__timestamp = 0
+        self.start_time = start_time
+        self.idx = None
 
-    def set_timestamp(self, t):
-        # 时间戳只允许设置一次，这样做是为了防止将同一个action实例插入到 action_list 多次
-        if self.__timestamp:
-            raise ActionTimestampException(
-                "Action timestamp already setted, can not change")
+    def set_idx(self, idx):
+        self.idx = idx
 
-        self.__timestamp = t
-
-    def get_timestamp(self):
-        return self.__timestamp
-    
     def __debug(self, fmt_str, *args, **kwargs):
-        fmt_str = str(round(self.__timestamp, 3)) + ": " + fmt_str
+        fmt_str = str(round(self.start_time, 3)) + ": " + fmt_str
         logging.debug(fmt_str, *args, **kwargs)
     
     def debug(self, fmt_str, *args, **kwargs):
         pass
         # self.__debug(fmt_str, *args, **kwargs)
 
-    def do(self, plan: ActionPlan):
-        return self.do_impl(plan)
+    def get_timeline_nodes(self):
+        return (self.start_time, self.idx)
 
-    def do_impl(self, plan: ActionPlan):
-        """
-        * plan: 此Action所在的ActionPlan的实例
-        """
+    def do(self, plan: ActionPlan):
         pass
 
-
 class SwitchAction(Action):
-    def __init__(self, ch: Character):
-        super().__init__(f"切换到{ch.name}")
+    def __init__(self, ch: Character, t):
+        super().__init__(f"切换到{ch.name}", t)
         self.ch = ch
 
-    def do_impl(self, plan: ActionPlan):
-        self.debug(self.name)
-        plan.switch_ch_to_forground(self.ch)
-
+    def do(self, plan: ActionPlan):
+        plan.switch_character(self.ch)
 
 class Q_Animation_Start_Action(Action):
-    def __init__(self, ch: Character):
+    def __init__(self, ch: Character, t):
         super().__init__(f"{ch.name}大招动画开始")
         self.ch = ch
 
-    def do_impl(self, plan: ActionPlan):
-        self.debug(self.name)
+    def do(self, plan: ActionPlan):
         self.ch.get_hp().set_in_q_animation(True)
 
 
 class Q_Animation_End_Action(Action):
-    def __init__(self, ch: Character):
+    def __init__(self, ch: Character, t):
         super().__init__(f"{ch.name}大招动画结束")
         self.ch = ch
 
-    def do_impl(self, plan: ActionPlan):
-        self.debug(self.name)
+    def do(self, plan: ActionPlan):
         self.ch.get_hp().set_in_q_animation(False)
 
 
 class AttributeAction(Action, Buff):
-    def do_impl(self, plan: ActionPlan):
+    def do(self, plan: ActionPlan):
         plan.add_extra_attr(self)
 
 class ActionPlan:
     def __init__(self, characters: list[Character], monster: Monster):
         """
+        * characters: 队伍角色列表
+        
         注：会自动处理队伍元素共鸣，但双岩例外，因为有双岩不一定有盾，减了岩抗时，输出位不定是岩C，比如计算娜维娅队里的香菱或夜兰的输出
 
         如果需要添加双岩共鸣 buff, 需要手动调用 add_shuang_yan_buff
@@ -105,20 +86,18 @@ class ActionPlan:
 
         self.__characters = characters if characters else []
         self.__forground_character: Character = None
-
         self.__monster = monster if monster else Monster()
-
-        self.__current_index = 0
-        self.__current_action_time = 0
-        self.action_list: list[Action] = []
-
-        self.__buff_mamager = BuffManager(self)
-        
+        self.__buff_manager = BuffManager(self)
         self.events = Events()
 
         self.__total_raw_damage = 0
         self.__total_expect_damage = 0
         self.__total_crit_damage = 0
+
+        self.__current_index = 0
+        self.__current_action_time = 0
+        self.__action_array: list[Action] = []
+        self.__time_line = []
 
     def __process_characters(self, reset=False):
         num_chs = len(self.__characters)
@@ -140,12 +119,8 @@ class ActionPlan:
             elif ch.elem_type is Ys_Elem_Type.BING:
                 bing_num += 1
 
-            if not reset:
-                ch.set_plan(self)
-                ch.set_teammates(self.__characters[:i] + self.__characters[i+1:])
-            else:
-                ch.set_plan(None)
-                ch.set_teammates(None)
+            if reset:
+                ch.reset_buff_attrs()
 
         if huo_num >= 2:
             for t in self.__characters:
@@ -191,14 +166,13 @@ class ActionPlan:
         self.__monster.add_jian_kang(0.2)
 
     def prepare(self):
-        self.__buff_mamager.init(self)
+        self.__buff_manager.init(self)
         self.__init_characters()
-        self.__monster.set_plan(self)
         
     def finish(self):
-        self.__monster.set_plan(None)
+        self.__monster.buff_attrs.reset()
         self.__reset_characters()
-        self.__buff_mamager.reset()
+        self.__buff_manager.reset()
 
     def __enter__(self):
         self.prepare()
@@ -233,10 +207,17 @@ class ActionPlan:
     
     def get_p4(self):
         return self.get_character_by_position(3)
+    
+    def get_teammates(self, ch):
+        return [c for c in self.__characters if c is not ch]
             
     @property
     def forground_character(self):
         return self.__forground_character
+
+    @property
+    def backgroud_characters(self):
+        return [c for c in self.__characters if c is not self.__forground_character]
 
     @property
     def monster(self):
@@ -248,25 +229,37 @@ class ActionPlan:
     
     @property
     def buff_mamager(self):
-        return self.__buff_mamager
+        return self.__buff_manager
 
     ##################################################
 
     def get_effective_delay(self):
         # 生效延迟
-        return random.uniform(0.05, 0.15)
+        # return random.uniform(0.05, 0.15)
+        return 0.05 + random.random() / 10
+    
+    def get_small_delay(self):
+        """
+        time range: [0, 0.05]
+        """
+        return random.random() / 20
 
-    def add_damage(self, damage, ch: Character):
+    def add_damage(self, damage, ch: Character, raw_damage_only=False):
         damage = self.monster.attacked(damage)
-        cd = ch.get_crit_damage()
-        expect_damage = ys_expect_damage(damage, ch.get_crit_rate(), cd)
-        crit_damage = ys_crit_damage(damage, cd)
-        damage = int(damage)
 
+        expect_damage = 0
+        crit_damage = 0
+        if not raw_damage_only:
+            cd = ch.get_crit_damage()
+            expect_damage = ys_expect_damage(damage, ch.get_crit_rate(), cd)
+            crit_damage = ys_crit_damage(damage, cd)
+            damage = int(damage)
+
+            self.__total_expect_damage += expect_damage
+            self.__total_crit_damage += crit_damage
+            
         self.__total_raw_damage += damage
-        self.__total_expect_damage += expect_damage
-        self.__total_crit_damage += crit_damage
-
+        
         return (damage, crit_damage, expect_damage)
     
     @property
@@ -281,7 +274,7 @@ class ActionPlan:
     def total_crit_damage(self):
         return self.__total_crit_damage
 
-    def switch_ch_to_forground(self, ch: Character):
+    def switch_character(self, ch: Character):
         if self.__forground_character:
             if ch is self.__forground_character:
                 return
@@ -294,9 +287,8 @@ class ActionPlan:
             prev_fore.switch_to_background(self.__current_action_time)
 
     def add_switch_action(self, ch: Character, t):
-        action = SwitchAction(ch)
-        action.set_timestamp(t)
-        self.action_list.append(action)
+        action = SwitchAction(ch, t)
+        self.add_action(action)
 
     def add_consume_hp_callback(self, callback):
         self.events.on_consume_hp += callback
@@ -355,7 +347,6 @@ class ActionPlan:
             elif hp_per < 0:
                 change_data = c.consume_hp_per(hp_per)
 
-            # self.debug(str(change_data))
             if change_data.has_changed():
                 hp_changed_targets.append(change_data)
 
@@ -389,63 +380,62 @@ class ActionPlan:
         # self.__debug(fmt_str, *args, **kwargs)
 
     def q_animation_start(self, ch: Character, t):
-        action = Q_Animation_Start_Action(ch)
-        action.set_timestamp(t)
-        self.action_list.append(action)
+        self.add_actioin(Q_Animation_Start_Action(ch, t))
 
     def q_animation_end(self, ch: Character, t):
-        action = Q_Animation_End_Action(ch)
-        action.set_timestamp(t)
-        self.action_list.append(action)
+        self.add_action(Q_Animation_End_Action(ch, t))
 
-    def sort_action(self):
-        self.action_list.sort(key=lambda a: a.get_timestamp())
+    def __add_action_to_array(self, action):
+        action_idx = len(self.__action_array)
+        action.set_idx(action_idx)
+        self.__action_array.append(action)
 
-    def append_action(self, action):
-        self.action_list.append(action)
+    def add_action(self, action: Action):
+        self.__add_action_to_array(action)
+        self.__time_line.extend(action.get_timeline_nodes())
 
-    def add_action(self, action:Action, min_t, max_t = None, base_action: Action = None, effective_delay=0) -> Action:
-        base_time = 0 if base_action is None else base_action.get_timestamp()
-
-        if not max_t:
-            t = base_time + min_t
-        else:
-            t = base_time + random.randint(round(min_t * 1000), round(max_t * 1000)) / 1000
-        action.set_timestamp(t + effective_delay)
-
-        self.action_list.append(action)
-
-        return action
-            
-    def insert_action(self, action, re_sort=False):
-        self.action_list.append(action)
-        if re_sort:
-            self.sort_action()
-            
-    def insert_action_runtime(self, action):
-        if action.get_timestamp() < self.__current_action_time:
-            raise Exception("action timestamp small than current action time")
+    def insert_timeline_node_runtime(self, insert_position, node):
+        timeline_len = len(self.__time_line)
         
-        idx = self.__current_index
-        lst_len = len(self.action_list)
-        
-        while idx < lst_len:
-            if self.action_list[idx].get_timestamp() > action.get_timestamp():
-                self.action_list.insert(idx, action)
-                return
-            idx += 1
-            
-        self.action_list.append(action)
+        while insert_position < timeline_len:
+            if self.__time_line[insert_position][0] > node[0]:
+                self.__time_line.insert(insert_position, node)
+                return insert_position + 1
+            insert_position += 1
+
+        # 此时 timelineidx == timeline_len
+        self.__time_line.append(node)
+
+        return insert_position + 1
+    
+    def insert_timeline_node_after_cur_idx(self, node):
+        return self.insert_timeline_node_runtime(self.__current_index + 1, node)
+
+    def insert_action_runtime(self, action: Action):
+        if action.start_time < self.__current_action_time:
+            raise Exception(f"Error: insert action {action.name} @{action.start_time} before current time {self.__current_action_time}")
+        self.__add_action_to_array(action)
+
+        timeline_nodes = action.get_timeline_nodes()
+        insert_position =  self.__current_index + 1
+        for node in timeline_nodes:
+            insert_position = self.insert_timeline_node_runtime(insert_position, node)
+
+    def __update_buff(self):
+        self.__buff_manager.update()
+        for ch in self.characters:
+            ch.get_hp().on_max_hp_changed()
 
     def run(self):
-        self.sort_action()
+        self.__time_line.sort(key=lambda a: a[0])
 
         self.__current_index = 0
-        while self.__current_index < len(self.action_list):
-            action = self.action_list[self.__current_index]
-            cur_time = action.get_timestamp()
-            self.__current_action_time = cur_time
-            self.__buff_mamager.update(cur_time)
-            action.do(self)
-
+        while self.__current_index < len(self.__time_line):
+            action_idx = self.__time_line[self.__current_index][1]
+            action = self.__action_array[action_idx]
+            if action is not None:
+                self.__current_action_time = self.__time_line[self.__current_index][0]
+                self.__update_buff()
+                action.do(self)
+            
             self.__current_index += 1
