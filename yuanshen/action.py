@@ -42,7 +42,10 @@ class Action:
         return (self.start_time, self.idx)
 
     def do(self, plan: ActionPlan):
-        pass
+        """
+        * return value: True if finished, False if not finished, aka, repeatable
+        """
+        return True
 
 class SwitchAction(Action):
     def __init__(self, ch: Character, t):
@@ -421,11 +424,6 @@ class ActionPlan:
         for node in timeline_nodes:
             insert_position = self.insert_timeline_node_runtime(insert_position, node)
 
-    def __update_buff(self):
-        self.__buff_manager.update()
-        for ch in self.characters:
-            ch.get_hp().on_max_hp_changed()
-
     def run(self):
         self.__time_line.sort(key=lambda a: a[0])
 
@@ -434,8 +432,11 @@ class ActionPlan:
             action_idx = self.__time_line[self.__current_index][1]
             action = self.__action_array[action_idx]
             if action is not None:
-                self.__current_action_time = self.__time_line[self.__current_index][0]
-                self.__update_buff()
-                action.do(self)
+                cur_time = self.__time_line[self.__current_index][0]
+                self.__current_action_time = cur_time
+                self.__buff_manager.update(cur_time)
+                finished = action.do(self)
+                if finished:
+                    self.__action_array[action_idx] = None
             
             self.__current_index += 1

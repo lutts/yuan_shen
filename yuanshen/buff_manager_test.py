@@ -1,4 +1,7 @@
+from typing import Self
 from buff_manager import *
+from character import Character
+from action import ActionPlan
 
 def _do_test():
     class Creator1:
@@ -111,6 +114,31 @@ def _do_test():
     assert buff1.cur_layer == 2
     assert buff2.cur_layer == 1
 
+
+class NaxiDa_Zhuan_Wu(Buff, attrs=BuffAttrs.ELEM_MASTERY):
+    def update(self, buff_manager: BuffManager):
+        plan: ActionPlan = buff_manager.plan
+        for ch in plan.characters:
+            ch.buff_attrs.elem_mastery += 40
+
+
+class YeLan_E(Buff, max_layer=4, attrs=BuffAttrs.HP_PER):
+    def __init__(self, start_time: float, end_time: float = None, creator=None):
+        super().__init__(start_time, end_time, creator)
+
+        self.layer_times = [(start_time, end_time)]
+
+    def inc_layer(self, new_buff: Self):
+        if self.cur_layer < self.max_layer:
+            self.cur_layer += 1
+            self.layer_times.extend(new_buff.layer_times)
+
+    def update(self, buff_manager):
+        plan: ActionPlan = buff_manager.plan
+        
+
+        for ch in plan.characters:
+            ch.get_hp().buff_attrs.hp_per += self.cur_layer * 0.1
 
 # Main body
 if __name__ == '__main__':

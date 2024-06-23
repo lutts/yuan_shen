@@ -6,6 +6,7 @@ Module documentation.
 
 from typing import Self
 from enum import Flag, auto
+from collections import deque
 
 
 class BuffAttrs(Flag):
@@ -36,10 +37,10 @@ class BuffAttrs(Flag):
 
 
 class Buff:
-    def __init_subclass__(cls, max_layer=0, co_exist=False, re_convertable=True,
+    def __init_subclass__(cls, max_layer=1, co_exist=False, re_convertable=True,
                           attrs: BuffAttrs = None, depend_attrs: BuffAttrs = BuffAttrs(0)) -> None:
         """
-        * max_layer: 最大允许叠层, 0 表示不允许重复存在(即: 后来的 buff_type 相同的会覆盖旧的), 默认不可重复存在(0)
+        * max_layer: 最大允许叠层
 
             * 注：如果 creator 不同，则还需要根据 co_exist 来判断是否允许重复存在
 
@@ -69,19 +70,32 @@ class Buff:
         creator: buff 施加者，可能是某个 Character, 也可能是某件武器，也可能是圣遗物效果
         """
 
-        self.start_time = start_time
-        self.end_time = end_time
+        self.__start_time = start_time
+        self.__end_time = end_time
         self.cur_layer = 1
         self.creator = creator
+
+    @property
+    def start_time(self):
+        pass
+    
+    @property
+    def end_time(self):
+        pass
 
     def inc_layer(self, new_buff):
         if self.cur_layer < self.max_layer:
             self.cur_layer += 1
+            self.__start_end_times.extend(new_buff.__start_end_times)
+
+    def dec_layer(self):
+        self.__start_end_times.pop()
+        self.cur_layer -= 1
 
     def on_finish(self):
         pass
 
-    def update(self, buff_manager):
+    def update(self, buff_manager, cur_time):
         pass
 
 
@@ -109,7 +123,7 @@ class BuffManager:
 
     def update(self, cur_time):
         for ch in self.plan.characters:
-            ch.reset_buff_attrs()
+            ch.reset_attrs()
         self.plan.monster.buff_attrs.reset()
 
         invalid_buff = [buff for buff in self.__buff_lst 
@@ -121,37 +135,31 @@ class BuffManager:
 
         self.__buff_lst.sort(key=lambda x: x.level)
 
-        un_re_convertable_buffs = []
+        max_hp_may_changed = False
         for buff in self.__buff_lst:
             if buff.buff.start_time >= cur_time:
                 continue
 
-            if buff.buff.re_convertable:
-                buff.update()
-            else:
-                un_re_convertable_buffs.append(buff)
+            buff.buff.update(self, cur_time)
 
-        if un_re_convertable_buffs:
-            for buff in un_re_convertable_buffs:
-                buff.update()
+            if not max_hp_may_changed and buff.buff.attrs & (BuffAttrs.HP_PER | BuffAttrs.HP):
+                max_hp_may_changed = True
 
+        if max_hp_may_changed:
             for ch in self.plan.characters:
-                ch.sync_un_convertable_attrs()
-            self.plan.monster.sync_un_convertable_attrs()
+                ch.get_hp().on_max_hp_changed()
                 
     def __del_buff(self, buff: BuffNode):
         self.__buff_lst.remove(buff)
 
         parents = buff.parents
-        childs = buff.childs
-
         if not parents:
             self.__root_node.childs.remove(buff)
         else:
             for p in parents:
                 p.childs.remove(buff)
 
-        for c in childs:
+        for c in buff.childs:
             c.parents.remove(buff)
             for p in parents:
                 if c.buff.depend_attrs & p.buff.attrs:
@@ -180,10 +188,11 @@ class BuffManager:
 
     def __add_buff(self, new_buff: BuffNode):
         self.__buff_lst.append(new_buff)
+        # 大部分时候，buff 之间没有依赖关系
         self.__root_node.childs.append(new_buff)
 
         for buff in self.__buff_lst:
-            if buff.buff.attrs & new_buff.buff.depend_attrs:
+            if buff.buff.re_convertable and buff.buff.attrs & new_buff.buff.depend_attrs:
                 buff.childs.append(new_buff)
                 new_buff.parents.append(buff)
                 self.__adjust_level(new_buff)
@@ -199,7 +208,7 @@ class BuffManager:
                 same_type_buff_lst.append(b)
 
         if same_type_buff_lst:
-            if new_buff.max_layer == 0:  # 不允许叠层
+            if new_buff.max_layer == 1:  # 不允许叠层
                 if new_buff.co_exist:
                     # 不可重复，但不同 creator 允许同时存在
                     # 那么只需要替换掉 creator 相同的那个 old buff 即可

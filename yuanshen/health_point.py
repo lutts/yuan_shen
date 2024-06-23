@@ -45,27 +45,28 @@ class HealthPoint:
         base_hp = round(base_hp)
         max_hp = round(max_hp)
 
-        self.__base_hp: int = base_hp
-        if not max_hp:
-            # 最少为白字生命值 + 圣遗物花
-            max_hp = base_hp + 4780
+        self.__base_hp = base_hp
+
+        self.fixed_attrs = HpBuffAttributes()
+        self.buff_attrs = HpBuffAttributes()
+        # NOTE: 生命值上限止前似乎没有不可转化的
+        # self.un_convertable_attrs = HpBuffAttributes()
         
-        self.__max_hp: int = max_hp
-        self.__max_hp_with_buff: int = max_hp
+        if max_hp:
+            self.fixed_attrs.hp = max_hp - base_hp
+        self.__maxest_hp_ever: int = max_hp
+        self.__cur_max_hp = max_hp
+
         self.__cur_hp: int = max_hp
         self.__cur_hp_per = 1.0
+
         self.__in_q_animation = False
-
-        self.buff_attrs = HpBuffAttributes()
-        self.un_convertable_attrs = HpBuffAttributes()
-
-        self.__maxest_hp_ever: int = max_hp
-
-    def __str__(self) -> str:
-        return "base_hp: %i, max_hp: %i, cur_hp: %i" % (self.__base_hp, self.get_max_hp(), self.__cur_hp)
 
     def get_base_hp(self):
         return self.__base_hp
+    
+    def get_max_hp(self):
+        return self.__cur_max_hp
     
     def get_cur_hp(self):
         return self.__cur_hp
@@ -83,42 +84,22 @@ class HealthPoint:
 
     def set_in_q_animation(self, anim = False):
         self.__in_q_animation = anim
-
-    def get_max_hp(self):
-        return self.__max_hp_with_buff
         
     def on_max_hp_changed(self):
-        new_max_hp = self.__max_hp + self.buff_attrs.get_max_hp(self.__base_hp)
-        if self.__max_hp_with_buff == new_max_hp:
+        cur_max_hp = self.fixed_attrs.get_max_hp(self.__base_hp) + self.buff_attrs.get_max_hp(self.__base_hp)
+        if cur_max_hp == self.__cur_max_hp:
             return
+        
+        self.__cur_max_hp = cur_max_hp
         
         # 不直接乘法，避免可能的浮点运算问题
         if self.__cur_hp_per == 1:
-            self.__cur_hp = new_max_hp
+            self.__cur_hp = cur_max_hp
         else:
-            self.__cur_hp = new_max_hp * self.__cur_hp_per
-        
-        self.__max_hp_with_buff = new_max_hp
+            self.__cur_hp = cur_max_hp * self.__cur_hp_per
 
-        if new_max_hp > self.__maxest_hp_ever:
-            self.__maxest_hp_ever = new_max_hp
-
-    def set_max_hp(self, max_hp):
-        self.__max_hp = round(max_hp)
-        self.on_max_hp_changed()
-
-    def modify_max_hp(self, hp):
-        if hp == 0:
-            return
-        
-        self.__max_hp += round(hp)
-        self.on_max_hp_changed()
-
-    def modify_max_hp_per(self, hp_per):
-        if hp_per == 0:
-            return
-        
-        self.modify_max_hp(self.__base_hp * hp_per)
+        if cur_max_hp > self.__maxest_hp_ever:
+            self.__maxest_hp_ever = cur_max_hp
 
     def modify_cur_hp(self, hp_changed) -> HP_Change_Data:
         """
@@ -131,38 +112,37 @@ class HealthPoint:
         if hp_changed < 0 and self.__in_q_animation:
             return not_changed_data
         
+        hp_changed = round(hp_changed)
+        
         if hp_changed == 0:
             return not_changed_data
         
-        cur_max_hp = self.get_max_hp()
-        
-        if hp_changed > 0 and self.__cur_hp == cur_max_hp:
+        if hp_changed > 0 and self.__cur_hp == self.__cur_max_hp:
             return HP_Change_Data(0, 0, hp_changed)
         
         over_heal_num = 0
-        hp_changed = round(hp_changed)
-
+        
         cur_hp = self.__cur_hp + hp_changed
-        if cur_hp >= cur_max_hp:
-            actual_modified_hp = cur_max_hp - self.__cur_hp
-            over_heal_num = cur_hp - cur_max_hp
-            self.__cur_hp = cur_max_hp
+        if cur_hp >= self.__cur_max_hp:
+            actual_modified_hp = self.__cur_max_hp - self.__cur_hp
+            over_heal_num = cur_hp - self.__cur_max_hp
+            self.__cur_hp = self.__cur_max_hp
             self.__cur_hp_per = 1
-        elif cur_hp > 0:   # 0 < cur_hp < cur_max_hp
-            actual_modified_hp = cur_hp - self.__cur_hp
+        elif cur_hp > 0:   # 0 < cur_hp < self.__cur_max_hp
+            actual_modified_hp = hp_changed
             self.__cur_hp = cur_hp
-            self.__cur_hp_per = round(self.__cur_hp / cur_max_hp, 3)
+            self.__cur_hp_per = round(self.__cur_hp / self.__cur_max_hp, 3)
         else:   # cur_hp <= 0
             actual_modified_hp = 0 - self.__cur_hp
             self.__cur_hp = 0
             self.__cur_hp_per = 0
 
-        actual_modified_hp_per = actual_modified_hp / cur_max_hp
+        actual_modified_hp_per = actual_modified_hp / self.__cur_max_hp
 
         return HP_Change_Data(actual_modified_hp, actual_modified_hp_per, over_heal_num)
 
     def modify_cur_hp_per(self, hp_per):
-        return self.modify_cur_hp(self.get_max_hp() * hp_per)
+        return self.modify_cur_hp(self.__cur_max_hp * hp_per)
 
     def __str__(self):
-        return "hp:" + str(self.get_cur_hp()) + "/" + str(self.get_max_hp())
+        return "hp:" + str(self.__cur_hp) + "/" + str(self.__cur_max_hp)
