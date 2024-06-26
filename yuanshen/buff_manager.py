@@ -139,33 +139,49 @@ class BuffManager:
     def init(self, plan):
         self.__buff_lst: list[BuffNode] = []
         self.__root_node = BuffNode(None)
+        self.__prev_valid_buff_num = 0
 
     def reset(self):
         self.__buff_lst = None
         self.__root_node = None
 
     def update(self, plan, cur_time):
+        buff_changed = False
+
+        invalid_buff = []
+        valid_buff = []
+
+        for buff in self.__buff_lst:
+            if buff.buff.end_time is not None and buff.buff.end_time < cur_time:
+                invalid_buff.append(buff)
+            elif buff.buff.start_time <= cur_time:
+                valid_buff.append(buff)
+
+        valid_buff_num = len(valid_buff)
+        if valid_buff_num != self.__prev_valid_buff_num:
+            buff_changed = True
+            self.__prev_valid_buff_num = valid_buff_num
+
+        if invalid_buff:
+            # print([b.buff for b in invalid_buff])
+            # print([b.buff.end_time for b in invalid_buff])
+            buff_changed = True
+            for buff in invalid_buff:
+                self.__del_buff(buff)
+                buff.buff.on_finish()
+
+        if not buff_changed:
+            return
+
         # print(f"update buff @{cur_time}")
         for ch in plan.characters:
             ch.reset_attrs()
         plan.monster.buff_attrs.reset()
 
-        invalid_buff = [buff for buff in self.__buff_lst 
-                        if buff.buff.end_time is not None and buff.buff.end_time < cur_time]
-        # print([b.buff for b in invalid_buff])
-        # print([b.buff.end_time for b in invalid_buff])
-
-        for buff in invalid_buff:
-            self.__del_buff(buff)
-            buff.buff.on_finish()
-
-        self.__buff_lst.sort(key=lambda x: x.level)
+        valid_buff.sort(key=lambda x: x.level)
 
         max_hp_may_changed = False
         for buff in self.__buff_lst:
-            if buff.buff.start_time >= cur_time:
-                continue
-
             buff.buff.update(self, plan, cur_time)
 
             if not max_hp_may_changed and buff.buff.attrs & (BuffAttrs.HP_PER | BuffAttrs.HP):
