@@ -86,7 +86,9 @@ class HealthPoint:
         self.__in_q_animation = anim
         
     def on_max_hp_changed(self):
-        cur_max_hp = self.fixed_attrs.get_max_hp(self.__base_hp) + self.buff_attrs.get_max_hp(self.__base_hp)
+        cur_max_hp = int(self.__base_hp + self.fixed_attrs.get_max_hp(self.__base_hp) + self.buff_attrs.get_max_hp(self.__base_hp))
+        # fixed_max_hp = self.fixed_attrs.get_max_hp(self.__base_hp)
+        # print(f"base_hp:{self.__base_hp}, fixed_max_hp:{fixed_max_hp}, cur_max_hp:{cur_max_hp}")
         if cur_max_hp == self.__cur_max_hp:
             return
         

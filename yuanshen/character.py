@@ -161,8 +161,7 @@ class Character(CharacterBase, name="通用角色"):
         self.__fixed_attrs = _ChAttributes()
         self.buff_attrs = _ChAttributes()
         self.un_convertable_attrs = _ChAttributes()
-        self.__attrs = [self.__fixed_attrs, self.buff_attrs, self.un_convertable_attrs]
-        
+
         # 攻击力
         if all_atk:
             self.__fixed_attrs.atk = all_atk - base_atk
@@ -264,12 +263,12 @@ class Character(CharacterBase, name="通用角色"):
     def get_atk(self, include_un_convertable=True):
         atk_per = self.__fixed_attrs.atk_per
         atk_per += self.buff_attrs.atk_per
-        if include_un_convertable:
-            atk_per += self.un_convertable_attrs.atk_per
 
         atk = self.__fixed_attrs.atk
         atk += self.buff_attrs.atk
+
         if include_un_convertable:
+            atk_per += self.un_convertable_attrs.atk_per
             atk += self.un_convertable_attrs.atk
 
         return round(atk_per * self.__base_atk + atk)
@@ -277,12 +276,12 @@ class Character(CharacterBase, name="通用角色"):
     def get_defence(self, include_un_convertable=True):
         def_per = self.__fixed_attrs.def_per
         def_per += self.buff_attrs.def_per
-        if include_un_convertable:
-            def_per += self.un_convertable_attrs.def_per
 
         def_v = self.__fixed_attrs.def_v
         def_v += self.buff_attrs.def_v
+
         if include_un_convertable:
+            def_per += self.un_convertable_attrs.def_per
             def_v += self.un_convertable_attrs.def_v
 
         return round(self.__base_defence * def_per + def_v)
@@ -326,7 +325,7 @@ class Character(CharacterBase, name="通用角色"):
     
     def __get_base_bonus(self, include_un_convertable):
         bb = self.__fixed_attrs.elem_bonus + self.buff_attrs.elem_bonus
-        if if include_un_convertable:
+        if include_un_convertable:
             bb += self.un_convertable_attrs.elem_bonus
         return bb
 

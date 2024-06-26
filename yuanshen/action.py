@@ -39,7 +39,10 @@ class Action:
         # self.__debug(fmt_str, *args, **kwargs)
 
     def get_timeline_nodes(self):
-        return (self.start_time, self.idx)
+        return [(self.start_time, self.idx)]
+    
+    def need_update_buff(self):
+        return True
 
     def do(self, plan: ActionPlan):
         """
@@ -52,6 +55,9 @@ class SwitchAction(Action):
         super().__init__(f"切换到{ch.name}", t)
         self.ch = ch
 
+    def need_update_buff(self):
+        return False
+
     def do(self, plan: ActionPlan):
         plan.switch_character(self.ch)
 
@@ -59,6 +65,9 @@ class Q_Animation_Start_Action(Action):
     def __init__(self, ch: Character, t):
         super().__init__(f"{ch.name}大招动画开始")
         self.ch = ch
+
+    def need_update_buff(self):
+        return False
 
     def do(self, plan: ActionPlan):
         self.ch.get_hp().set_in_q_animation(True)
@@ -69,13 +78,12 @@ class Q_Animation_End_Action(Action):
         super().__init__(f"{ch.name}大招动画结束")
         self.ch = ch
 
+    def need_update_buff(self):
+        return False
+
     def do(self, plan: ActionPlan):
         self.ch.get_hp().set_in_q_animation(False)
 
-
-class AttributeAction(Action, Buff):
-    def do(self, plan: ActionPlan):
-        plan.add_extra_attr(self)
 
 class ActionPlan:
     def __init__(self, characters: list[Character], monster: Monster):
@@ -90,7 +98,7 @@ class ActionPlan:
         self.__characters = characters if characters else []
         self.__forground_character: Character = None
         self.__monster = monster if monster else Monster()
-        self.__buff_manager = BuffManager(self)
+        self.__buff_manager = BuffManager()
         self.events = Events()
 
         self.__total_raw_damage = 0
@@ -123,7 +131,7 @@ class ActionPlan:
                 bing_num += 1
 
             if reset:
-                ch.reset_buff_attrs()
+                ch.reset_attrs()
 
         if huo_num >= 2:
             for t in self.__characters:
@@ -231,7 +239,7 @@ class ActionPlan:
         return self.__current_action_time
     
     @property
-    def buff_mamager(self):
+    def buff_manager(self):
         return self.__buff_manager
 
     ##################################################
@@ -434,7 +442,8 @@ class ActionPlan:
             if action is not None:
                 cur_time = self.__time_line[self.__current_index][0]
                 self.__current_action_time = cur_time
-                self.__buff_manager.update(cur_time)
+                if action.need_update_buff():
+                    self.__buff_manager.update(self, cur_time)
                 finished = action.do(self)
                 if finished:
                     self.__action_array[action_idx] = None

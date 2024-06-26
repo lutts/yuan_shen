@@ -95,7 +95,7 @@ class Wan_Ye_Ch(Character, name="枫原万叶",
 
         # 二命的结束时间无法准确测量，目前观测到的数据显示第五次流风之后 1.5 秒效果消失
         ming_2_buff = Wan_Ye_Ming_2_Buff(q_start_time, last_liu_feng_hit + 1.5, self)
-        plan.buff_mamager.add_buff(ming_2_buff)
+        plan.buff_manager.add_buff(ming_2_buff)
 
     def do_q(self, plan: ActionPlan, t, add_all_liu_feng=False):
         """
@@ -151,9 +151,9 @@ class WanYe_Kuo_San_Action(Action):
     def do_impl(self, plan: ActionPlan):
         cur_time = plan.current_action_time
         bonus_buf = Wan_Ye_Bonus_Buff(cur_time, cur_time + 8, creator=self.wan_ye)
-        plan.buff_mamager.add_buff(bonus_buf)
+        plan.buff_manager.add_buff(bonus_buf)
 
         # 减抗需要万叶在前台
         if self.wan_ye.is_in_foreground():
             feng_tao_buff = Feng_Tao_Buff(cur_time, cur_time + 10)
-            plan.buff_mamager.add_buff(feng_tao_buff)
+            plan.buff_manager.add_buff(feng_tao_buff)

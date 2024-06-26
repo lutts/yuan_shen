@@ -4,7 +4,7 @@
 Module documentation.
 """
 
-from typing import Self
+from typing import Self, NewType
 from enum import Flag, auto
 from collections import deque
 
@@ -34,6 +34,9 @@ class BuffAttrs(Flag):
     JIAN_KANG = auto()
     JIAN_FANG = auto()
     IGNORE_FANG = auto()
+
+
+BuffManager = NewType("BuffManager", None)
 
 
 class Buff:
@@ -70,32 +73,53 @@ class Buff:
         creator: buff 施加者，可能是某个 Character, 也可能是某件武器，也可能是圣遗物效果
         """
 
-        self.__start_time = start_time
-        self.__end_time = end_time
-        self.cur_layer = 1
+        self.__start_end_times = deque([(start_time, end_time)])
         self.creator = creator
 
     @property
     def start_time(self):
-        pass
+        return self.__start_end_times[0][0]
     
     @property
     def end_time(self):
+        return self.__start_end_times[-1][1]
+    
+    @property
+    def cur_layer(self):
+        """
+        注: cur_layer 的值可能会大于 max_layer, 因为有的 buff 虽然最多只能叠 max_layer 层，
+        但超出 max_layer 后可能还允许继续叠，生效层数仍然是 max_layer, 但超出的层数会刷新 buff 持续时间
+        """
+        return len(self.__start_end_times)
+
+    def __remove_expired_layer(self, cur_time):
+        expired_layer = []
+        while True:
+            end_time = self.__start_end_times[0][1]
+            if end_time < cur_time:
+                expired_layer.append(self.__start_end_times.popleft())
+            else:
+                break
+
+        return expired_layer
+
+    def update(self, buff_manager: BuffManager, plan, cur_time):
+        if self.max_layer == 1:
+            return self.on_update(buff_manager, plan, cur_time, None)
+        else:
+            return self.on_update(buff_manager, plan, cur_time, self.__remove_expired_layer(cur_time))
+
+    def append_layer(self, new_buff: Self):
+        self.__start_end_times.extend(new_buff.__start_end_times)
+
+    def inc_layer(self, new_buff: Self):
+        # NOTE：已经满层了，有的不能再叠了，有的会刷新 buff 持续时间，所以 inc_layer 不存在一个通用的逻辑
         pass
-
-    def inc_layer(self, new_buff):
-        if self.cur_layer < self.max_layer:
-            self.cur_layer += 1
-            self.__start_end_times.extend(new_buff.__start_end_times)
-
-    def dec_layer(self):
-        self.__start_end_times.pop()
-        self.cur_layer -= 1
 
     def on_finish(self):
         pass
 
-    def update(self, buff_manager, cur_time):
+    def on_update(self, buff_manager: BuffManager, plan, cur_time, expired_layer):
         pass
 
 
@@ -106,28 +130,30 @@ class BuffNode:
         self.parents: list[Self] = []
         self.childs: list[Self] = []
 
+
 class BuffManager:
     def __init__(self):
-        self.plan = None
         self.__buff_lst: list[BuffNode] = None
         self.__root_node: BuffNode = None
 
     def init(self, plan):
-        self.plan = plan
         self.__buff_lst: list[BuffNode] = []
         self.__root_node = BuffNode(None)
 
     def reset(self):
-        self.plan = None
         self.__buff_lst = None
+        self.__root_node = None
 
-    def update(self, cur_time):
-        for ch in self.plan.characters:
+    def update(self, plan, cur_time):
+        # print(f"update buff @{cur_time}")
+        for ch in plan.characters:
             ch.reset_attrs()
-        self.plan.monster.buff_attrs.reset()
+        plan.monster.buff_attrs.reset()
 
         invalid_buff = [buff for buff in self.__buff_lst 
-                        if buff.buff.end_time is not None and buff.buff.end_time > cur_time]
+                        if buff.buff.end_time is not None and buff.buff.end_time < cur_time]
+        # print([b.buff for b in invalid_buff])
+        # print([b.buff.end_time for b in invalid_buff])
 
         for buff in invalid_buff:
             self.__del_buff(buff)
@@ -140,13 +166,13 @@ class BuffManager:
             if buff.buff.start_time >= cur_time:
                 continue
 
-            buff.buff.update(self, cur_time)
+            buff.buff.update(self, plan, cur_time)
 
             if not max_hp_may_changed and buff.buff.attrs & (BuffAttrs.HP_PER | BuffAttrs.HP):
                 max_hp_may_changed = True
 
         if max_hp_may_changed:
-            for ch in self.plan.characters:
+            for ch in plan.characters:
                 ch.get_hp().on_max_hp_changed()
                 
     def __del_buff(self, buff: BuffNode):
@@ -171,7 +197,7 @@ class BuffManager:
     # NOTE: 这个函数也能检测循环依赖，有循环依赖的时候，这个函数会进入死循环
     def __adjust_level(self, buff: BuffNode):
         if not buff.parents:
-            self.__root_node.childs.append(c)
+            self.__root_node.childs.append(buff)
             buff.level = 0
         else:
             if buff.level == 0:
@@ -187,7 +213,6 @@ class BuffManager:
             self.__adjust_level(c)
 
     def __add_buff(self, new_buff: BuffNode):
-        self.__buff_lst.append(new_buff)
         # 大部分时候，buff 之间没有依赖关系
         self.__root_node.childs.append(new_buff)
 
@@ -196,11 +221,13 @@ class BuffManager:
                 buff.childs.append(new_buff)
                 new_buff.parents.append(buff)
                 self.__adjust_level(new_buff)
-            elif buff.buff.depend_attrs & new_buff.buff.attrs:
+            elif new_buff.buff.re_convertable and buff.buff.depend_attrs & new_buff.buff.attrs:
                 new_buff.childs.append(buff)
                 buff.parents.append(new_buff)
                 self.__adjust_level(buff)
 
+        self.__buff_lst.append(new_buff)
+        
     def add_buff(self, new_buff: Buff):
         same_type_buff_lst: list[BuffNode] = []
         for b in self.__buff_lst:
@@ -263,3 +290,4 @@ class BuffManager:
         for test only!
         """
         return self.__buff_lst
+    
