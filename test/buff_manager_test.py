@@ -45,40 +45,50 @@ def do_add_test1():
 
     buff_manager = BuffManager()
     buff_manager.init(None)
-    buff_manager.add_buff(Buff_Lay_0_Co_f(0, creator=creator1))
+    new = buff_manager.add_buff(Buff_Lay_0_Co_f(0, creator=creator1))
+    assert new is True
     new_buff = Buff_Lay_0_Co_f(0, creator2)
-    buff_manager.add_buff(new_buff)
+    new = buff_manager.add_buff(new_buff)
+    assert new is False
     assert is_same_lst(buff_manager.buff_lst, [new_buff])
 
     buff_manager = BuffManager()
     buff_manager.init(None)
-    buff_manager.add_buff(Buff_Lay_0_Co_f(0, creator=creator1))
+    new = buff_manager.add_buff(Buff_Lay_0_Co_f(0, creator=creator1))
+    assert new is True
     new_buff = Buff_Lay_0_Co_f(0, creator1)
-    buff_manager.add_buff(new_buff)
+    new = buff_manager.add_buff(new_buff)
+    assert new is False
     assert is_same_lst(buff_manager.buff_lst, [new_buff])
 
     buff_manager = BuffManager()
     buff_manager.init(None)
     buff1 = Buff_Lay_0_Co_t(0, creator=creator1)
     buff2 = Buff_Lay_0_Co_t(0, creator=creator2)
-    buff_manager.add_buff(buff1)
-    buff_manager.add_buff(buff2)
+    new = buff_manager.add_buff(buff1)
+    assert new is True
+    new = buff_manager.add_buff(buff2)
+    assert new is True
     assert is_same_lst(buff_manager.buff_lst, [buff1, buff2])
 
     buff_manager = BuffManager()
     buff_manager.init(None)
     buff1 = Buff_Lay_0_Co_t(0, creator=creator1)
     buff2 = Buff_Lay_0_Co_t(0, creator=creator1)
-    buff_manager.add_buff(buff1)
-    buff_manager.add_buff(buff2)
+    new = buff_manager.add_buff(buff1)
+    assert new is True
+    new = buff_manager.add_buff(buff2)
+    assert new is False
     assert is_same_lst(buff_manager.buff_lst, [buff2])
 
     buff_manager = BuffManager()
     buff_manager.init(None)
     buff1 = Buff_Lay_2_Co_f(0, creator=creator1)
     buff2 = Buff_Lay_2_Co_f(0, creator=creator1)
-    buff_manager.add_buff(buff1)
-    buff_manager.add_buff(buff2)
+    new = buff_manager.add_buff(buff1)
+    assert new is True
+    new = buff_manager.add_buff(buff2)
+    assert new is False
     assert is_same_lst(buff_manager.buff_lst, [buff1])
     assert buff1.cur_layer == 2
 
@@ -86,8 +96,10 @@ def do_add_test1():
     buff_manager.init(None)
     buff1 = Buff_Lay_2_Co_f(0, creator=creator1)
     buff2 = Buff_Lay_2_Co_f(0, creator=creator2)
-    buff_manager.add_buff(buff1)
-    buff_manager.add_buff(buff2)
+    new = buff_manager.add_buff(buff1)
+    assert new is True
+    new = buff_manager.add_buff(buff2)
+    assert new is False
     assert is_same_lst(buff_manager.buff_lst, [buff2])
     assert buff2.cur_layer == 1
 
@@ -95,8 +107,10 @@ def do_add_test1():
     buff_manager.init(None)
     buff1 = Buff_Lay_2_Co_t(0, creator=creator1)
     buff2 = Buff_Lay_2_Co_t(0, creator=creator1)
-    buff_manager.add_buff(buff1)
-    buff_manager.add_buff(buff2)
+    new = buff_manager.add_buff(buff1)
+    assert new is True
+    new = buff_manager.add_buff(buff2)
+    assert new is False
     assert is_same_lst(buff_manager.buff_lst, [buff1])
     assert buff1.cur_layer == 2
 
@@ -104,8 +118,10 @@ def do_add_test1():
     buff_manager.init(None)
     buff1 = Buff_Lay_2_Co_t(0, creator=creator1)
     buff2 = Buff_Lay_2_Co_t(0, creator=creator2)
-    buff_manager.add_buff(buff1)
-    buff_manager.add_buff(buff2)
+    new = buff_manager.add_buff(buff1)
+    assert new is True
+    new = buff_manager.add_buff(buff2)
+    assert new is True
     assert is_same_lst(buff_manager.buff_lst, [buff1, buff2])
     assert buff1.cur_layer == 1
     assert buff2.cur_layer == 1
@@ -115,9 +131,12 @@ def do_add_test1():
     buff1 = Buff_Lay_2_Co_t(0, creator=creator1)
     buff2 = Buff_Lay_2_Co_t(0, creator=creator2)
     buff3 = Buff_Lay_2_Co_t(0, creator=creator1)
-    buff_manager.add_buff(buff1)
-    buff_manager.add_buff(buff2)
-    buff_manager.add_buff(buff3)
+    new = buff_manager.add_buff(buff1)
+    assert new is True
+    new = buff_manager.add_buff(buff2)
+    assert new is True
+    new = buff_manager.add_buff(buff3)
+    assert new is False
     assert is_same_lst(buff_manager.buff_lst, [buff1, buff2])
     assert buff1.cur_layer == 2
     assert buff2.cur_layer == 1

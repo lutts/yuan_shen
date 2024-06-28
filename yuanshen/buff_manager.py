@@ -245,6 +245,9 @@ class BuffManager:
         self.__buff_lst.append(new_buff)
         
     def add_buff(self, new_buff: Buff):
+        """
+        * 返回值: True 表示新增了, False 表示替换了某个 Buff 或只是叠层了
+        """
         same_type_buff_lst: list[BuffNode] = []
         for b in self.__buff_lst:
             if type(b.buff) is type(new_buff):
@@ -258,15 +261,17 @@ class BuffManager:
                     for old_buff in same_type_buff_lst:
                         if old_buff.buff.creator is new_buff.creator:
                             old_buff.buff = new_buff
-                            return
+                            return False
 
                     # 没有 creator 相同的，作为新 buff 添加到列表
                     self.__add_buff(BuffNode(new_buff))
+                    return True
                 else:
                     # 不可重复，而且不论 creator 是否相同都不可重复
                     assert len(same_type_buff_lst) == 1
                     old_buff = same_type_buff_lst[0]
                     old_buff.buff = new_buff
+                    return False
             else:   # 允许叠层
                 if new_buff.co_exist:
                     # 允许叠层，并且不同 creator 是分别叠层的
@@ -274,10 +279,11 @@ class BuffManager:
                     for old_buff in same_type_buff_lst:
                         if old_buff.buff.creator is new_buff.creator:
                             old_buff.buff.inc_layer(new_buff)
-                            return
+                            return False
 
                     # 没有 creator 相同的，作为新 buff 添加到列表
                     self.__add_buff(BuffNode(new_buff))
+                    return True
                 else:
                     # 允许叠层，但不同 creator 不允许共存
                     # 这意味着，只在 creator 相同时叠层，否则如果 creator 不同，new_buff 将替换掉 old_buff
@@ -287,8 +293,10 @@ class BuffManager:
                         old_buff.buff.inc_layer(new_buff)
                     else:
                         old_buff.buff = new_buff
+                    return False
         else:
             self.__add_buff(BuffNode(new_buff))
+            return True
 
     def remove_buff(self, buff: Buff):
         buff_node = None
