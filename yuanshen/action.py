@@ -248,12 +248,9 @@ class ActionPlan:
     ##################################################
 
     def add_buff(self, buff: Buff, update=False):
-        new_add = self.__buff_manager.add_buff(buff, update)
+        self.__buff_manager.add_buff(buff, update)
         if update:
-            if new_add:
-                buff.update(self.__buff_manager, self, self.__current_action_time)
-            else:
-                self.__buff_manager.update(self, self.__current_action_time)
+            self.__buff_manager.update(self, self.__current_action_time)
 
     def update_buff(self):
         self.__buff_manager.update(self, self.__current_action_time)

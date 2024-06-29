@@ -75,6 +75,7 @@ class Buff:
 
         self.__start_end_times = deque([(start_time, end_time)])
         self.creator = creator
+        self.need_update = True
 
     @property
     def start_time(self):
@@ -139,38 +140,26 @@ class BuffManager:
     def init(self, plan):
         self.__buff_lst: list[BuffNode] = []
         self.__root_node = BuffNode(None)
-        self.__prev_valid_buff_num = 0
 
     def reset(self):
         self.__buff_lst = None
         self.__root_node = None
 
     def update(self, plan, cur_time):
-        buff_changed = False
+        need_update = False
 
-        invalid_buff = []
-        valid_buff = []
-
-        for buff in self.__buff_lst:
+        idx = 0
+        while idx < len(self.__buff_lst):
+            buff = self.__buff_lst[idx]
             if buff.buff.end_time is not None and buff.buff.end_time < cur_time:
-                invalid_buff.append(buff)
-            elif buff.buff.start_time <= cur_time:
-                valid_buff.append(buff)
-
-        valid_buff_num = len(valid_buff)
-        if valid_buff_num != self.__prev_valid_buff_num:
-            buff_changed = True
-            self.__prev_valid_buff_num = valid_buff_num
-
-        if invalid_buff:
-            # print([b.buff for b in invalid_buff])
-            # print([b.buff.end_time for b in invalid_buff])
-            buff_changed = True
-            for buff in invalid_buff:
                 self.__del_buff(buff)
-                buff.buff.on_finish()
+                need_update = True
+            else:
+                if not need_update and buff.buff.start_time <= cur_time and buff.buff.need_update:
+                    need_update = True
+                idx += 1
 
-        if not buff_changed:
+        if not need_update:
             return
 
         # print(f"update buff @{cur_time}")
@@ -178,10 +167,11 @@ class BuffManager:
             ch.reset_attrs()
         plan.monster.buff_attrs.reset()
 
-        valid_buff.sort(key=lambda x: x.level)
+        self.__buff_lst.sort(key=lambda x: x.level)
 
         for buff in self.__buff_lst:
-            buff.buff.update(self, plan, cur_time)
+            if buff.buff.start_time <= cur_time:
+                buff.buff.update(self, plan, cur_time)
                 
     def __del_buff(self, buff: BuffNode):
         self.__buff_lst.remove(buff)
@@ -238,7 +228,7 @@ class BuffManager:
         
     def add_buff(self, new_buff: Buff):
         """
-        * 返回值: True 表示新增了, False 表示替换了某个 Buff 或只是叠层了
+        * 返回值: 如果新增了 buff, 则返回相应的 BuffNode, 如果是替换了旧的或增加了叠层，则返回 None
         """
         same_type_buff_lst: list[BuffNode] = []
         for b in self.__buff_lst:
@@ -253,17 +243,17 @@ class BuffManager:
                     for old_buff in same_type_buff_lst:
                         if old_buff.buff.creator is new_buff.creator:
                             old_buff.buff = new_buff
-                            return False
+                            return
 
                     # 没有 creator 相同的，作为新 buff 添加到列表
-                    self.__add_buff(BuffNode(new_buff))
-                    return True
+                    new_buff_node = BuffNode(new_buff)
+                    self.__add_buff(new_buff_node)
+                    return new_buff_node
                 else:
                     # 不可重复，而且不论 creator 是否相同都不可重复
                     assert len(same_type_buff_lst) == 1
                     old_buff = same_type_buff_lst[0]
                     old_buff.buff = new_buff
-                    return False
             else:   # 允许叠层
                 if new_buff.co_exist:
                     # 允许叠层，并且不同 creator 是分别叠层的
@@ -271,11 +261,12 @@ class BuffManager:
                     for old_buff in same_type_buff_lst:
                         if old_buff.buff.creator is new_buff.creator:
                             old_buff.buff.inc_layer(new_buff)
-                            return False
+                            return
 
                     # 没有 creator 相同的，作为新 buff 添加到列表
-                    self.__add_buff(BuffNode(new_buff))
-                    return True
+                    new_buff_node = BuffNode(new_buff)
+                    self.__add_buff(new_buff_node)
+                    return new_buff_node
                 else:
                     # 允许叠层，但不同 creator 不允许共存
                     # 这意味着，只在 creator 相同时叠层，否则如果 creator 不同，new_buff 将替换掉 old_buff
@@ -285,10 +276,10 @@ class BuffManager:
                         old_buff.buff.inc_layer(new_buff)
                     else:
                         old_buff.buff = new_buff
-                    return False
         else:
-            self.__add_buff(BuffNode(new_buff))
-            return True
+            new_buff_node = BuffNode(new_buff)
+            self.__add_buff(new_buff_node)
+            return new_buff_node
 
     def remove_buff(self, buff: Buff):
         buff_node = None

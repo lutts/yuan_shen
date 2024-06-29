@@ -45,20 +45,22 @@ def do_add_test1():
 
     buff_manager = BuffManager()
     buff_manager.init(None)
-    new = buff_manager.add_buff(Buff_Lay_0_Co_f(0, creator=creator1))
-    assert new is True
+    buff = Buff_Lay_0_Co_f(0, creator=creator1)
+    new = buff_manager.add_buff(buff)
+    assert new.buff is buff
     new_buff = Buff_Lay_0_Co_f(0, creator2)
     new = buff_manager.add_buff(new_buff)
-    assert new is False
+    assert new is None
     assert is_same_lst(buff_manager.buff_lst, [new_buff])
 
     buff_manager = BuffManager()
     buff_manager.init(None)
-    new = buff_manager.add_buff(Buff_Lay_0_Co_f(0, creator=creator1))
-    assert new is True
+    buff = Buff_Lay_0_Co_f(0, creator=creator1)
+    new = buff_manager.add_buff(buff)
+    assert new.buff is buff
     new_buff = Buff_Lay_0_Co_f(0, creator1)
     new = buff_manager.add_buff(new_buff)
-    assert new is False
+    assert new is None
     assert is_same_lst(buff_manager.buff_lst, [new_buff])
 
     buff_manager = BuffManager()
@@ -66,9 +68,9 @@ def do_add_test1():
     buff1 = Buff_Lay_0_Co_t(0, creator=creator1)
     buff2 = Buff_Lay_0_Co_t(0, creator=creator2)
     new = buff_manager.add_buff(buff1)
-    assert new is True
+    assert new.buff is buff1
     new = buff_manager.add_buff(buff2)
-    assert new is True
+    assert new.buff is buff2
     assert is_same_lst(buff_manager.buff_lst, [buff1, buff2])
 
     buff_manager = BuffManager()
@@ -76,9 +78,9 @@ def do_add_test1():
     buff1 = Buff_Lay_0_Co_t(0, creator=creator1)
     buff2 = Buff_Lay_0_Co_t(0, creator=creator1)
     new = buff_manager.add_buff(buff1)
-    assert new is True
+    assert new.buff is buff1
     new = buff_manager.add_buff(buff2)
-    assert new is False
+    assert new is None
     assert is_same_lst(buff_manager.buff_lst, [buff2])
 
     buff_manager = BuffManager()
@@ -86,9 +88,9 @@ def do_add_test1():
     buff1 = Buff_Lay_2_Co_f(0, creator=creator1)
     buff2 = Buff_Lay_2_Co_f(0, creator=creator1)
     new = buff_manager.add_buff(buff1)
-    assert new is True
+    assert new.buff is buff1
     new = buff_manager.add_buff(buff2)
-    assert new is False
+    assert new is None
     assert is_same_lst(buff_manager.buff_lst, [buff1])
     assert buff1.cur_layer == 2
 
@@ -97,9 +99,9 @@ def do_add_test1():
     buff1 = Buff_Lay_2_Co_f(0, creator=creator1)
     buff2 = Buff_Lay_2_Co_f(0, creator=creator2)
     new = buff_manager.add_buff(buff1)
-    assert new is True
+    assert new.buff is buff1
     new = buff_manager.add_buff(buff2)
-    assert new is False
+    assert new is None
     assert is_same_lst(buff_manager.buff_lst, [buff2])
     assert buff2.cur_layer == 1
 
@@ -108,9 +110,9 @@ def do_add_test1():
     buff1 = Buff_Lay_2_Co_t(0, creator=creator1)
     buff2 = Buff_Lay_2_Co_t(0, creator=creator1)
     new = buff_manager.add_buff(buff1)
-    assert new is True
+    assert new.buff is buff1
     new = buff_manager.add_buff(buff2)
-    assert new is False
+    assert new is None
     assert is_same_lst(buff_manager.buff_lst, [buff1])
     assert buff1.cur_layer == 2
 
@@ -119,9 +121,9 @@ def do_add_test1():
     buff1 = Buff_Lay_2_Co_t(0, creator=creator1)
     buff2 = Buff_Lay_2_Co_t(0, creator=creator2)
     new = buff_manager.add_buff(buff1)
-    assert new is True
+    assert new.buff is buff1
     new = buff_manager.add_buff(buff2)
-    assert new is True
+    assert new.buff is buff2
     assert is_same_lst(buff_manager.buff_lst, [buff1, buff2])
     assert buff1.cur_layer == 1
     assert buff2.cur_layer == 1
@@ -132,11 +134,11 @@ def do_add_test1():
     buff2 = Buff_Lay_2_Co_t(0, creator=creator2)
     buff3 = Buff_Lay_2_Co_t(0, creator=creator1)
     new = buff_manager.add_buff(buff1)
-    assert new is True
+    assert new.buff is buff1
     new = buff_manager.add_buff(buff2)
-    assert new is True
+    assert new.buff is buff2
     new = buff_manager.add_buff(buff3)
-    assert new is False
+    assert new is None
     assert is_same_lst(buff_manager.buff_lst, [buff1, buff2])
     assert buff1.cur_layer == 2
     assert buff2.cur_layer == 1
@@ -247,7 +249,7 @@ class Test2_Result_Checker(Action):
         #         print("\t" + str(p))
 
         na_xi_da = plan.get_p1()
-        # (645 + 40) + 250 + (41727 * 0.2 / 100) + 100
+        # (645) + 250 + (41727 * 0.2 / 100) + 100
         assert na_xi_da.get_elem_mastery() == 1118
         assert round(na_xi_da.get_e_bonus(), 4) == round(0.4136, 4)
 
