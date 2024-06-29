@@ -458,7 +458,6 @@ class ActionPlan:
                 self.__current_action_time = cur_time
                 if action.need_update_buff():
                     self.__buff_manager.update(self, cur_time)
-                print(f"do action {action.name}")
                 finished = action.do(self)
                 if finished:
                     self.__action_array[action_idx] = None

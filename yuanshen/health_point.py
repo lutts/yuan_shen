@@ -86,7 +86,6 @@ class HealthPoint:
         self.on_max_hp_changed()
 
     def reset_attrs(self):
-        print("====>reset hp attrs")
         hp_per = self.__buff_hp_per
         hp = self.__buff_hp
         self.__buff_hp_per = 0
@@ -123,7 +122,7 @@ class HealthPoint:
         
     def on_max_hp_changed(self):
         cur_max_hp = int((1 + self.__fixed_hp_per + self.__buff_hp_per) * self.__base_hp + self.__fixed_hp + self.__buff_hp)
-        print(f"base_hp:{self.__base_hp}, buff hp per:{self.__buff_hp_per}, cur_max_hp:{cur_max_hp}")
+        ## print(f"base_hp:{self.__base_hp}, buff hp per:{self.__buff_hp_per}, cur_max_hp:{cur_max_hp}")
         if cur_max_hp == self.__cur_max_hp:
             return
         

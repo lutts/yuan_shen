@@ -175,7 +175,6 @@ class BuffManager:
 
         # print(f"update buff @{cur_time}")
         for ch in plan.characters:
-            print("===>reset ch attrs")
             ch.reset_attrs()
         plan.monster.buff_attrs.reset()
 
