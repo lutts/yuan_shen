@@ -1,5 +1,15 @@
 import weakref
 
+class Ys_Item:
+    def apply_fixed_attr(self, owner):
+        pass
+
+    def apply_dynamic_attr(self, owner, plan):
+        pass
+
+    def reset(self, plan):
+        pass
+
 class Ys_Attribute_Supplier:
     def __init__(self,
                  crit_rate=0.0, crit_damage=0.0,

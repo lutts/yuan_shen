@@ -175,21 +175,14 @@ class BuffManager:
 
         # print(f"update buff @{cur_time}")
         for ch in plan.characters:
+            print("===>reset ch attrs")
             ch.reset_attrs()
         plan.monster.buff_attrs.reset()
 
         valid_buff.sort(key=lambda x: x.level)
 
-        max_hp_may_changed = False
         for buff in self.__buff_lst:
             buff.buff.update(self, plan, cur_time)
-
-            if not max_hp_may_changed and buff.buff.attrs & (BuffAttrs.HP_PER | BuffAttrs.HP):
-                max_hp_may_changed = True
-
-        if max_hp_may_changed:
-            for ch in plan.characters:
-                ch.get_hp().on_max_hp_changed()
                 
     def __del_buff(self, buff: BuffNode):
         self.__buff_lst.remove(buff)

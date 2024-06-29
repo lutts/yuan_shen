@@ -3,23 +3,45 @@ from ..character import Character, Character_HP_Change_Data
 from ..action import Action, ActionPlan
 
 
-class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉", base_atk=542):
+class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
     E_BONUS_MULTIPLIER = [8/100, 10/100, 12/100, 14/100, 16/100]
     HP_BONUS_MULTIPLIER = [14/100, 17.5/100, 21/100, 24.5/100, 28/100]
 
-    def __init__(self):
-        super().__init__(crit_damage=0.882)
+    def __init__(self, base_atk=542, crit_damage=0.882, refinement_rank=1):
+        """
+        默认为 90 级精一
+        """
+        self.base_atk = base_atk
+        self.crit_damage = crit_damage
+        self.e_bonus_multiplier = Jing_Shui_Liu_Yong_Zhi_Hui.E_BONUS_MULTIPLIER[refinement_rank - 1]
+        self.hp_bonus_multiplier = Jing_Shui_Liu_Yong_Zhi_Hui.HP_BONUS_MULTIPLIER[refinement_rank - 1]
 
+        self.reset()
+
+    def reset(self, plan):
+        self.remove_callback(plan)
         self.__e_bonus_level = 0
         self.__e_bonus_last_change_time = 0
 
         self.__hp_bonus_level = 0
         self.__hp_bonus_last_change_time = 0
-    
-    def apply_passive(self, plan: ActionPlan=None):
-        plan.add_consume_hp_callback(self.on_hp_changed)
-        plan.add_regenerate_hp_callback(self.on_hp_changed)
 
+    def apply_fixed_attr(self, owner: Character):
+        owner.fixed_attrs.crit_damage += self.crit_damage
+    
+    def apply_dynamic_attr(self, owner: Character, plan: ActionPlan):
+        if plan is None:
+            owner.buff_attrs.e_bonus += self.e_bonus_multiplier * 3
+            owner.get_hp().buff_attrs.hp_per += self.hp_bonus_multiplier * 2
+            owner.get_hp().on_max_hp_changed()
+        else:
+            plan.add_consume_hp_callback(self.on_hp_changed)
+            plan.add_regenerate_hp_callback(self.on_hp_changed)
+
+    def remove_callback(self, plan: ActionPlan):
+        plan.remove_consume_hp_callback(self.on_hp_changed)
+        plan.remove_regenerate_hp_callback(self.on_hp_changed)
+    
     def on_hp_changed(self, plan: ActionPlan, source: Character, targets_with_data: list[Character_HP_Change_Data]):
         teammate_processed = False
         owner = self.get_owner()
@@ -31,8 +53,7 @@ class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉", base_atk=
                 teammate_processed = True
 
         if self.__hp_bonus_level >= 2 and self.__e_bonus_level >= 3:
-            plan.remove_consume_hp_callback(self.on_hp_changed)
-            plan.remove_regenerate_hp_callback(self.on_hp_changed)
+            self.remove_callback(plan)
                       
     def increase_e_bonus_level(self, plan: ActionPlan):
         if self.__e_bonus_level >= 3:

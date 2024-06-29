@@ -3,7 +3,7 @@ Module documentation.
 """
 
 import uuid
-from .attribute import Ys_Attribute_Supplier
+from .item import Ys_Attribute_Supplier
 from .elem_type import Ys_Elem_Type
 
 class ShengYiWu(Ys_Attribute_Supplier):

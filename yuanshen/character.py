@@ -158,53 +158,51 @@ class Character(CharacterBase, name="通用角色"):
         # * 固定属性：由 角色的基础属性 + 圣遗物属性 构成
         # * 可二次转化 Buff 属性：由各种能被二次转化的 Buff 附加而成
         # * 不可二次转化 Buff 属性：由各种不能被二次转化的 Buff 附加而成
-        self.__fixed_attrs = _ChAttributes()
+        self.fixed_attrs = _ChAttributes()
         self.buff_attrs = _ChAttributes()
         self.un_convertable_attrs = _ChAttributes()
 
         # 攻击力
         if all_atk:
-            self.__fixed_attrs.atk = all_atk - base_atk
+            self.fixed_attrs.atk = all_atk - base_atk
         # 总防御力
         if all_defence:
-            self.__fixed_attrs.def_v = all_defence - base_defence
+            self.fixed_attrs.def_v = all_defence - base_defence
 
         # 元素精通
-        self.__fixed_attrs.elem_mastery = elem_mastery
+        self.fixed_attrs.elem_mastery = elem_mastery
 
-        self.__fixed_attrs.crit_rate = crit_rate
-        self.__fixed_attrs.crit_damage = crit_damage
+        self.fixed_attrs.crit_rate = crit_rate
+        self.fixed_attrs.crit_damage = crit_damage
 
         # 治疗加成
-        self.__fixed_attrs.healing_bonus = healing_bonus
+        self.fixed_attrs.healing_bonus = healing_bonus
         # 受治疗加成
-        self.__fixed_attrs.incoming_healing_bonus = incoming_healing_bonus
+        self.fixed_attrs.incoming_healing_bonus = incoming_healing_bonus
 
-        self.__fixed_attrs.energy_recharge = energy_recharge
+        self.fixed_attrs.energy_recharge = energy_recharge
 
-        self.__fixed_attrs.elem_bonus = elem_bonus
+        self.fixed_attrs.elem_bonus = elem_bonus
         # 普通攻击
-        self.__fixed_attrs.normal_a_bonus = normal_a_bonus
+        self.fixed_attrs.normal_a_bonus = normal_a_bonus
         # 重击
         if not charged_a_bonus:
             charged_a_bonus = normal_a_bonus
-        self.__fixed_attrs.charged_a_bonus = charged_a_bonus
+        self.fixed_attrs.charged_a_bonus = charged_a_bonus
         # 下落攻击
         if not plunging_bonus:
             plunging_bonus = normal_a_bonus
-        self.__fixed_attrs.plunging_bonus = plunging_bonus
+        self.fixed_attrs.plunging_bonus = plunging_bonus
 
-        self.__fixed_attrs.e_bonus = e_bonus
-        self.__fixed_attrs.q_bonus = q_bonus
+        self.fixed_attrs.e_bonus = e_bonus
+        self.fixed_attrs.q_bonus = q_bonus
 
         self.__weapon: Ys_Weapon = weapon
+        if weapon:
+            weapon.apply_fixed_attr(self)
 
         self.__syw_combine: list[ShengYiWu] = None
         self.__syw_name_count: dict[str, int] = None
-
-        if weapon:
-            weapon.set_owner(self)
-            weapon.apply_static_attributes(self)
 
         self.__in_foreground = False
         # 最近一次前后台切换的时间，有些 buff 是在切到前台或后台时开始计时的
@@ -216,7 +214,7 @@ class Character(CharacterBase, name="通用角色"):
         """
         self.buff_attrs.reset()
         self.un_convertable_attrs.reset()
-        self.__hp.buff_attrs.reset()
+        self.__hp.reset_attrs()
 
     def get_base_hp(self):
         return self.__hp.get_base_hp()
@@ -229,10 +227,13 @@ class Character(CharacterBase, name="通用角色"):
     
     def get_max_hp(self):
         return self.__hp.get_max_hp()
+    
+    def set_max_hp(self, max_hp):
+        self.__hp.set_max_hp()
 
     def get_base_atk(self):
         return self.__base_atk
-    
+
     def get_base_defence(self):
         return self.__base_defence
     
@@ -260,89 +261,95 @@ class Character(CharacterBase, name="通用角色"):
     def consume_hp_per(self, hp_per):
         return Character_HP_Change_Data(self, self.__hp.modify_cur_hp_per(hp_per))
     
+    def set_atk(self, all_atk):
+        self.fixed_attrs.atk = all_atk - self.__base_atk
+    
     def get_atk(self, include_un_convertable=True):
-        atk_per = self.__fixed_attrs.atk_per
+        atk_per = self.fixed_attrs.atk_per
         atk_per += self.buff_attrs.atk_per
 
-        atk = self.__fixed_attrs.atk
+        atk = self.fixed_attrs.atk
         atk += self.buff_attrs.atk
 
         if include_un_convertable:
             atk_per += self.un_convertable_attrs.atk_per
             atk += self.un_convertable_attrs.atk
 
-        return round(atk_per * self.__base_atk + atk)
+        return round((1 + atk_per) * self.__base_atk + atk)
+    
+    def set_defence(self, all_def):
+        self.fixed_attrs.def_v = all_def - self.__base_defence
 
     def get_defence(self, include_un_convertable=True):
-        def_per = self.__fixed_attrs.def_per
+        def_per = self.fixed_attrs.def_per
         def_per += self.buff_attrs.def_per
 
-        def_v = self.__fixed_attrs.def_v
+        def_v = self.fixed_attrs.def_v
         def_v += self.buff_attrs.def_v
 
         if include_un_convertable:
             def_per += self.un_convertable_attrs.def_per
             def_v += self.un_convertable_attrs.def_v
 
-        return round(self.__base_defence * def_per + def_v)
+        return round(self.__base_defence * (1 + def_per) + def_v)
 
     def get_elem_mastery(self, include_un_convertable=True):
-        em = self.__fixed_attrs.elem_mastery + self.buff_attrs.elem_mastery
+        em = self.fixed_attrs.elem_mastery + self.buff_attrs.elem_mastery
         if include_un_convertable:
             em += self.un_convertable_attrs.elem_mastery
         return em
 
     def get_crit_rate(self, include_un_convertable=True):
-        cr = self.__fixed_attrs.crit_rate + self.buff_attrs.crit_rate
+        cr = self.fixed_attrs.crit_rate + self.buff_attrs.crit_rate
         if include_un_convertable:
             cr += self.un_convertable_attrs.crit_rate
 
         return cr
 
     def get_crit_damage(self, include_un_convertable=True):
-        cd = self.__fixed_attrs.crit_damage + self.buff_attrs.crit_damage
+        cd = self.fixed_attrs.crit_damage + self.buff_attrs.crit_damage
         if include_un_convertable:
             cd += self.un_convertable_attrs.crit_damage
         return cd
 
     def get_healing_bonus(self, include_un_convertable=True):
-        hb = self.__fixed_attrs.healing_bonus + self.buff_attrs.healing_bonus
+        hb = self.fixed_attrs.healing_bonus + self.buff_attrs.healing_bonus
         if include_un_convertable:
             hb += self.un_convertable_attrs.healing_bonus
         return hb
 
     def get_incoming_healing_bonus(self, include_un_convertable=True):
-        ihb = self.__fixed_attrs.incoming_healing_bonus + self.buff_attrs.incoming_healing_bonus
+        ihb = self.fixed_attrs.incoming_healing_bonus + self.buff_attrs.incoming_healing_bonus
         if include_un_convertable:
             ihb += self.un_convertable_attrs.incoming_healing_bonus
         return ihb
 
     def get_energy_recharge(self, include_un_convertable=True):
-        er = self.__fixed_attrs.energy_recharge + self.buff_attrs.energy_recharge
+        er = self.fixed_attrs.energy_recharge + self.buff_attrs.energy_recharge
         if include_un_convertable:
             er += self.un_convertable_attrs.energy_recharge
         return round(er, 1)
     
     def __get_base_bonus(self, include_un_convertable):
-        bb = self.__fixed_attrs.elem_bonus + self.buff_attrs.elem_bonus
+        bb = self.fixed_attrs.elem_bonus + self.buff_attrs.elem_bonus
         if include_un_convertable:
             bb += self.un_convertable_attrs.elem_bonus
         return bb
 
     def get_normal_a_bonus(self, include_un_convertable=True):
-        normal_a_bonus = self.__fixed_attrs.normal_a_bonus + self.buff_attrs.normal_a_bonus
+        normal_a_bonus = self.fixed_attrs.normal_a_bonus + self.buff_attrs.normal_a_bonus
         if include_un_convertable:
             normal_a_bonus += self.un_convertable_attrs.normal_a_bonus
         return self.__get_base_bonus(include_un_convertable) + normal_a_bonus
 
     def get_charged_a_bonus(self, include_un_convertable=True):
-        charged_a_bonus = self.__fixed_attrs.charged_a_bonus + self.buff_attrs.charged_a_bonus
+        charged_a_bonus = self.fixed_attrs.charged_a_bonus + self.buff_attrs.charged_a_bonus
         if include_un_convertable:
             charged_a_bonus += self.un_convertable_attrs.charged_a_bonus
         return self.__get_base_bonus(include_un_convertable) + charged_a_bonus
 
     def get_plunging_bonus(self, include_un_convertable=True):
-        plunging_bonus = self.__fixed_attrs.plunging_bonus + self.buff_attrs.plunging_bonus
+        plunging_bonus = self.fixed_attrs.plunging_bonus + self.buff_attrs.plunging_bonus
         if include_un_convertable:
             plunging_bonus += self.un_convertable_attrs.plunging_bonus
         return self.__get_base_bonus(include_un_convertable) + plunging_bonus
@@ -351,13 +358,13 @@ class Character(CharacterBase, name="通用角色"):
         return self.get_normal_a_bonus(include_un_convertable)
 
     def get_e_bonus(self, include_un_convertable=True):
-        e_bonus = self.__fixed_attrs.e_bonus + self.buff_attrs.e_bonus
+        e_bonus = self.fixed_attrs.e_bonus + self.buff_attrs.e_bonus
         if include_un_convertable:
             e_bonus += self.un_convertable_attrs.e_bonus
         return self.__get_base_bonus(include_un_convertable) + e_bonus
 
     def get_q_bonus(self, include_un_convertable=True):
-        q_bonus = self.__fixed_attrs.q_bonus + self.buff_attrs.q_bonus
+        q_bonus = self.fixed_attrs.q_bonus + self.buff_attrs.q_bonus
         if include_un_convertable:
             q_bonus += self.un_convertable_attrs.q_bonus
         return self.__get_base_bonus(include_un_convertable) + q_bonus
@@ -389,7 +396,7 @@ class Character(CharacterBase, name="通用角色"):
         # 花
         self.__hp.fixed_attrs.hp += 4780
         # 羽毛
-        self.__fixed_attrs.atk += 311
+        self.fixed_attrs.atk += 311
         for syw in syw_combine:
             if syw.name in self.__syw_name_count:
                 self.__syw_name_count[syw.name] += 1
@@ -399,31 +406,20 @@ class Character(CharacterBase, name="通用角色"):
             self.__hp.fixed_attrs.hp_per += syw.hp_percent
             self.__hp.fixed_attrs.hp += syw.hp
 
-            self.__fixed_attrs.crit_rate += syw.crit_rate
-            self.__fixed_attrs.crit_damage += syw.crit_damage
-            self.__fixed_attrs.energy_recharge += syw.energy_recharge * 100
-            self.__fixed_attrs.atk_per += syw.atk_per
-            self.__fixed_attrs.atk += syw.atk
-            self.__fixed_attrs.def_per += syw.def_per
-            self.__fixed_attrs.def_v += syw.def_v
-            self.__fixed_attrs.elem_mastery += syw.elem_mastery
-            self.__fixed_attrs.elem_bonus += syw.elem_bonus
-
-        self.__hp.on_max_hp_changed()
+            self.fixed_attrs.crit_rate += syw.crit_rate
+            self.fixed_attrs.crit_damage += syw.crit_damage
+            self.fixed_attrs.energy_recharge += syw.energy_recharge * 100
+            self.fixed_attrs.atk_per += syw.atk_per
+            self.fixed_attrs.atk += syw.atk
+            self.fixed_attrs.def_per += syw.def_per
+            self.fixed_attrs.def_v += syw.def_v
+            self.fixed_attrs.elem_mastery += syw.elem_mastery
+            self.fixed_attrs.elem_bonus += syw.elem_bonus
 
         # TODO: 圣遗物套装效果是否在此处理？
 
     def get_weapon(self) -> Ys_Weapon:
         return self.__weapon
-
-    # def set_weapon(self, weapon: Ys_Weapon):
-    #     if self.__weapon:
-    #         raise Exception("不支持战斗时切换武器")
-        
-    #     self.__weapon = weapon
-    #     weapon.set_owner(self)
-    #     weapon.apply_static_attributes(self)
-        
 
     def __str__(self):
         s = ""

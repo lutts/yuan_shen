@@ -12,7 +12,7 @@ from ..weapon import Ys_Weapon
 from ..utils import ys_crit_damage, ys_expect_damage
 from ..character import Character
 from ..monster import Monster
-from ..action import Action, ActionPlan, AttributeAction
+from ..action import Action, ActionPlan
 from ..syw import ShengYiWu
 from ..weapon_impl import simple_weapons
 

@@ -438,16 +438,26 @@ class SC(SB, name="sc", value="scv"):
     def __init__(self) -> None:
         print(super())
 
+class TestX1:
+    def __init__(self):
+        self.__test = 0
+
+    @property
+    def test(self):
+        return self.__test
+
+    @test.setter
+    def test(self, t):
+        self.__test = t
+
 # Main body
 if __name__ == '__main__':
     #avg_min_max([7.135, 6.855, 7.834,  6.885,  7.935,  7.385,  7.169,  6.268])
     pass
 
-    sb = SB()
-    sc = SC()
-
-    print(sc.name)
-    #print(sc.value)
-    print(sc.__init_subclass__)
-
-    print(sb.__init_subclass__)
+    t = TestX1()
+    print(t.test)
+    t.test = 2
+    print(t.test)
+    t.test += 3
+    print(t.test)

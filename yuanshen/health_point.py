@@ -20,24 +20,9 @@ class HP_Change_Data:
     
     def __str__(self):
         return "hp changed: " + str(round(self.hp)) + "(" + str(round(self.hp_per, 3)) + "), over_heal_num:" + str(round(self.over_heal_num))
-    
+
+
 not_changed_data = HP_Change_Data(0, 0, 0)
-
-class HpBuffAttributes:
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.hp_per = 0
-        self.hp = 0
-
-    def merge(self, other: Self):
-        self.hp_per += other.hp_per
-        self.hp += other.hp
-
-    def get_max_hp(self, base_hp):
-        return base_hp * self.hp_per + self.hp
-
 
 class HealthPoint:
     def __init__(self, base_hp: int, max_hp: int = 0):
@@ -47,13 +32,15 @@ class HealthPoint:
 
         self.__base_hp = base_hp
 
-        self.fixed_attrs = HpBuffAttributes()
-        self.buff_attrs = HpBuffAttributes()
+        self.__fixed_hp_per = 0
+        self.__fixed_hp = 0
+        self.__buff_hp_per = 0
+        self.__buff_hp = 0
         # NOTE: 生命值上限止前似乎没有不可转化的
         # self.un_convertable_attrs = HpBuffAttributes()
         
         if max_hp:
-            self.fixed_attrs.hp = max_hp - base_hp
+            self.__fixed_hp = max_hp - base_hp
         self.__maxest_hp_ever: int = max_hp
         self.__cur_max_hp = max_hp
 
@@ -61,6 +48,51 @@ class HealthPoint:
         self.__cur_hp_per = 1.0
 
         self.__in_q_animation = False
+
+    @property
+    def fixed_hp_per(self):
+        return self.__fixed_hp_per
+    
+    @fixed_hp_per.setter
+    def fixed_hp_per(self, hp_per):
+        self.__fixed_hp_per = hp_per
+        self.on_max_hp_changed()
+
+    @property
+    def fixed_hp(self):
+        return self.__fixed_hp
+    
+    @fixed_hp.setter
+    def fixed_hp(self, hp):
+        self.__fixed_hp = hp
+        self.on_max_hp_changed()
+
+    @property
+    def buff_hp_per(self):
+        return self.__buff_hp_per
+    
+    @buff_hp_per.setter
+    def buff_hp_per(self, hp_per):
+        self.__buff_hp_per = hp_per
+        self.on_max_hp_changed()
+
+    @property
+    def buff_hp(self):
+        return self.__buff_hp
+    
+    @buff_hp.setter
+    def buff_hp(self, hp):
+        self.__buff_hp = hp
+        self.on_max_hp_changed()
+
+    def reset_attrs(self):
+        print("====>reset hp attrs")
+        hp_per = self.__buff_hp_per
+        hp = self.__buff_hp
+        self.__buff_hp_per = 0
+        self.__buff_hp = 0
+        if hp_per != 0 or hp != 0:
+            self.on_max_hp_changed()
 
     def get_base_hp(self):
         return self.__base_hp
@@ -84,11 +116,14 @@ class HealthPoint:
 
     def set_in_q_animation(self, anim = False):
         self.__in_q_animation = anim
+
+    def set_max_hp(self, max_hp):
+        self.__fixed_hp = max_hp - self.__base_hp
+        self.on_max_hp_changed()
         
     def on_max_hp_changed(self):
-        cur_max_hp = int(self.__base_hp + self.fixed_attrs.get_max_hp(self.__base_hp) + self.buff_attrs.get_max_hp(self.__base_hp))
-        # fixed_max_hp = self.fixed_attrs.get_max_hp(self.__base_hp)
-        # print(f"base_hp:{self.__base_hp}, fixed_max_hp:{fixed_max_hp}, cur_max_hp:{cur_max_hp}")
+        cur_max_hp = int((1 + self.__fixed_hp_per + self.__buff_hp_per) * self.__base_hp + self.__fixed_hp + self.__buff_hp)
+        print(f"base_hp:{self.__base_hp}, buff hp per:{self.__buff_hp_per}, cur_max_hp:{cur_max_hp}")
         if cur_max_hp == self.__cur_max_hp:
             return
         

@@ -138,16 +138,16 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
     intervals_dict = {}
     for name, t in ys_timestamp_dict.items():
         liu_feng = [t.liu_feng_first, t.liu_feng_2nd,  t.liu_feng_3rd, t.liu_feng_4th, t.liu_feng_5th]
-        last_kuo_san = None
+        last_liu_feng_hit = None
         for idx in [4, 3, 2, 1, 0]:
             if liu_feng[idx][-1] is not null_timestamp:
-                last_kuo_san = liu_feng[idx][0]
+                last_liu_feng_hit = liu_feng[idx][0]
                 break
 
-        if not last_kuo_san:
-            last_kuo_san = t.q_hit
+        if not last_liu_feng_hit:
+            last_liu_feng_hit = t.q_hit
 
-        last_bonused = t.ling_hua_last_bonused - last_kuo_san
+        last_bonused = t.ling_hua_last_bonused - last_liu_feng_hit
         if last_bonused:
             last_bonused = round(last_bonused + 0.001, 3)
 
@@ -157,16 +157,16 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
             "Q命中 - Q风伤": t.q_feng_damage - t.q_hit,
             "Q命中 - 扩散伤害": t.q_kuo_san_damage - t.q_hit,
 
-            "Q动画开始 - 第一次流风开始": t.liu_feng_first[0] - t.q_start,
-            "流风间隔": [
+            "Q动画开始 - 第一次流风命中": t.liu_feng_first[0] - t.q_start,
+            "流风命中间隔": [
                 t.liu_feng_2nd[0] - t.liu_feng_first[0],
                 t.liu_feng_3rd[0] - t.liu_feng_2nd[0],
                 t.liu_feng_4th[0] - t.liu_feng_3rd[0],
                 t.liu_feng_5th[0] - t.liu_feng_4th[0]
             ],
-            "第一次流风 - 最后一次流风": t.liu_feng_5th[0] - t.liu_feng_first[0],
-            "Q动画结束 - 最后一次流风": t.liu_feng_5th[0] - t.q_end,
-            "流风减抗持续时间": (last_bonused, t.ling_hua_first_unbonused - last_kuo_san)
+            "第一次流风命中 - 最后一次流风命中": t.liu_feng_5th[0] - t.liu_feng_first[0],
+            "Q动画结束 - 最后一次流风命中": t.liu_feng_5th[0] - t.q_end,
+            "流风减抗持续时间(从最后一次流风命中算起)": (last_bonused, t.ling_hua_first_unbonused - last_liu_feng_hit)
         }
 
     return intervals_dict

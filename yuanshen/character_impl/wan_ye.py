@@ -8,23 +8,24 @@ import random
 from ..elem_type import Ys_Elem_Type
 from ..weapon import Ys_Weapon
 from ..action import Action, ActionPlan
-from ..buff_manager import Buff
+from ..buff_manager import Buff, BuffAttrs, BuffManager
 from ..character import Character
 
 
 class Wan_Ye_Ch(Character, name="枫原万叶", 
                 elem_type=Ys_Elem_Type.FENG, ming_zuo_num=2, q_energy=60):
-    def __init__(self, elem_mastery = 994, weapon: Ys_Weapon=None):
-        """
-        注意：如果传入的武器有精通属性，那么传给 elem_mastery 的值里需要减去武器的精通值
-        """
-        super().__init__(elem_mastery=elem_mastery, weapon=weapon)
+    @staticmethod
+    def create_instance(elem_mastery = 994, weapon: Ys_Weapon = None):
+        if weapon:
+            elem_mastery -= weapon.get_elem_mastery()
+        return Wan_Ye_Ch(base_hp=13348, base_atk=297, base_defence=807,
+                         elem_mastery=elem_mastery, weapon=weapon)
 
     def get_tian_fu_bonus(self):
-        return self.get_elem_mastery() * 0.04 / 100
+        return self.get_elem_mastery(False) * 0.04 / 100
             
-    def __add_kuo_san_action(self, plan: ActionPlan, t):
-        action = WanYe_Kuo_San_Action(self, t)
+    def __add_kuo_san_action(self, plan: ActionPlan, start_time):
+        action = WanYe_Kuo_San_Action(self, start_time)
         plan.add_action(action)
 
     def __do_raw_e(self, plan: ActionPlan, t, down_kuo_san=True):
@@ -59,11 +60,12 @@ class Wan_Ye_Ch(Character, name="枫原万叶",
         switch_to_next_ch_time = atk_btn_again + random.uniform(0.366, 0.7)
         return switch_to_next_ch_time
 
-    def __do_raw_q(self, plan: ActionPlan, q_start_time, add_all_liu_feng=False):
+    def __do_raw_q(self, plan: ActionPlan, q_start_time):
         plan.q_animation_start(self, self, q_start_time)
 
         q_hit = q_start_time + 1.2
-        self.__add_kuo_san_action(plan, q_hit)
+        q_kuo_san = q_hit + 0.2
+        self.__add_kuo_san_action(plan, q_kuo_san)
 
         # 大招动画的时间也基本是固定的(TODO：在按钮变亮前就会受伤，0.2是预估的，需要实测)
         q_end_time = q_start_time + 1.55 - 0.2
@@ -73,87 +75,80 @@ class Wan_Ye_Ch(Character, name="枫原万叶",
         # * 如果怪身上有元素附着，则先造成染伤，触发元素反应，再造成风伤，除非反应有元素残留，否则不会造成扩散
         # * 如果怪身上没有元素附着，则先造成风伤，后造成染伤，不会造成扩散
 
-        first_liu_feng_hit = q_start_time + random.uniform(2.334, 2.434)
-        max_liu_feng_hit = first_liu_feng_hit + 8
+        liu_feng_hit = q_start_time + random.uniform(2.334, 2.434)
+        max_liu_feng_hit = liu_feng_hit + 8
 
-        if add_all_liu_feng:
-            self.__add_kuo_san_action(plan, first_liu_feng_hit)
+        self.__add_kuo_san_action(plan, liu_feng_hit)
 
-        last_liu_feng_hit = first_liu_feng_hit
-        for _ in range(0, 4):
-            liu_feng_hit  = last_liu_feng_hit + random.uniform(1.966, 2.033)
+        for _ in range(0, 5):
+            liu_feng_hit += random.uniform(1.966, 2.033)
             if liu_feng_hit > max_liu_feng_hit:
                 liu_feng_hit = max_liu_feng_hit
 
-            if add_all_liu_feng:
-                self.__add_kuo_san_action(plan, liu_feng_hit)
-
-            last_liu_feng_hit = liu_feng_hit
-
-        if not add_all_liu_feng:
-            self.__add_kuo_san_action(plan, last_liu_feng_hit)
+            self.__add_kuo_san_action(plan, liu_feng_hit)
 
         # 二命的结束时间无法准确测量，目前观测到的数据显示第五次流风之后 1.5 秒效果消失
-        ming_2_buff = Wan_Ye_Ming_2_Buff(q_start_time, last_liu_feng_hit + 1.5, self)
-        plan.buff_manager.add_buff(ming_2_buff)
+        ming_2_buff = Wan_Ye_Ming_2_Buff(q_start_time, liu_feng_hit + 1.5, self)
+        plan.add_buff(ming_2_buff)
 
-    def do_q(self, plan: ActionPlan, t, add_all_liu_feng=False):
+    def do_q(self, plan: ActionPlan, t):
         """
         * t: 切万叶出来的时间
-        * add_all_liu_feng: 如果为 False(默认), 则只添加最后一次流风的 action, 如果为 True, 则添加所有流风的 action
+        * ignore_liu_feng: 是否忽略五次流风扩散，如果能确定五次流风期间万叶都不会切到前台来，则可以忽略，否则不能忽略
         * 返回值：切下一个角色的时机
         """
         t = self.q_switch(plan, t)
 
-        self.__do_raw_q(plan, t, add_all_liu_feng)
+        self.__do_raw_q(plan, t)
 
         # TODO: 是否要考虑 qe 连招？
         switch_to_next_ch_time = t + random.uniform(1.767, 1.883)
         return switch_to_next_ch_time
     
-    def do_eq(self, plan: ActionPlan, t, add_all_liu_feng=False):
+    def do_eq(self, plan: ActionPlan, t):
         pass
 
-    def do_qe(self, plan: ActionPlan, t,  add_all_liu_feng=False):
+    def do_qe(self, plan: ActionPlan, t):
         pass
 
 
-class Wan_Ye_Bonus_Buff(Buff):
-    def update(self, buff_manager):
-        wan_ye: Wan_Ye_Ch = self.creator
-        bonus = wan_ye.get_tian_fu_bonus()
-        return super().update(buff_manager)
+class Wan_Ye_Bonus_Buff(Buff, attrs=BuffAttrs.ELEM_BONUS, depend_attrs=BuffAttrs.ELEM_MASTERY, re_convertable=False):
+    def __init__(self, start_time: float, bonus, wan_ye):
+        super().__init__(start_time, end_time=start_time + 8, creator=wan_ye)
+        self.bonus = bonus
     
-    def get_elem_bonus(self, plan: ActionPlan, target_character):
-        wan_ye: Wan_Ye_Ch = self.creator
-        return wan_ye.get_tian_fu_bonus()
+    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time, expired_layer):
+        for ch in plan.characters:
+            ch.un_convertable_attrs.elem_bonus += self.bonus
         
 
-class Feng_Tao_Buff(Buff):
-    def get_jian_kang(self, plan: ActionPlan):
-        return 0.4
+class Feng_Tao_Buff(Buff, attrs=BuffAttrs.JIAN_KANG):
+    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time, expired_layer):
+        plan.monster.buff_attrs.jian_kang += 0.4
 
 
-class Wan_Ye_Ming_2_Buff(Buff):
-    def get_elem_mastery(self, plan: ActionPlan, target_character: Character):
-        if target_character.is_in_foreground() or target_character is self.creator:
-            # 万叶自身及前台能吃到二命加成
-            return 200
-        
-        return 0
+class Wan_Ye_Ming_2_Buff(Buff, attrs=BuffAttrs.ELEM_MASTERY):
+    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time, expired_layer):
+        for ch in plan.characters:
+            if ch.is_in_foreground():
+                ch.buff_attrs.elem_mastery += 200
+            elif ch is self.creator:
+                ch.buff_attrs.elem_mastery += 200
 
 
 class WanYe_Kuo_San_Action(Action):
-    def __init__(self, wan_ye: Wan_Ye_Ch):
-        super().__init__("万叶触发扩散")
+    def __init__(self, wan_ye: Wan_Ye_Ch, start_time):
+        super().__init__("万叶触发扩散", start_time)
         self.wan_ye = wan_ye
 
-    def do_impl(self, plan: ActionPlan):
-        cur_time = plan.current_action_time
-        bonus_buf = Wan_Ye_Bonus_Buff(cur_time, cur_time + 8, creator=self.wan_ye)
-        plan.buff_manager.add_buff(bonus_buf)
+    def do(self, plan: ActionPlan):
+        cur_time = self.start_time
+
+        # 增伤可以后台触发
+        bonus = self.wan_ye.get_tian_fu_bonus()
+        plan.add_buff(Wan_Ye_Bonus_Buff(cur_time, bonus, self.wan_ye))
 
         # 减抗需要万叶在前台
         if self.wan_ye.is_in_foreground():
             feng_tao_buff = Feng_Tao_Buff(cur_time, cur_time + 10)
-            plan.buff_manager.add_buff(feng_tao_buff)
+            plan.add_buff(feng_tao_buff)

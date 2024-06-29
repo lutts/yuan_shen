@@ -111,16 +111,12 @@ class ActionPlan:
         self.__time_line = []
 
     def __process_characters(self, reset=False):
-        num_chs = len(self.__characters)
-
         huo_num = 0
         shui_num = 0
         cao_num = 0
         bing_num = 0
 
-        for i in range(0, num_chs):
-            ch = self.__characters[i]
-
+        for ch in self.__characters:
             if ch.elem_type is Ys_Elem_Type.HUO:
                 huo_num += 1
             elif ch.elem_type is Ys_Elem_Type.SHUI:
@@ -130,8 +126,15 @@ class ActionPlan:
             elif ch.elem_type is Ys_Elem_Type.BING:
                 bing_num += 1
 
+            weapon = ch.get_weapon()
             if reset:
                 ch.reset_attrs()
+                if weapon:
+                    weapon.reset(self)
+            else:
+                if weapon:
+                    weapon.apply_dynamic_attr(ch, self)
+
 
         if huo_num >= 2:
             for t in self.__characters:
@@ -455,6 +458,7 @@ class ActionPlan:
                 self.__current_action_time = cur_time
                 if action.need_update_buff():
                     self.__buff_manager.update(self, cur_time)
+                print(f"do action {action.name}")
                 finished = action.do(self)
                 if finished:
                     self.__action_array[action_idx] = None
