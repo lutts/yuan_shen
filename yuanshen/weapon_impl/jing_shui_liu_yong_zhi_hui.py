@@ -19,29 +19,27 @@ class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
         self.reset()
 
     def reset(self, plan):
-        self.remove_callback(plan)
+        plan.remove_consume_hp_callback(self.on_hp_changed)
+        plan.remove_regenerate_hp_callback(self.on_hp_changed)
+    
         self.__e_bonus_level = 0
-        self.__e_bonus_last_change_time = 0
+        self.__e_bonus_last_change_time = -100
 
         self.__hp_bonus_level = 0
-        self.__hp_bonus_last_change_time = 0
+        self.__hp_bonus_last_change_time = -100
 
     def apply_fixed_attr(self, owner: Character):
         owner.fixed_attrs.crit_damage += self.crit_damage
+        self.set_owner(owner)
     
     def apply_dynamic_attr(self, owner: Character, plan: ActionPlan):
         if plan is None:
             owner.buff_attrs.e_bonus += self.e_bonus_multiplier * 3
-            owner.get_hp().buff_attrs.hp_per += self.hp_bonus_multiplier * 2
-            owner.get_hp().on_max_hp_changed()
+            owner.get_hp().buff_hp_per += self.hp_bonus_multiplier * 2
         else:
             plan.add_consume_hp_callback(self.on_hp_changed)
             plan.add_regenerate_hp_callback(self.on_hp_changed)
 
-    def remove_callback(self, plan: ActionPlan):
-        plan.remove_consume_hp_callback(self.on_hp_changed)
-        plan.remove_regenerate_hp_callback(self.on_hp_changed)
-    
     def on_hp_changed(self, plan: ActionPlan, source: Character, targets_with_data: list[Character_HP_Change_Data]):
         teammate_processed = False
         owner = self.get_owner()
@@ -51,19 +49,12 @@ class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
             elif not teammate_processed:
                 self.increase_hp_bonus_level(plan)
                 teammate_processed = True
-
-        if self.__hp_bonus_level >= 2 and self.__e_bonus_level >= 3:
-            self.remove_callback(plan)
                       
     def increase_e_bonus_level(self, plan: ActionPlan):
-        if self.__e_bonus_level >= 3:
+        cur_time = plan.current_action_time
+        if cur_time - self.__e_bonus_last_change_time < 0.2:
             return
         
-        cur_time = plan.current_action_time
-
-        if self.__e_bonus_last_change_time and (cur_time - self.__e_bonus_last_change_time < 0.2):
-            return
-
         self.__e_bonus_last_change_time = cur_time
         self.__e_bonus_level += 1
 

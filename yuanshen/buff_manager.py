@@ -106,9 +106,9 @@ class Buff:
 
     def update(self, buff_manager: BuffManager, plan, cur_time):
         if self.max_layer == 1:
-            return self.on_update(buff_manager, plan, cur_time, None)
+            self.need_update = self.on_update(buff_manager, plan, cur_time, None)
         else:
-            return self.on_update(buff_manager, plan, cur_time, self.__remove_expired_layer(cur_time))
+            self.need_update = self.on_update(buff_manager, plan, cur_time, self.__remove_expired_layer(cur_time))
 
     def append_layer(self, new_buff: Self):
         self.__start_end_times.extend(new_buff.__start_end_times)
@@ -121,6 +121,9 @@ class Buff:
         pass
 
     def on_update(self, buff_manager: BuffManager, plan, cur_time, expired_layer):
+        """
+        * return: True if buff is "Dirty" again
+        """
         pass
 
 
@@ -153,6 +156,7 @@ class BuffManager:
             buff = self.__buff_lst[idx]
             if buff.buff.end_time is not None and buff.buff.end_time < cur_time:
                 self.__del_buff(buff)
+                buff.buff.on_finish()
                 need_update = True
             else:
                 if not need_update and buff.buff.start_time <= cur_time and buff.buff.need_update:

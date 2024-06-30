@@ -461,3 +461,13 @@ if __name__ == '__main__':
     print(t.test)
     t.test += 3
     print(t.test)
+
+    import weakref
+
+    tw = weakref.ref(t)
+
+    tt = tw()
+    if tt is t:
+        print("tt is t")
+    else:
+        print("tt is not t")

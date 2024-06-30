@@ -1,6 +1,12 @@
 import weakref
 
 class Ys_Item:
+    def set_owner(self, owner):
+        self.__owner = weakref.ref(owner)
+
+    def get_owner(self):
+        return self.__owner()
+    
     def apply_fixed_attr(self, owner):
         pass
 
