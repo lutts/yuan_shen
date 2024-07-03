@@ -248,7 +248,7 @@ class ActionPlan:
     ##################################################
 
     def add_buff(self, buff: Buff, update=False):
-        self.__buff_manager.add_buff(buff, update)
+        self.__buff_manager.add_buff(buff)
         if update:
             self.__buff_manager.update(self, self.__current_action_time)
 
@@ -455,6 +455,7 @@ class ActionPlan:
                 self.__current_action_time = cur_time
                 if action.need_update_buff():
                     self.__buff_manager.update(self, cur_time)
+                print(f"do action {action.name}")
                 finished = action.do(self)
                 if finished:
                     self.__action_array[action_idx] = None

@@ -66,3 +66,15 @@ TODO：万叶的 Action 不能省？只能老老实实都加上去么？
 ---》节省流风：如果只是q或e到是没问题，但如果以后支持 qe，则后来的 e 会把 q 的顶掉！哪怕是在大招没结束时放 e 也会把 q 给顶掉！
 
 要不还是按步就班地来？
+
+
+
+=============
+何时 sort?
+
+* 删除时不需要sort: 因为虽然删除可能导致 childs的 level 发生变动，但如果这些 childs 有 parents，他们仍然会在 parents 后面，如果这些 childs 有 孙辈，孙辈仍然会在 childs 后面
+    childs的 level 发生变动后，buff_lst 可能不再是有序的，但 buff 的依赖关系并没有变动，无序只会出现在毫无关系的 buff 之间
+* 叠层或替换：不需要sort，因为整个依赖关系没有变动
+* 完全新增 buff:  
+    * 如果添加完后 buff 没有 childs，那么也不需要 sort，直接 append在最后就行
+    * 如果添中完后 buff 有 childs，则需要重新排序

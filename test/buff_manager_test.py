@@ -22,11 +22,11 @@ def do_add_test1():
     class Buff_Lay_0_Co_t(Buff, co_exist=True, attrs=BuffAttrs.CRIT_DAMAGE):
         pass
 
-    class Buff_Lay_2_Co_f(Buff, max_layer=2, attrs = BuffAttrs.ATK_PER):
+    class Buff_Lay_2_Co_f(MultiLayerBuff, max_layer=2, attrs = BuffAttrs.ATK_PER):
         def inc_layer(self, new_buff: Self):
             self.append_layer(new_buff)
 
-    class Buff_Lay_2_Co_t(Buff, max_layer=2, co_exist=True, attrs = BuffAttrs.ELEM_MASTERY):
+    class Buff_Lay_2_Co_t(MultiLayerBuff, max_layer=2, co_exist=True, attrs = BuffAttrs.ELEM_MASTERY):
         def inc_layer(self, new_buff: Self):
             self.append_layer(new_buff)
 
@@ -92,7 +92,7 @@ def do_add_test1():
     new = buff_manager.add_buff(buff2)
     assert new is None
     assert is_same_lst(buff_manager.buff_lst, [buff1])
-    assert buff1.cur_layer == 2
+    assert buff1.cur_layer(0) == 2
 
     buff_manager = BuffManager()
     buff_manager.init(None)
@@ -103,7 +103,7 @@ def do_add_test1():
     new = buff_manager.add_buff(buff2)
     assert new is None
     assert is_same_lst(buff_manager.buff_lst, [buff2])
-    assert buff2.cur_layer == 1
+    assert buff2.cur_layer(0) == 1
 
     buff_manager = BuffManager()
     buff_manager.init(None)
@@ -114,7 +114,7 @@ def do_add_test1():
     new = buff_manager.add_buff(buff2)
     assert new is None
     assert is_same_lst(buff_manager.buff_lst, [buff1])
-    assert buff1.cur_layer == 2
+    assert buff1.cur_layer(0) == 2
 
     buff_manager = BuffManager()
     buff_manager.init(None)
@@ -125,8 +125,8 @@ def do_add_test1():
     new = buff_manager.add_buff(buff2)
     assert new.buff is buff2
     assert is_same_lst(buff_manager.buff_lst, [buff1, buff2])
-    assert buff1.cur_layer == 1
-    assert buff2.cur_layer == 1
+    assert buff1.cur_layer(0) == 1
+    assert buff2.cur_layer(0) == 1
 
     buff_manager = BuffManager()
     buff_manager.init(None)
@@ -140,8 +140,8 @@ def do_add_test1():
     new = buff_manager.add_buff(buff3)
     assert new is None
     assert is_same_lst(buff_manager.buff_lst, [buff1, buff2])
-    assert buff1.cur_layer == 2
-    assert buff2.cur_layer == 1
+    assert buff1.cur_layer(0) == 2
+    assert buff2.cur_layer(0) == 1
 
     print("Add Test1 Passed")
 
@@ -174,15 +174,20 @@ class NaXiDa_Q_Action(Action):
         plan.buff_manager.add_buff(NaXiDa_Q_Buff(self.start_time, min(250, int(max_em / 4))))
 
 
-class YeLan_E(Buff, max_layer=4, attrs=BuffAttrs.HP_PER):
+class YeLan_E(MultiLayerBuff, max_layer=4, attrs=BuffAttrs.HP_PER):
     def inc_layer(self, new_buff: Self):
         self.append_layer(new_buff)
 
     def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time, expired_layer):
-        cur_layer = self.cur_layer
+        cur_layer = self.cur_layer(cur_time)
         # print("cur_layer: ", cur_layer)
         for ch in plan.characters:
             ch.get_hp().buff_hp_per += cur_layer * 0.1
+
+
+class YeLan_E_Action(Action):
+    def do(self, plan: ActionPlan):
+        plan.add_buff(YeLan_E(self.start_time, self.start_time + 25))
 
 
 class Sheng_Xian(Buff, attrs=BuffAttrs.ELEM_MASTERY, 
@@ -249,22 +254,22 @@ class Test2_Result_Checker(Action):
         #         print("\t" + str(p))
 
         na_xi_da = plan.get_p1()
-        # (645) + 250 + (41727 * 0.2 / 100) + 100
-        assert na_xi_da.get_elem_mastery() == 1118
+        # (645 + 40) + 250 + (42956 * 0.2 / 100) + 100
+        assert na_xi_da.get_elem_mastery() == 1120 - 100
         assert round(na_xi_da.get_e_bonus(), 4) == round(0.4136, 4)
 
         ye_lan = plan.get_p2()
-        assert ye_lan.get_max_hp() == 44790
-        assert ye_lan.get_elem_mastery() == 223
+        assert ye_lan.get_max_hp() == 46235
+        assert ye_lan.get_elem_mastery() == 225 - 100
         assert round(ye_lan.get_e_bonus(), 4) == round(0.4136, 4)
 
         a_ren = plan.get_p3()
-        assert a_ren.get_max_hp() == 41727
-        assert a_ren.get_elem_mastery() == 1162
+        assert a_ren.get_max_hp() == 42956
+        assert a_ren.get_elem_mastery() == 1169 - 100
         assert round(a_ren.get_e_bonus(), 4) == round(0.4136, 4)
         
         wan_ye = plan.get_p4()
-        assert wan_ye.get_elem_mastery() == 1217
+        assert wan_ye.get_elem_mastery() == 1219 - 100
         assert round(wan_ye.get_e_bonus(), 4) == round(0.4136, 4)
 
         print("Test2 Passed")
@@ -290,7 +295,8 @@ def do_test2():
         plan.add_action(Wan_Ye_E_Action("万叶e", start_time=10))
         plan.add_switch_action(na_xi_da, 10.5)
         plan.add_action(NaXiDa_Q_Action("纳西妲Q", start_time=11))
-        plan.add_action(Em_Provider_Action("其他精通", start_time=14))
+        plan.add_action(YeLan_E_Action("夜兰e", start_time=13))
+        # plan.add_action(Em_Provider_Action("其他精通", start_time=14))
         plan.add_action(Test2_Result_Checker("Test2结果检查", start_time=15))
 
         plan.run()
