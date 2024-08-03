@@ -1,32 +1,33 @@
 from ..weapon import Ys_Weapon
 from ..character import Character, Character_HP_Change_Data
 from ..action import Action, ActionPlan
+from ..buff_manager import MultiLayerBuff
 
 
 class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
     E_BONUS_MULTIPLIER = [8/100, 10/100, 12/100, 14/100, 16/100]
     HP_BONUS_MULTIPLIER = [14/100, 17.5/100, 21/100, 24.5/100, 28/100]
 
-    def __init__(self, base_atk=542, crit_damage=0.882, refinement_rank=1):
+    def __init__(self, base_atk=542, crit_damage=0.882, refinement_rank=1, never_dec_layer=True):
         """
         默认为 90 级精一
+
+        * never_dec_layer: 永不掉层，一般来说，芙芙用自已的专武时，除非一直切白芙加血，否则是能保证不掉层的。
+                           如果是其他角色使用芙芙的专武，需视情况而定
         """
         self.base_atk = base_atk
         self.crit_damage = crit_damage
+        self.never_dec_layer = never_dec_layer
+
         self.e_bonus_multiplier = Jing_Shui_Liu_Yong_Zhi_Hui.E_BONUS_MULTIPLIER[refinement_rank - 1]
         self.hp_bonus_multiplier = Jing_Shui_Liu_Yong_Zhi_Hui.HP_BONUS_MULTIPLIER[refinement_rank - 1]
 
-        self.reset()
+        self.__e_bonus_last_change_time = -10000
+        self.__hp_bonus_last_change_time = -10000
 
-    def reset(self, plan):
-        plan.remove_consume_hp_callback(self.on_hp_changed)
-        plan.remove_regenerate_hp_callback(self.on_hp_changed)
-    
         self.__e_bonus_level = 0
-        self.__e_bonus_last_change_time = -100
-
         self.__hp_bonus_level = 0
-        self.__hp_bonus_last_change_time = -100
+        
 
     def apply_fixed_attr(self, owner: Character):
         owner.fixed_attrs.crit_damage += self.crit_damage
@@ -40,6 +41,10 @@ class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
             plan.add_consume_hp_callback(self.on_hp_changed)
             plan.add_regenerate_hp_callback(self.on_hp_changed)
 
+    def __remove_callbacks(self, plan):
+        plan.remove_consume_hp_callback(self.on_hp_changed)
+        plan.remove_regenerate_hp_callback(self.on_hp_changed)
+
     def on_hp_changed(self, plan: ActionPlan, source: Character, targets_with_data: list[Character_HP_Change_Data]):
         teammate_processed = False
         owner = self.get_owner()
@@ -49,6 +54,9 @@ class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
             elif not teammate_processed:
                 self.increase_hp_bonus_level(plan)
                 teammate_processed = True
+
+        if self.never_dec_layer and self.__hp_bonus_level >= 2 and self.__e_bonus_level >= 3:
+            self.__remove_callbacks(plan)
                       
     def increase_e_bonus_level(self, plan: ActionPlan):
         cur_time = plan.current_action_time
@@ -56,36 +64,32 @@ class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
             return
         
         self.__e_bonus_last_change_time = cur_time
-        self.__e_bonus_level += 1
-
+        
         action = Increase_JingShui_E_Bonus_Level_Action(self)
-        action.set_timestamp(cur_time + plan.get_effective_delay())
+        action.set_timestamp(cur_time + plan.random_choince_2(0.067, 0.083))
         plan.insert_action_runtime(action)
 
     def increase_hp_bonus_level(self, plan: ActionPlan):
-        if self.__hp_bonus_level >= 2:
-            return
-        
         cur_time = plan.current_action_time
-
-        if self.__hp_bonus_last_change_time and (cur_time - self.__hp_bonus_last_change_time < 0.2):
+        if cur_time - self.__hp_bonus_last_change_time < 0.2:
             # 有0.2秒的CD
             return
 
         self.__hp_bonus_last_change_time = cur_time
-        self.__hp_bonus_level += 1
 
         action = Increase_JingShui_Hp_Level_Action(self)
-        action.set_timestamp(cur_time + plan.get_effective_delay())
+        action.set_timestamp(cur_time + plan.random_choince_2(0.067, 0.083))
         plan.insert_action_runtime(action)
+
+
     
 class Increase_JingShui_Hp_Level_Action(Action):
     def __init__(self, supervisor: Jing_Shui_Liu_Yong_Zhi_Hui):
         super().__init__("静水流涌之辉生命值叠层")
         self.supervisor = supervisor
 
-    def do_impl(self, plan: ActionPlan):
-        owner: Character = self.supervisor.owner
+    def do(self, plan: ActionPlan):
+        owner: Character = self.supervisor.get_owner()
         multiplier = Jing_Shui_Liu_Yong_Zhi_Hui.HP_BONUS_MULTIPLIER[self.supervisor.refinement_rank - 1]
         owner.get_hp().modify_max_hp_per(multiplier)
         self.debug("静水流涌之辉生命叠一层，目前层数: %d",  self.supervisor.hp_bonus_level)
@@ -96,7 +100,7 @@ class Increase_JingShui_E_Bonus_Level_Action(Action):
         super().__init__("静水流涌之辉战技增伤叠层")
         self.supervisor = supervisor
 
-    def do_impl(self, plan: ActionPlan):
+    def do(self, plan: ActionPlan):
         owner: Character = self.supervisor.owner
         multiplier = Jing_Shui_Liu_Yong_Zhi_Hui.E_BONUS_MULTIPLIER[self.supervisor.refinement_rank - 1]
         owner.add_e_bonus(multiplier)

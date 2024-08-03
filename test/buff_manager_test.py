@@ -23,12 +23,10 @@ def do_add_test1():
         pass
 
     class Buff_Lay_2_Co_f(MultiLayerBuff, max_layer=2, attrs = BuffAttrs.ATK_PER):
-        def inc_layer(self, new_buff: Self):
-            self.append_layer(new_buff)
+        pass
 
     class Buff_Lay_2_Co_t(MultiLayerBuff, max_layer=2, co_exist=True, attrs = BuffAttrs.ELEM_MASTERY):
-        def inc_layer(self, new_buff: Self):
-            self.append_layer(new_buff)
+        pass
 
     def is_same_lst(l1, l2):
         if len(l1) != len(l2):
@@ -147,7 +145,7 @@ def do_add_test1():
 
 
 class NaxiDa_Zhuan_Wu(Buff, attrs=BuffAttrs.ELEM_MASTERY):
-    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time, expired_layer):
+    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time):
         for ch in plan.characters:
             ch.buff_attrs.elem_mastery += 40
 
@@ -157,7 +155,7 @@ class NaXiDa_Q_Buff(Buff, attrs=BuffAttrs.ELEM_MASTERY, depend_attrs=BuffAttrs.E
         super().__init__(start_time, end_time=start_time + 25.66)
         self.q_em = q_em
 
-    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time, expired_layer):
+    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time):
         for ch in plan.characters:
             if ch.is_in_foreground():
                 ch.un_convertable_attrs.elem_mastery += self.q_em
@@ -171,14 +169,11 @@ class NaXiDa_Q_Action(Action):
             if em > max_em:
                 max_em = em
        
-        plan.buff_manager.add_buff(NaXiDa_Q_Buff(self.start_time, min(250, int(max_em / 4))))
+        plan.add_buff(NaXiDa_Q_Buff(self.start_time, min(250, int(max_em / 4))))
 
 
 class YeLan_E(MultiLayerBuff, max_layer=4, attrs=BuffAttrs.HP_PER):
-    def inc_layer(self, new_buff: Self):
-        self.append_layer(new_buff)
-
-    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time, expired_layer):
+    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time):
         cur_layer = self.cur_layer(cur_time)
         # print("cur_layer: ", cur_layer)
         for ch in plan.characters:
@@ -193,7 +188,7 @@ class YeLan_E_Action(Action):
 class Sheng_Xian(Buff, attrs=BuffAttrs.ELEM_MASTERY, 
                  depend_attrs=BuffAttrs.HP|BuffAttrs.HP_PER, 
                  re_convertable=False):
-    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time, expired_layer):
+    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time):
         owner: Character = self.creator
         owner_max_hp = owner.get_max_hp()
         # print(f"owner_max_hp: {owner_max_hp}, owner buff hp per:{owner.get_hp().buff_hp_per}")
@@ -209,7 +204,7 @@ class Wan_Ye_E(Buff, attrs=BuffAttrs.ELEM_BONUS, depend_attrs=BuffAttrs.ELEM_MAS
         super().__init__(start_time, end_time=start_time + 8, creator=wan_ye)
         self.bonus = bonus
 
-    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time, expired_layer):
+    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time):
         for ch in plan.characters:
             ch.un_convertable_attrs.elem_bonus += self.bonus
 
@@ -219,27 +214,26 @@ class Wan_Ye_E_Action(Action):
         wan_ye = plan.get_p4()
         em = wan_ye.get_elem_mastery(include_un_convertable=False)
         bonus = em * 0.04 / 100
-        plan.buff_manager.add_buff(Wan_Ye_E(self.start_time, bonus, wan_ye))
+        plan.add_buff(Wan_Ye_E(self.start_time, bonus, wan_ye))
 
 
 class Em_Provider(Buff, attrs=BuffAttrs.ELEM_MASTERY):
-    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time, expired_layer):
+    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time):
         for ch in plan.characters:
             ch.buff_attrs.elem_mastery += 100
 
 
 class TestPrepareAction(Action):
     def do(self, plan: ActionPlan):
-        buff_manager = plan.buff_manager
-        buff_manager.add_buff(NaxiDa_Zhuan_Wu(0))
-        buff_manager.add_buff(YeLan_E(1, 1 + 25))
-        buff_manager.add_buff(YeLan_E(4, 4 + 25))
-        buff_manager.add_buff(Sheng_Xian(7, 7 + 20, creator=plan.get_p3()))
+        plan.add_buff(NaxiDa_Zhuan_Wu(0))
+        plan.add_buff(YeLan_E(1, 1 + 25))
+        plan.add_buff(YeLan_E(4, 4 + 25))
+        plan.add_buff(Sheng_Xian(7, 7 + 20, creator=plan.get_p3()))
         
 
 class Em_Provider_Action(Action):
     def do(self, plan: ActionPlan):
-        plan.buff_manager.add_buff(Em_Provider(12))
+        plan.add_buff(Em_Provider(12))
 
 
 class Test2_Result_Checker(Action):

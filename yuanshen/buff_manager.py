@@ -87,17 +87,27 @@ class Buff:
     def cur_layer(self, cur_time):
         return 1
     
-    def need_update(self, plan, cur_time):
-        return self.__need_update and self.__start_time <= cur_time
+    def prepare_update(self, plan, cur_time):
+        """
+        prepare update
+
+        return: need update or not
+        """
+        
+        nu = self.__need_update and self.__start_time <= cur_time
+        self.__need_update = False
+        return nu
 
     def update(self, buff_manager: BuffManager, plan, cur_time):
-        self.__need_update = False
-        self.on_update(buff_manager, plan, cur_time, None)
+        if cur_time < self.start_time():
+            return
+        
+        self.on_update(buff_manager, plan, cur_time)
 
     def on_finish(self):
         pass
 
-    def on_update(self, buff_manager: BuffManager, plan, cur_time, expired_layer):
+    def on_update(self, buff_manager: BuffManager, plan, cur_time):
         pass
 
 
@@ -113,7 +123,7 @@ class MultiLayerBuff(Buff):
 
         self.__start_end_times = deque([(start_time, end_time)])
         self.creator = creator
-        self._prev_layer = 0
+        self.__cur_layer = 0
 
     def start_time(self):
         return self.__start_end_times[0][0]
@@ -124,39 +134,34 @@ class MultiLayerBuff(Buff):
     def cur_layer(self, cur_time):
         layer = 0
         for start_time, end_time in self.__start_end_times:
-            if start_time <= cur_time and cur_time <= end_time:
+            if cur_time <= end_time and start_time <= cur_time:
+                # NOTE: 首先检查 end_time，方便快速过滤超时的 layer
                 layer += 1
                 if layer == self.max_layer:
-                    return layer
+                    break
                 
         return layer
 
-    def __remove_expired_layer(self, cur_time):
-        expired_layer = []
-        while True:
+    def remove_expired_layer(self, cur_time):
+        while self.__start_end_times:
             end_time = self.__start_end_times[0][1]
             if end_time < cur_time:
-                expired_layer.append(self.__start_end_times.popleft())
+                self.__start_end_times.popleft()
             else:
                 break
-
-        return expired_layer
     
-    def need_update(self, plan, cur_time):
-        return self.cur_layer(cur_time) != self._prev_layer
+    def prepare_update(self, plan, cur_time):
+        self.remove_expired_layer(cur_time)
 
-    def update(self, buff_manager: BuffManager, plan, cur_time):
-        expired_layer = self.__remove_expired_layer(cur_time)
-        self.on_update(buff_manager, plan, cur_time, expired_layer)
-        self._prev_layer = self.cur_layer(cur_time)
+        if cur_time < self.start_time():
+            return False
 
-    def append_layer(self, new_buff: Self):
+        prev_layer = self.__cur_layer
+        self.__cur_layer = self.cur_layer(cur_time)
+        return prev_layer != self.__cur_layer
+
+    def inc_layer(self, new_buff: Self, cur_time):
         self.__start_end_times.extend(new_buff.__start_end_times)
-
-    def inc_layer(self, new_buff: Self):
-        # NOTE：已经满层了，有的不能再叠了，有的会刷新 buff 持续时间，所以 inc_layer 不存在一个通用的逻辑
-        # 例如：苍古叠满层后，20秒内不能再叠层
-        pass
 
 
 class BuffNode:
@@ -192,8 +197,8 @@ class BuffManager:
                 need_update = True
             else:
                 idx += 1
-                if not need_update and buff.buff.need_update(plan, cur_time):
-                    need_update = True
+                nu = buff.buff.prepare_update(plan, cur_time)
+                need_update = need_update or nu
 
         if not need_update:
             return
@@ -204,8 +209,7 @@ class BuffManager:
         plan.monster.buff_attrs.reset()
 
         for buff in self.__buff_lst:
-            if buff.buff.start_time() <= cur_time:
-                buff.buff.update(self, plan, cur_time)
+            buff.buff.update(self, plan, cur_time)
                 
     def __del_buff(self, buff: BuffNode):
         self.__buff_lst.remove(buff)
@@ -260,7 +264,7 @@ class BuffManager:
 
         self.__buff_lst.append(new_buff)
         
-    def add_buff(self, new_buff: Buff):
+    def add_buff(self, new_buff: Buff, cur_time=None):
         """
         * 返回值: 如果新增了 buff, 则返回相应的 BuffNode, 如果是替换了旧的或增加了叠层，则返回 None
         """
@@ -294,7 +298,7 @@ class BuffManager:
                     # 找出 creator 相同的 old_buff，叠层加一
                     for old_buff in same_type_buff_lst:
                         if old_buff.buff.creator is new_buff.creator:
-                            old_buff.buff.inc_layer(new_buff)
+                            old_buff.buff.inc_layer(new_buff, cur_time)
                             return
 
                     # 没有 creator 相同的，作为新 buff 添加到列表
@@ -306,7 +310,7 @@ class BuffManager:
                     assert len(same_type_buff_lst) == 1
                     old_buff = same_type_buff_lst[0]
                     if old_buff.buff.creator is new_buff.creator:
-                        old_buff.buff.inc_layer(new_buff)
+                        old_buff.buff.inc_layer(new_buff, cur_time)
                     else:
                         old_buff.buff = new_buff
                     return

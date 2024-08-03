@@ -240,15 +240,11 @@ class ActionPlan:
     @property
     def current_action_time(self):
         return self.__current_action_time
-    
-    @property
-    def buff_manager(self):
-        return self.__buff_manager
 
     ##################################################
 
     def add_buff(self, buff: Buff, update=False):
-        self.__buff_manager.add_buff(buff)
+        self.__buff_manager.add_buff(buff, self.__current_action_time)
         if update:
             self.__buff_manager.update(self, self.__current_action_time)
 
@@ -265,6 +261,22 @@ class ActionPlan:
         time range: [0, 0.05]
         """
         return random.random() / 20
+
+    def random_choince_2(self, n1, n2):
+        r = random.random()
+        if r < 0.5:
+            return n1
+        else:
+            return n2
+
+    def random_choince_3(self, n1, n2, n3):
+        r = random.random()
+        if r < 0.33:
+            return n1
+        elif r < 0.66:
+            return n2
+        else:
+            return n3
 
     def add_damage(self, damage, ch: Character, raw_damage_only=False):
         damage = self.monster.attacked(damage)

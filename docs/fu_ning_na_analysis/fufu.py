@@ -263,3 +263,10 @@ ye_lan_q_damage()
 monster = Monster(level=93, kang_xin=-0.2)
 monster.add_jian_kang(0.2)
 print(monster.attacked(1124 * 0.703 * 1.465))
+
+print("===============")
+
+monster = Monster()
+monster.add_jian_kang(0.4)
+print(monster.attacked(1))
+print(monster.attacked(41988 * 14.47 / 100 * (1 + 1.4764 + 0.3)))
