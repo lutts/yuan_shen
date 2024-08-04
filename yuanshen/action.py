@@ -262,14 +262,14 @@ class ActionPlan:
         """
         return random.random() / 20
 
-    def random_choince_2(self, n1, n2):
+    def random_choice_2(self, n1, n2):
         r = random.random()
         if r < 0.5:
             return n1
         else:
             return n2
 
-    def random_choince_3(self, n1, n2, n3):
+    def random_choice_3(self, n1, n2, n3):
         r = random.random()
         if r < 0.33:
             return n1

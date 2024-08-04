@@ -1,7 +1,8 @@
+from yuanshen.buff_manager import BuffManager
 from ..weapon import Ys_Weapon
 from ..character import Character, Character_HP_Change_Data
 from ..action import Action, ActionPlan
-from ..buff_manager import MultiLayerBuff
+from ..buff_manager import MultiLayerBuff, BuffAttrs
 
 
 class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
@@ -66,7 +67,7 @@ class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
         self.__e_bonus_last_change_time = cur_time
         
         action = Increase_JingShui_E_Bonus_Level_Action(self)
-        action.set_timestamp(cur_time + plan.random_choince_2(0.067, 0.083))
+        action.set_timestamp(cur_time + plan.random_choice_2(0.067, 0.083))
         plan.insert_action_runtime(action)
 
     def increase_hp_bonus_level(self, plan: ActionPlan):
@@ -78,21 +79,32 @@ class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
         self.__hp_bonus_last_change_time = cur_time
 
         action = Increase_JingShui_Hp_Level_Action(self)
-        action.set_timestamp(cur_time + plan.random_choince_2(0.067, 0.083))
+        action.set_timestamp(cur_time + plan.random_choice_2(0.067, 0.083))
         plan.insert_action_runtime(action)
 
 
-    
+class JingShui_Hp_Buff(MultiLayerBuff, max_layer=2, attrs=BuffAttrs.HP):
+    def on_update(self, buff_manager: BuffManager, plan, cur_time):
+        jing_shui: Jing_Shui_Liu_Yong_Zhi_Hui = self.creator
+        owner: Character = jing_shui.get_owner()
+        owner.get_hp().buff_hp_per += jing_shui.hp_bonus_multiplier * self.__cur_layer
+
+
+class JingShui_E_Bonus_Buff(MultiLayerBuff, max_layer=3, attrs=BuffAttrs.E_BONUS):
+    def on_update(self, buff_manager: BuffManager, plan, cur_time):
+        jing_shui: Jing_Shui_Liu_Yong_Zhi_Hui = self.creator
+        owner: Character = jing_shui.get_owner()
+        owner.buff_attrs.e_bonus += jing_shui.e_bonus_multiplier * self.__cur_layer
+
+
 class Increase_JingShui_Hp_Level_Action(Action):
-    def __init__(self, supervisor: Jing_Shui_Liu_Yong_Zhi_Hui):
+    def __init__(self, jing_shui: Jing_Shui_Liu_Yong_Zhi_Hui):
         super().__init__("静水流涌之辉生命值叠层")
-        self.supervisor = supervisor
+        self.jing_shui = jing_shui
 
     def do(self, plan: ActionPlan):
-        owner: Character = self.supervisor.get_owner()
-        multiplier = Jing_Shui_Liu_Yong_Zhi_Hui.HP_BONUS_MULTIPLIER[self.supervisor.refinement_rank - 1]
-        owner.get_hp().modify_max_hp_per(multiplier)
-        self.debug("静水流涌之辉生命叠一层，目前层数: %d",  self.supervisor.hp_bonus_level)
+        buff = JingShui_Hp_Buff(self.start_time, end_time=0, creator=self.jing_shui)
+        plan.add_buff(buff)
 
 
 class Increase_JingShui_E_Bonus_Level_Action(Action):

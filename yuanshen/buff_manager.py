@@ -64,17 +64,17 @@ class Buff:
         cls.attrs = attrs
         cls.depend_attrs = depend_attrs
 
-    def __init__(self, start_time: float, end_time: float = 10000, creator=None):
+    def __init__(self, start_time: float, duration: float = 10000, creator=None):
         """
         start_time: buff 开始时间
 
-        end_time: 默认是一个很大的值，一场战斗不会持续这么长时间，因此默认的值可视为永久 buff
+        duration: 默认是一个很大的值，一场战斗不会持续这么长时间，因此默认的值可视为永久 buff
 
         creator: buff 施加者，可能是某个 Character, 也可能是某件武器，也可能是圣遗物效果
         """
 
         self.__start_time = start_time
-        self.__end_time = end_time
+        self.__end_time = start_time + duration
         self.creator = creator
         self.__need_update = True
 
@@ -112,7 +112,7 @@ class Buff:
 
 
 class MultiLayerBuff(Buff):
-    def __init__(self, start_time: float, end_time: float = 10000, creator=None):
+    def __init__(self, start_time: float, duration: float = 10000, creator=None):
         """
         start_time: buff 开始时间
 
@@ -121,7 +121,7 @@ class MultiLayerBuff(Buff):
         creator: buff 施加者，可能是某个 Character, 也可能是某件武器，也可能是圣遗物效果
         """
 
-        self.__start_end_times = deque([(start_time, end_time)])
+        self.__start_end_times = deque([(start_time, start_time + duration)])
         self.creator = creator
         self.__cur_layer = 0
 

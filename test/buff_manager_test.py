@@ -46,7 +46,7 @@ def do_add_test1():
     buff = Buff_Lay_0_Co_f(0, creator=creator1)
     new = buff_manager.add_buff(buff)
     assert new.buff is buff
-    new_buff = Buff_Lay_0_Co_f(0, creator2)
+    new_buff = Buff_Lay_0_Co_f(0, creator=creator2)
     new = buff_manager.add_buff(new_buff)
     assert new is None
     assert is_same_lst(buff_manager.buff_lst, [new_buff])
@@ -56,7 +56,7 @@ def do_add_test1():
     buff = Buff_Lay_0_Co_f(0, creator=creator1)
     new = buff_manager.add_buff(buff)
     assert new.buff is buff
-    new_buff = Buff_Lay_0_Co_f(0, creator1)
+    new_buff = Buff_Lay_0_Co_f(0, creator=creator1)
     new = buff_manager.add_buff(new_buff)
     assert new is None
     assert is_same_lst(buff_manager.buff_lst, [new_buff])
@@ -152,7 +152,7 @@ class NaxiDa_Zhuan_Wu(Buff, attrs=BuffAttrs.ELEM_MASTERY):
 
 class NaXiDa_Q_Buff(Buff, attrs=BuffAttrs.ELEM_MASTERY, depend_attrs=BuffAttrs.ELEM_MASTERY, re_convertable=False):
     def __init__(self, start_time: float, q_em):
-        super().__init__(start_time, end_time=start_time + 25.66)
+        super().__init__(start_time, duration=25.66)
         self.q_em = q_em
 
     def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time):
@@ -182,7 +182,7 @@ class YeLan_E(MultiLayerBuff, max_layer=4, attrs=BuffAttrs.HP_PER):
 
 class YeLan_E_Action(Action):
     def do(self, plan: ActionPlan):
-        plan.add_buff(YeLan_E(self.start_time, self.start_time + 25))
+        plan.add_buff(YeLan_E(self.start_time, duration=25))
 
 
 class Sheng_Xian(Buff, attrs=BuffAttrs.ELEM_MASTERY, 
@@ -201,7 +201,7 @@ class Sheng_Xian(Buff, attrs=BuffAttrs.ELEM_MASTERY,
 
 class Wan_Ye_E(Buff, attrs=BuffAttrs.ELEM_BONUS, depend_attrs=BuffAttrs.ELEM_MASTERY, re_convertable=False):
     def __init__(self, start_time: float, bonus, wan_ye):
-        super().__init__(start_time, end_time=start_time + 8, creator=wan_ye)
+        super().__init__(start_time, duration=8, creator=wan_ye)
         self.bonus = bonus
 
     def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time):
@@ -226,9 +226,9 @@ class Em_Provider(Buff, attrs=BuffAttrs.ELEM_MASTERY):
 class TestPrepareAction(Action):
     def do(self, plan: ActionPlan):
         plan.add_buff(NaxiDa_Zhuan_Wu(0))
-        plan.add_buff(YeLan_E(1, 1 + 25))
-        plan.add_buff(YeLan_E(4, 4 + 25))
-        plan.add_buff(Sheng_Xian(7, 7 + 20, creator=plan.get_p3()))
+        plan.add_buff(YeLan_E(1, duration=25))
+        plan.add_buff(YeLan_E(4, duration=25))
+        plan.add_buff(Sheng_Xian(7, duration=20, creator=plan.get_p3()))
         
 
 class Em_Provider_Action(Action):
