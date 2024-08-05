@@ -14,3 +14,6 @@ class Ys_Weapon(Ys_Item):
         
         super().__init_subclass__(**kwargs)
         cls.name = name
+
+    def __init__(self, base_atk):
+        self.base_atk = base_atk

@@ -40,6 +40,8 @@ BuffManager = NewType("BuffManager", None)
 
 
 class Buff:
+    DURATION_FOREVER = 10000
+
     def __init_subclass__(cls, max_layer=1, co_exist=False, re_convertable=True,
                           attrs: BuffAttrs = None, depend_attrs: BuffAttrs = BuffAttrs(0)) -> None:
         """
@@ -64,7 +66,7 @@ class Buff:
         cls.attrs = attrs
         cls.depend_attrs = depend_attrs
 
-    def __init__(self, start_time: float, duration: float = 10000, creator=None):
+    def __init__(self, start_time: float, duration: float = None, creator=None):
         """
         start_time: buff 开始时间
 
@@ -74,7 +76,12 @@ class Buff:
         """
 
         self.__start_time = start_time
-        self.__end_time = start_time + duration
+
+        if duration:
+            self.__end_time = start_time + duration
+        else:
+            self.__end_time = start_time + Buff.DURATION_FOREVER
+
         self.creator = creator
         self.__need_update = True
 
@@ -112,7 +119,7 @@ class Buff:
 
 
 class MultiLayerBuff(Buff):
-    def __init__(self, start_time: float, duration: float = 10000, creator=None):
+    def __init__(self, start_time: float, duration: float = None, creator=None):
         """
         start_time: buff 开始时间
 
@@ -121,7 +128,12 @@ class MultiLayerBuff(Buff):
         creator: buff 施加者，可能是某个 Character, 也可能是某件武器，也可能是圣遗物效果
         """
 
-        self.__start_end_times = deque([(start_time, start_time + duration)])
+        if duration:
+            end_time = start_time + duration
+        else:
+            end_time = start_time + Buff.DURATION_FOREVER
+
+        self.__start_end_times = deque([(start_time, end_time)])
         self.creator = creator
         self.__cur_layer = 0
 

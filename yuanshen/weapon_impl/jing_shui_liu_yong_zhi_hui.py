@@ -16,7 +16,8 @@ class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
         * never_dec_layer: 永不掉层，一般来说，芙芙用自已的专武时，除非一直切白芙加血，否则是能保证不掉层的。
                            如果是其他角色使用芙芙的专武，需视情况而定
         """
-        self.base_atk = base_atk
+        super().__init__(base_atk)
+
         self.crit_damage = crit_damage
         self.never_dec_layer = never_dec_layer
 
@@ -28,7 +29,6 @@ class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
 
         self.__e_bonus_level = 0
         self.__hp_bonus_level = 0
-        
 
     def apply_fixed_attr(self, owner: Character):
         owner.fixed_attrs.crit_damage += self.crit_damage
@@ -65,9 +65,10 @@ class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
             return
         
         self.__e_bonus_last_change_time = cur_time
+        self.__e_bonus_level += 1
         
-        action = Increase_JingShui_E_Bonus_Level_Action(self)
-        action.set_timestamp(cur_time + plan.random_choice_2(0.067, 0.083))
+        start_time = cur_time + plan.random_choice_2(0.067, 0.083)
+        action = Increase_JingShui_E_Bonus_Level_Action(self, start_time)
         plan.insert_action_runtime(action)
 
     def increase_hp_bonus_level(self, plan: ActionPlan):
@@ -77,9 +78,10 @@ class Jing_Shui_Liu_Yong_Zhi_Hui(Ys_Weapon, name="静水流涌之辉"):
             return
 
         self.__hp_bonus_last_change_time = cur_time
+        self.__hp_bonus_level += 1
 
-        action = Increase_JingShui_Hp_Level_Action(self)
-        action.set_timestamp(cur_time + plan.random_choice_2(0.067, 0.083))
+        start_time = cur_time + plan.random_choice_2(0.067, 0.083)
+        action = Increase_JingShui_Hp_Level_Action(self, start_time)
         plan.insert_action_runtime(action)
 
 
@@ -90,6 +92,20 @@ class JingShui_Hp_Buff(MultiLayerBuff, max_layer=2, attrs=BuffAttrs.HP):
         owner.get_hp().buff_hp_per += jing_shui.hp_bonus_multiplier * self.__cur_layer
 
 
+class Increase_JingShui_Hp_Level_Action(Action):
+    def __init__(self, jing_shui: Jing_Shui_Liu_Yong_Zhi_Hui, start_time):
+        super().__init__("静水流涌之辉生命值叠层", start_time)
+        self.jing_shui = jing_shui
+
+    def do(self, plan: ActionPlan):
+        if self.jing_shui.never_dec_layer:
+            dur = None
+        else:
+            dur = 6
+        buff = JingShui_Hp_Buff(self.start_time, duration=dur, creator=self.jing_shui)
+        plan.add_buff(buff)
+
+
 class JingShui_E_Bonus_Buff(MultiLayerBuff, max_layer=3, attrs=BuffAttrs.E_BONUS):
     def on_update(self, buff_manager: BuffManager, plan, cur_time):
         jing_shui: Jing_Shui_Liu_Yong_Zhi_Hui = self.creator
@@ -97,23 +113,15 @@ class JingShui_E_Bonus_Buff(MultiLayerBuff, max_layer=3, attrs=BuffAttrs.E_BONUS
         owner.buff_attrs.e_bonus += jing_shui.e_bonus_multiplier * self.__cur_layer
 
 
-class Increase_JingShui_Hp_Level_Action(Action):
-    def __init__(self, jing_shui: Jing_Shui_Liu_Yong_Zhi_Hui):
-        super().__init__("静水流涌之辉生命值叠层")
+class Increase_JingShui_E_Bonus_Level_Action(Action):
+    def __init__(self, jing_shui: Jing_Shui_Liu_Yong_Zhi_Hui, start_time):
+        super().__init__("静水流涌之辉战技增伤叠层", start_time)
         self.jing_shui = jing_shui
 
     def do(self, plan: ActionPlan):
-        buff = JingShui_Hp_Buff(self.start_time, end_time=0, creator=self.jing_shui)
+        if self.jing_shui.never_dec_layer:
+            dur = None
+        else:
+            dur = 6
+        buff = JingShui_E_Bonus_Buff(self.start_time, duration=dur, creator=self.jing_shui)
         plan.add_buff(buff)
-
-
-class Increase_JingShui_E_Bonus_Level_Action(Action):
-    def __init__(self, supervisor: Jing_Shui_Liu_Yong_Zhi_Hui):
-        super().__init__("静水流涌之辉战技增伤叠层")
-        self.supervisor = supervisor
-
-    def do(self, plan: ActionPlan):
-        owner: Character = self.supervisor.owner
-        multiplier = Jing_Shui_Liu_Yong_Zhi_Hui.E_BONUS_MULTIPLIER[self.supervisor.refinement_rank - 1]
-        owner.add_e_bonus(multiplier)
-        self.debug("静水流涌之辉战技叠一层，目前层数: %d", self.supervisor.e_bonus_level)
