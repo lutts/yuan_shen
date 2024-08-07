@@ -43,6 +43,9 @@ class Action:
     
     def need_update_buff(self):
         return True
+    
+    def keep_expired_buff(self):
+        return False
 
     def do(self, plan: ActionPlan):
         """
@@ -466,7 +469,7 @@ class ActionPlan:
                 cur_time = self.__time_line[self.__current_index][0]
                 self.__current_action_time = cur_time
                 if action.need_update_buff():
-                    self.__buff_manager.update(self, cur_time)
+                    self.__buff_manager.update(self, cur_time, action.keep_expired_buff())
                 print(f"do action {action.name}")
                 finished = action.do(self)
                 if finished:

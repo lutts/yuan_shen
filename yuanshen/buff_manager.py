@@ -197,13 +197,13 @@ class BuffManager:
         self.__buff_lst = None
         self.__root_node = None
 
-    def update(self, plan, cur_time):
+    def update(self, plan, cur_time, keep_expired_buff):
         need_update = False
 
         idx = 0
         while idx < len(self.__buff_lst):
             buff = self.__buff_lst[idx]
-            if buff.buff.end_time() < cur_time:
+            if not keep_expired_buff and buff.buff.end_time() < cur_time:
                 self.__del_buff(buff)
                 buff.buff.on_finish()
                 need_update = True

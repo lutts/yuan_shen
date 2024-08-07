@@ -4,33 +4,28 @@
 Module documentation.
 """
 
+from yuanshen.buff_manager import BuffManager
+from ..elem_type import Ys_Elem_Type
 from ..action import Action, ActionPlan
-from ..buff_manager import Buff
+from ..buff_manager import Buff, BuffAttrs
 from ..character import Character
 
-class ZhongLi_E_AttributeSupplier(Buff):
-    def __init__(self):
-        self.end_time = None
 
-    def get_e_action(self, name: str = None):
-        return ZhongLi_E_Action(name, attr=self)
+class Zhong_Li_Ch(Character, name="钟离", elem_type=Ys_Elem_Type.YAN):
+    def do_e(self, plan: ActionPlan, t):
+        jian_kang_start = t + 1.034
+        jian_kang_action = Zhong_Li_Jian_Kang_Action(jian_kang_start)
 
-    def get_jian_kang(self, plan: ActionPlan):
-        cur_time = plan.current_action_time
-        if cur_time <= self.end_time:
-            return 0.2
-        else:
-            return 0
 
-class ZhongLi_E_Action(Action):
-    def __init__(self, name, attr: ZhongLi_E_AttributeSupplier):
-        if not name:
-            name = "钟离 e"
-        super().__init__(name)
-        
-        self.__attr = attr
+class Zhong_Li_Jian_Kang_Buff(Buff, attrs=BuffAttrs.JIAN_KANG):
+    def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time):
+        plan.monster.add_jian_kang(0.2)
 
-    def do_impl(self, plan: ActionPlan):
-        jian_kang_start_time = self.get_timestamp + 1.15
-        self.__attr.end_time = jian_kang_start_time + 20
-        plan.add_extra_attr(self.__attr)
+
+class Zhong_Li_Jian_Kang_Action(Action):
+    def __init__(self, start_time):
+        super().__init__("钟离e", start_time)
+
+    def do(self, plan: ActionPlan):
+        buff = Zhong_Li_Jian_Kang_Buff(start_time=self.start_time, duration=20.722)
+        plan.add_buff(buff)

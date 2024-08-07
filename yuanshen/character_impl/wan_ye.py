@@ -114,7 +114,7 @@ class Wan_Ye_Ch(Character, name="枫原万叶",
 
 class Wan_Ye_Bonus_Buff(Buff, attrs=BuffAttrs.ELEM_BONUS, depend_attrs=BuffAttrs.ELEM_MASTERY, re_convertable=False):
     def __init__(self, start_time: float, bonus, wan_ye):
-        super().__init__(start_time, end_time=start_time + 8, creator=wan_ye)
+        super().__init__(start_time, duration=8, creator=wan_ye)
         self.bonus = bonus
     
     def on_update(self, buff_manager: BuffManager, plan: ActionPlan, cur_time, expired_layer):

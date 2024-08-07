@@ -40,7 +40,7 @@ def get_intervals(ys_timestamp_dict: dict[str, Video_Timestamps]):
     intervals_dict = {}
     for filename, t in ys_timestamp_dict.items():
         intervals_dict[filename] = {
-            "e减抗开始时间": (round(t.ling_hua_last_unbonused - t.e_start + 0.001, 3),
+            "点按e - e减抗开始时间": (round(t.ling_hua_last_unbonused - t.e_start + 0.001, 3),
                               t.ling_hua_first_bonused - t.e_start),
         }
     
