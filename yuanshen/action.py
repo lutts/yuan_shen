@@ -8,7 +8,7 @@ import logging
 import typing
 import random
 
-from .elem_type import Ys_Elem_Type
+from .elem_type import Ys_Elem_Type, TeamElemGongMing
 from .utils import ys_crit_damage, ys_expect_damage
 from .buff_manager import Buff, BuffManager
 from .monster import Monster
@@ -99,6 +99,8 @@ class ActionPlan:
         """
 
         self.__characters = characters if characters else []
+        self.gong_ming = TeamElemGongMing([ch.elem_type for ch in self.__characters])
+
         self.__forground_character: Character = None
         self.__monster = monster if monster else Monster()
         self.__buff_manager = BuffManager()
@@ -113,74 +115,15 @@ class ActionPlan:
         self.__action_array: list[Action] = []
         self.__time_line = []
 
-    def __process_characters(self, reset=False):
-        huo_num = 0
-        shui_num = 0
-        cao_num = 0
-        bing_num = 0
-
-        for ch in self.__characters:
-            if ch.elem_type is Ys_Elem_Type.HUO:
-                huo_num += 1
-            elif ch.elem_type is Ys_Elem_Type.SHUI:
-                shui_num += 1
-            elif ch.elem_type is Ys_Elem_Type.CAO:
-                cao_num += 1
-            elif ch.elem_type is Ys_Elem_Type.BING:
-                bing_num += 1
-
-            weapon = ch.get_weapon()
-            if reset:
-                ch.reset_attrs()
-                if weapon:
-                    weapon.reset(self)
-            else:
-                if weapon:
-                    weapon.apply_dynamic_attr(ch, self)
-
-
-        if huo_num >= 2:
-            for t in self.__characters:
-                if reset:
-                    t.sub_atk_per(0.25)
-                else:
-                    t.add_atk_per(0.25)
-
-        if shui_num >= 2:
-            for t in self.__characters:
-                if reset:
-                    t.get_hp().modify_max_hp_per(-0.25)
-                else:
-                    t.get_hp().modify_max_hp_per(0.25)
-
-        if cao_num >= 2:
-            em = 50 + 30 + 20
-            for t in self.__characters:
-                if reset:
-                    t.sub_elem_mastery(em)
-                else:
-                    t.add_elem_mastery()
-
-        if bing_num >= 2:
-            for t in self.__characters:
-                if reset:
-                    t.sub_crit_rate(0.15)
-                else:
-                    t.add_crit_rate(0.15)
+    SHUANG_CAO_ELEM_BUFF = 50 + 30 + 20
 
     def __init_characters(self):
-        self.__process_characters()
+        for ch in self.__characters:
+            ch.init_for_plan(self)
 
     def __reset_characters(self):
-        self.__process_characters(reset=True)
-
-    def add_shuang_yan_buff(self):
-        # 假设盾是常驻的
-        for t in self.__characters:
-            t.add_all_bonus(0.15)
-        # 造成伤害使岩元素抗性下降20%，持续15秒，时间很长，加上可能的结晶盾，因此这里我们假设减抗是常驻的
-        # 假设的前提：15秒内会攻击一次刷新时间、盾如果破碎的话，15秒内会重新开盾(主动开盾或捡结晶盾)
-        self.__monster.add_jian_kang(0.2)
+        for ch in self.__characters:
+            ch.finish_plan(self)
 
     def prepare(self):
         self.__buff_manager.init(self)

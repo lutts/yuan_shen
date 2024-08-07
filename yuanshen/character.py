@@ -10,7 +10,7 @@ from enum import Enum
 
 from typing import Self
 
-from .elem_type import Ys_Elem_Type
+from .elem_type import Ys_Elem_Type, TeamElemGongMing
 from .weapon import Ys_Weapon
 from .health_point import HealthPoint, HP_Change_Data
 from .syw import ShengYiWu
@@ -215,6 +215,32 @@ class Character(CharacterBase, name="通用角色"):
         self.buff_attrs.reset()
         self.un_convertable_attrs.reset()
         self.__hp.reset_attrs()
+
+    def init_for_plan(self, plan):
+        gong_ming: TeamElemGongMing = plan.gong_ming
+
+        self.fixed_attrs.atk_per += gong_ming.atk_per
+        self.fixed_attrs.elem_mastery += gong_ming.elem_mastery
+        self.fixed_attrs.crit_rate += gong_ming.crit_rate
+        if gong_ming.hp_per:
+            self.__hp.fixed_hp_per += gong_ming.hp_per
+
+        if self.__weapon:
+            self.__weapon.apply_dynamic_attr(self, plan)
+
+    def finish_plan(self, plan):
+        gong_ming: TeamElemGongMing = plan.gong_ming
+
+        self.fixed_attrs.atk_per -= gong_ming.atk_per
+        self.fixed_attrs.elem_mastery -= gong_ming.elem_mastery
+        self.fixed_attrs.crit_rate -= gong_ming.crit_rate
+        if gong_ming.hp_per:
+            self.__hp.fixed_hp_per -= gong_ming.hp_per
+
+        self.reset_attrs()
+
+        if self.__weapon:
+            self.__weapon.reset(self)
 
     def get_base_hp(self):
         return self.__hp.get_base_hp()
