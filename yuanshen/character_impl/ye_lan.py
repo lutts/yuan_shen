@@ -45,7 +45,7 @@ class Ye_Lan_Ch(Character, name="夜兰", elem_type=Ys_Elem_Type.SHUI, ming_zuo_
         if ming_6 and self.ming_zuo_num < 6:
             return 0
         
-        multiplier = Ye_Lan_Ch.PO_JU_SHI_MULTIPLIER[self.a_level - Ye_Lan_Ch.MIN_SKILL_LEVEL]
+        multiplier = Ye_Lan_Ch.PO_JU_SHI_MULTIPLIER[self.a_idx()]
         damage = self.__get_damage(multiplier, self.get_a_bonus(), monster)
         if ming_6:
             damage *= 156/100
@@ -53,15 +53,15 @@ class Ye_Lan_Ch(Character, name="夜兰", elem_type=Ys_Elem_Type.SHUI, ming_zuo_
         return damage
     
     def get_e_damage(self, monster: Monster=None):
-        multiplier = Ye_Lan_Ch.E_MULTIPLIER[self.e_level - Ye_Lan_Ch.MIN_SKILL_LEVEL]
+        multiplier = Ye_Lan_Ch.E_MULTIPLIER[self.e_idx()]
         return self.__get_damage(multiplier, self.get_e_bonus(), monster)
     
     def get_q_damage(self, monster: Monster=None):
-        multiplier = Ye_Lan_Ch.Q_MULTIPLIER[self.q_level - Ye_Lan_Ch.MIN_SKILL_LEVEL]
+        multiplier = Ye_Lan_Ch.Q_MULTIPLIER[self.q_idx()]
         return self.__get_damage(multiplier, self.get_q_bonus(), monster)
     
     def get_qxt_damage(self, monster: Monster=None):
-        multiplier = Ye_Lan_Ch.QXT_MULTIPLIER[self.q_level - Ye_Lan_Ch.MIN_SKILL_LEVEL]
+        multiplier = Ye_Lan_Ch.QXT_MULTIPLIER[self.q_idx()]
         return self.__get_damage(multiplier, self.get_q_bonus(), monster)
     
     def get_extra_qxt_damage(self, monster: Monster=None):
@@ -70,6 +70,12 @@ class Ye_Lan_Ch(Character, name="夜兰", elem_type=Ys_Elem_Type.SHUI, ming_zuo_
         
         return self.__get_damage(14/100, self.get_q_bonus(), monster)
     
+    def do_e(self, plan: ActionPlan, t):
+        """
+        t: E技能引爆的时间
+        """
+        plan.add_action(YeLan_E_Action(t, self))
+
     def do_q(self, plan: ActionPlan, q_anim_start_time, do_damage = False):
         pass
 
@@ -84,6 +90,18 @@ class YeLan_Ming_4_Action(Action, Buff):
     def get_hp_percent(self, plan, target_character):
         # FIXME: 生效时长是否要加？持续25秒是否能覆盖整个输出轴？
         return 0.1
+    
+
+class YeLan_E_Action(Action):
+    def __init__(self, start_time, ye_lan: Ye_Lan_Ch):
+        super().__init__("夜兰E", start_time)
+        self.ye_lan = ye_lan
+
+    def do(self, plan: ActionPlan):
+        if self.ye_lan.calc_damage:
+            plan.add_damage(self.ye_lan.get_e_damage(), self.ye_lan)
+
+
 
 class YeLan_Q_Bonus_Action(AttributeAction):
     def __init__(self):

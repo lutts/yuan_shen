@@ -105,3 +105,12 @@ class Ys_Reaction_JiHua(Ys_Reaction):
         damage = self.monster.attacked(damage)
 
         return damage
+    
+class Ys_Reaction_ChaoJiHua(Ys_Reaction_JiHua):
+    def __init__(self, ch: Character, monster: Monster, extra_multiplier = 0):
+        super().__init__(ch, monster, ji_hua_type=JiHua_Type.Chao_JiHua, extra_multiplier=extra_multiplier)
+
+
+class Ys_Reaction_ManJiHua(Ys_Reaction_JiHua):
+    def __init__(self, ch: Character, monster: Monster, extra_multiplier=0):
+        super().__init__(ch, monster, ji_hua_type=JiHua_Type.Man_JiHua, extra_multiplier=extra_multiplier)

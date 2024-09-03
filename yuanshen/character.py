@@ -144,6 +144,8 @@ class Character(CharacterBase, name="通用角色"):
         if kwargs:
             super().__init__(**kwargs)
 
+        self.calc_damage = False
+
         # 基础攻击力：角色基础攻击力 + 武器基础攻击力
         if weapon:
             base_atk += weapon.base_atk
