@@ -91,3 +91,11 @@ class Monster:
     
     def __str__(self):
         return "kang:" + str(round(self.get_kang_xin_cheng_shang(), 3)) + ", fang:" + str(round(self.get_fang_yu_xi_shu(), 3))
+    
+
+if __name__ == '__main__':
+    monster = Monster()
+    monster.add_jian_kang(0.4)
+    monster2 = Monster(level=93)
+    monster2.add_jian_kang(0.4)
+    print(monster2.attacked(1) / monster.attacked(1) * 45)
