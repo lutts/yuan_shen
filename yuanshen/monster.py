@@ -94,8 +94,6 @@ class Monster:
     
 
 if __name__ == '__main__':
-    monster = Monster()
-    monster.add_jian_kang(0.4)
-    monster2 = Monster(level=93)
-    monster2.add_jian_kang(0.4)
-    print(monster2.attacked(1) / monster.attacked(1) * 45)
+    monster = Monster(level=103, character_level=80)
+    monster.add_jian_kang(0.36)
+    print(monster.attacked(1))
