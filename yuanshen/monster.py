@@ -94,6 +94,7 @@ class Monster:
     
 
 if __name__ == '__main__':
-    monster = Monster(level=103, character_level=80)
-    monster.add_jian_kang(0.36)
+    monster = Monster(level=10, character_level=90)
+    monster.add_jian_kang(0.9)
+    #monster.add_jian_fang(0.3)
     print(monster.attacked(1))
