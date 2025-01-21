@@ -94,9 +94,9 @@ class Monster:
     
 
 if __name__ == '__main__':
-    monster1 = Monster(level=100, character_level=90, kang_xin=0.1)
-    #monster1.add_jian_kang(0.4)
-    #monster1.add_jian_fang(0.2)
+    monster1 = Monster(level=103, character_level=90, kang_xin=0.1)
+    monster1.add_jian_kang(0.36 + 0.4)
+    monster1.add_jian_fang(0.2)
     dmg1 = monster1.attacked(1)
     print(monster1.attacked(1) )
 
